@@ -24,12 +24,7 @@
             <div class="fighter-club" id="fighterAClub">Team A</div>
         </div>
         <div class="fighter-name text-center" id="fighterAName">Fighter A</div>
-        <div class="score-indicators d-flex justify-content-center gap-2 mb-2">
-            <div class="score-box ippon" id="ipponA">0</div>
-            <div class="score-box waza" id="wazaA">0</div>
-            <div class="score-box yuko" id="yukoA">0</div>
-            <div class="score-box shido" id="shidoA">0</div>
-        </div>
+        <div class="fighter-score text-center" id="scoreA">0</div>
     </div>
 
     <!-- Player 2 (Bottom) -->
@@ -39,12 +34,7 @@
             <div class="fighter-club" id="fighterBClub">Team B</div>
         </div>
         <div class="fighter-name text-center" id="fighterBName">Fighter B</div>
-        <div class="score-indicators d-flex justify-content-center gap-2 mb-2">
-            <div class="score-box ippon" id="ipponB">0</div>
-            <div class="score-box waza" id="wazaB">0</div>
-            <div class="score-box yuko" id="yukoB">0</div>
-            <div class="score-box shido" id="shidoB">0</div>
-        </div>
+        <div class="fighter-score text-center" id="scoreB">0</div>
     </div>
 
     <!-- Bottom Bar with Timer and Match Info -->
@@ -65,7 +55,7 @@
 
     <!-- Application Script -->
     <script src="/public/js/vmix.js"></script>
-    
+
     <!-- Auto-refresh the page every 30 minutes to prevent any potential memory leaks -->
     <script>
     setInterval(() => {

@@ -58,16 +58,16 @@ connectedRef.on("value", function(snap) {
 updateStatus('Setting up Firebase listener...');
 try {
     const matchRef = database.ref('current_match');
-    
+
     matchRef.on('value', (snapshot) => {
         updateStatus('Received update from Firebase');
         const data = snapshot.val();
-        
+
         if (!data) {
             updateStatus('No data received from Firebase');
             return;
         }
-        
+
         console.log('Received update from Firebase:', data);
 
         // Update Fighter A
@@ -108,7 +108,7 @@ try {
     }, (error) => {
         updateStatus(`Firebase read error: ${error.message}`, true);
     });
-    
+
     updateStatus('Firebase listener active and waiting for updates...');
 } catch (error) {
     updateStatus(`Error setting up Firebase listener: ${error.message}`, true);
