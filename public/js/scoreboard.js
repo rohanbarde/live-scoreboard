@@ -10,7 +10,6 @@
     const TECH_OVERLAY_MS = 2000;
     const BIG_CARD_MS = 2000;
     const SHIDO_POINTER_MS = 1500;
-    let useWebAudioDing = true;
 
     /* Match state */
     const match = {
@@ -218,31 +217,26 @@ function renderSmallCards() {
     }
     function escapeHtml(s) { return (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
-    /* Sound (WebAudio with fallback) */
+    /* Sound (WebAudio) */
     const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
     function playDing() {
-      if (audioCtx && useWebAudioDing) {
+      if (audioCtx) {
         try {
           const o = audioCtx.createOscillator();
           const g = audioCtx.createGain();
           o.type = 'sine';
           o.frequency.setValueAtTime(880, audioCtx.currentTime);
           g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-          o.connect(g); g.connect(audioCtx.destination);
+          o.connect(g);
+          g.connect(audioCtx.destination);
           g.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
           o.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.12);
           g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.36);
           o.stop(audioCtx.currentTime + 0.36);
         } catch (e) {
-          fallbackAudio();
+          console.warn('Web Audio error', e);
         }
-      } else {
-        fallbackAudio();
       }
-    }
-    function fallbackAudio() {
-      const a = document.getElementById('dingAudio');
-      try { a.currentTime = 0; a.play(); } catch (e) { }
     }
 
     /* Overlay management */
@@ -263,18 +257,7 @@ function renderSmallCards() {
       else { if (bigCardTimeoutB) clearTimeout(bigCardTimeoutB); bigCardTimeoutB = setTimeout(() => { el.className = 'big-card ' + colorClass + ' hide'; el.setAttribute('aria-hidden', 'true'); }, BIG_CARD_MS); }
     }
 
-    /* show pointer near shido count */
-<!--    function showShidoPointer(side) {-->
-<!--      const container = (side === 'A') ? document.getElementById('shidoA') : document.getElementById('shidoB');-->
-<!--      // create temp pointer element near number-->
-<!--      const parent = container.parentElement;-->
-<!--      const pointer = document.createElement('div');-->
-<!--      pointer.className = 'shido-pointer';-->
-<!--      pointer.style.marginLeft = '8px';-->
-<!--      parent.appendChild(pointer);-->
-<!--      if (pointerTimeout) clearTimeout(pointerTimeout);-->
-<!--      pointerTimeout = setTimeout(() => { try { parent.removeChild(pointer); } catch (e) { } }, SHIDO_POINTER_MS);-->
-<!--    }-->
+    /* Shido pointer animation removed - unused in current UI */
 
     /* scoring logic */
     function doTechnique(side, tech) {
