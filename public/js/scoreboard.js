@@ -28,9 +28,13 @@
     };
 
     /* helpers */
-    function pad(n) { return String(n).padStart(2, '0'); }
-    function formatTimeFromSec(sec) { sec = Math.max(0, Math.floor(sec)); return `${pad(Math.floor(sec / 60))}:${pad(sec % 60)}`; }
-    function nowMatchTime() { return formatTimeFromSec(match.remainingSec); }
+    /**
+     * Gets the current match time in MM:SS format
+     * @returns {string} Formatted match time
+     */
+    function nowMatchTime() { 
+        return window.formatTimeFromSec ? window.formatTimeFromSec(match.remainingSec) : '00:00'; 
+    }
 
     // Function to check if action is allowed (only when timer is running)
     function isActionAllowed() {
@@ -208,14 +212,26 @@ function renderSmallCards() {
     }
     function renderLog() {
       const area = document.getElementById('logArea');
+      if (!area) return;
+      
+      const escape = window.escapeHtml || (s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'));
       area.innerHTML = '';
+      
       match.log.slice().reverse().forEach(e => {
-        const div = document.createElement('div'); div.className = 'event-row';
-        div.innerHTML = `<div class="d-flex justify-content-between"><div><strong>${escapeHtml(e.actor)}</strong> · <span class="small-muted">${escapeHtml(e.action)}</span></div><div class="small-muted">${escapeHtml(e.t)}</div></div><div class="small-muted">${escapeHtml(e.info)}</div>`;
+        const div = document.createElement('div');
+        div.className = 'event-row';
+        div.innerHTML = `
+          <div class="d-flex justify-content-between">
+            <div>
+              <strong>${escape(e.actor)}</strong> · 
+              <span class="small-muted">${escape(e.action)}</span>
+            </div>
+            <div class="small-muted">${escape(e.t)}</div>
+          </div>
+          <div class="small-muted">${escape(e.info)}</div>`;
         area.appendChild(div);
       });
     }
-    function escapeHtml(s) { return (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
     /* Sound (WebAudio) */
     const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
@@ -581,12 +597,22 @@ function endMatch() {
     /* print log */
     function printLog() {
       const w = window.open('', '_blank');
+      const escape = window.escapeHtml || (s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'));
+      
       w.document.write('<html><head><title>Match Log</title></head><body style="font-family:Arial;padding:20px;color:#000">');
       w.document.write(`<h3>Judo Match Log — ${new Date().toLocaleString()}</h3>`);
       w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
+      
       match.log.forEach(it => {
-        w.document.write(`<tr><td>${it.t}</td><td>${escapeHtml(it.actor)}</td><td>${escapeHtml(it.action)}</td><td>${escapeHtml(it.info)}</td></tr>`);
+        w.document.write(`
+          <tr>
+            <td>${it.t}</td>
+            <td>${escape(it.actor)}</td>
+            <td>${escape(it.action)}</td>
+            <td>${escape(it.info)}</td>
+          </tr>`);
       });
+      
       w.document.write('</tbody></table>');
       w.document.write('</body></html>');
       w.document.close();
@@ -650,10 +676,11 @@ function endMatch() {
   w.document.write('<style>@media print { body, .card-pill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style>');
   w.document.write('</head><body style="font-family:Arial;color:#000;padding:18px">');
   w.document.write(`<h2>JUDO BHARAT — Match Report</h2>`);
+  const escape = window.escapeHtml || (s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'));
+  
   w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
-  if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${escapeHtml(weightCategory)}</p>`);
-<!--  if (matchTime) w.document.write(`<p><strong>Match Number:</strong> ${escapeHtml(matchTime)}</p>`);-->
-  if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${escapeHtml(matNumber)}</p>`);
+  if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${escape(weightCategory)}</p>`);
+  if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${escape(matNumber)}</p>`);
 
 <!--      w.document.write('<h3>Players</h3>');-->
 <!--      w.document.write(`<p><strong>A:</strong> ${escapeHtml(match.fighterA.name)} — ${escapeHtml(match.fighterA.club)} — ${escapeHtml(match.fighterA.weight)}</p>`);-->
@@ -664,14 +691,14 @@ function endMatch() {
       w.document.write(`
   <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;">
 <!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterA.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterA.name)} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${escapeHtml(match.fighterA.club)})</span></div>
+<div style="font-weight:700;font-size:1.1em;">${escape(match.fighterA.name)} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${escape(match.fighterA.club)})</span></div>
 
     ${renderCardPills(match.fighterA.shido)}
     ${renderPointsGrid(match.fighterA)}
   </div>
   <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;">
 <!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterB.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterB.name)} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${escapeHtml(match.fighterB.club)})</span></div>
+<div style="font-weight:700;font-size:1.1em;">${escape(match.fighterB.name)} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${escape(match.fighterB.club)})</span></div>
 
     ${renderCardPills(match.fighterB.shido)}
     ${renderPointsGrid(match.fighterB)}
@@ -684,7 +711,7 @@ function endMatch() {
       w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
       w.document.write(`<li>B — Ippon: ${match.fighterB.ippon}, Waza-ari: ${match.fighterB.waza}, Yuko: ${match.fighterB.yuko}, Shido: ${match.fighterB.shido}</li>`);
       w.document.write('</ul>');
-      w.document.write(`<p><strong>Winner:</strong> ${escapeHtml(match.winnerName || '—')}</p>`);
+      w.document.write(`<p><strong>Winner:</strong> ${escape(match.winnerName || '—')}</p>`);
       w.document.write('<h3>Events</h3>');
       w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
       match.log.forEach(it => {
