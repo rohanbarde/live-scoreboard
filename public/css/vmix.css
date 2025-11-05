@@ -1,0 +1,127 @@
+    :root {
+            --bg: #05060a;
+            --panel: #0b1320;
+            --accent: #ffbf3b;
+            --blue-ijf-start: #0b2a8a;
+            --blue-ijf-end: #07143c;
+            --white-panel-start: #ffffff;
+            --white-panel-end: #e8eefc;
+            --yellow: #ffd24a;
+            --red: #ff4b4b;
+            --gold-glow: rgba(255, 215, 75, 0.35);
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            color: #e6eef6;
+            font-family: Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        .fighter-box {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .fighter-left {
+            background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
+            color: white;
+        }
+
+        .fighter-right {
+            background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
+            color: black;
+        }
+
+        .fighter-name {
+            font-size: 3vw;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .fighter-club {
+            font-size: 2vw;
+            margin-bottom: 15px;
+        }
+
+        .fighter-score {
+            font-size: 5vw;
+            font-weight: bold;
+        }
+
+        .match-number {
+            font-size: 2.5vw;
+            font-weight: bold;
+            color: var(--yellow);
+        }
+
+        .weight-category {
+            font-size: 2vw;
+            color: var(--yellow);
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .timer-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #222;
+            padding: 15px 0;
+            text-align: center;
+        }
+
+        .timer-display {
+            font-size: 8vw;
+            font-weight: bold;
+            display: flex;
+            margin-top: -8vw;
+  justify-content: center;
+  color: var(--yellow);
+
+        }
+
+        /* Hide all controls in vMix mode */
+        .btn, .operator-panel, .export-btn, .btn-close {
+            display: none !important;
+        }
+
+.fighter-top-row {
+    margin-bottom: 1vw;
+    padding: 0 1vw;
+}
+.fighter-flag {
+    width: 4vw;
+    height: auto;
+}
+.fighter-club {
+    font-size: 2vw;
+    font-weight: bold;
+    margin-left: 1vw;
+}
+
+        .fighter-name {
+    font-size: 3vw;
+    font-weight: bold;
+    margin-bottom: 10px;
+    margin-top: -20vw;
+}
+
+        .fighter-score {
+    font-size: 5vw;
+    font-weight: bold;
+    margin-top: -8vw;
+}

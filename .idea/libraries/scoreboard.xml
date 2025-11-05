@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="scoreboard">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/scoreboard.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

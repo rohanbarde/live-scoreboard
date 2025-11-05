@@ -1,0 +1,362 @@
+        :root {
+          --bg: #05060a;
+          --panel: #0b1320;
+
+          --accent: #ffbf3b;
+          --blue-ijf-start: #0b2a8a;
+          --blue-ijf-end: #07143c;
+          --white-panel-start: #ffffff;
+          --white-panel-end: #e8eefc;
+          --yellow: #ffd24a;
+          --red: #ff4b4b;
+          --gold-glow: rgba(255, 215, 75, 0.35);
+        }
+
+        html,
+        body {
+          height: 100%
+        }
+
+        body {
+          margin: 0;
+          background: linear-gradient(180deg, var(--bg), #080812);
+          color: #e6eef6;
+          font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+          max-width: 1600px;
+          margin: 18px auto 36px;
+        }
+
+        .card-surface {
+          background: linear-gradient(180deg, var(--panel), #01030a);
+          border-radius: 12px;
+          padding: 14px;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        h1 {
+          font-weight: 700;
+          color: var(--accent);
+          letter-spacing: 1px;
+          margin: 0;
+        }
+
+        .small-muted {
+          color: var(--muted);
+          font-size: 0.92rem;
+        }
+
+        /* Fighters */
+        .fighter-box {
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 12px;
+          padding: 12px;
+          position: relative;
+          min-height: 210px;
+        }
+
+        .fighter-left {
+          background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
+          color: #fff;
+          border-radius: 10px;
+          padding: 14px;
+        }
+
+        .fighter-right {
+          background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
+          color: #000;
+          border-radius: 10px;
+          padding: 14px;
+        }
+
+        .score-big {
+          font-size: 60px;
+          font-weight: 900;
+          color: #fff;
+          letter-spacing: 2px;
+        }
+
+        .score-big.white {
+          color: #031028;
+        }
+
+        /* for white panel readability */
+        /* display big triple: Ippon · Waza · Yuko */
+        .score-grid {
+          display: flex;
+          gap: 14px;
+          align-items: center;
+          margin-top: 6px;
+        }
+
+        .score-cell {
+          text-align: center;
+          min-width: 82px;
+        }
+
+        .score-label {
+          font-size: 13px;
+          color: var(--muted);
+          font-weight: 700;
+          letter-spacing: 0.6px;
+        }
+
+        .score-num {
+          font-size: 36px;
+          font-weight: 800;
+          margin-top: 6px;
+        }
+
+    /* Hide shido score numbers */
+        #shidoA, #shidoB {
+          visibility: hidden;
+          position: relative;
+          height: 55px;
+          border-radius: 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 8px;
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+          font-weight: 900;
+          font-size: 18px;
+        }
+
+        .card-pill.yellow {
+          background: linear-gradient(180deg, #fff7d8, var(--yellow));
+          border: 4px solid rgba(255, 255, 255, 0.92);
+        }
+
+        .card-pill.red {
+          background: linear-gradient(180deg, #ff9b9b, var(--red));
+          border: 4px solid rgba(255, 255, 255, 0.92);
+          color: #fff;
+        }
+
+        .card-count {
+          min-width: 34px;
+          padding: 6px 10px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.92);
+          color: #000;
+          font-weight: 800;
+          text-align: center;
+          display: none; /* Hidden - keep for PDF generation */
+          margin-left: 6px;
+        }
+
+        /* pointer for shido */
+        .shido-pointer {
+          display: inline-block;
+          width: 0;
+          height: 0;
+          border-left: 8px solid transparent;
+          border-right: 8px solid transparent;
+          border-bottom: 12px solid var(--yellow);
+          animation: shidoPointerAnim 900ms ease-out;
+        }
+
+        @keyframes shidoPointerAnim {
+          0% {
+            transform: translateY(-8px) scale(.6);
+            opacity: 0;
+          }
+
+          20% {
+            transform: translateY(0px) scale(1.05);
+            opacity: 1;
+          }
+
+          100% {
+            transform: translateY(-6px) scale(1);
+            opacity: 0;
+          }
+        }
+
+        /* overlays */
+        .overlay-tech {
+          position: fixed;
+          left: 50%;
+          transform: translateX(-50%);
+          top: 12%;
+          z-index: 9999;
+          pointer-events: none;
+          border-radius: 14px;
+          padding: 18px 28px;
+          font-weight: 900;
+          font-size: 54px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+          opacity: 0;
+          transform-origin: center center;
+        }
+
+        .overlay-tech.show {
+          opacity: 1;
+          transform: translateX(-50%) scale(1);
+          transition: all .22s ease-out;
+        }
+
+        .overlay-tech.hide {
+          opacity: 0;
+          transform: translateX(-50%) scale(.85);
+          transition: all .25s ease-in;
+        }
+
+        .overlay-ipp {
+          background: linear-gradient(180deg, #fff8da, #ffd24a);
+          color: #000;
+          text-shadow: none;
+          box-shadow: 0 30px 80px rgba(255, 203, 81, 0.18);
+        }
+
+        .overlay-waza {
+          background: linear-gradient(180deg, #e6f0ff, #9fb7ff);
+          color: #03204a;
+        }
+
+        .overlay-yuko {
+          background: linear-gradient(180deg, #e9e9eb, #cfcfd1);
+          color: #000;
+        }
+
+        .overlay-shido {
+          background: linear-gradient(180deg, #fff7d8, #ffd24a);
+          color: #000;
+        }
+
+        .overlay-hansoku {
+          background: linear-gradient(180deg, #ff9b9b, #ff3d3d);
+          color: #fff;
+        }
+
+        /* big card overlays per fighter (pop in place) */
+        .big-card {
+          position: absolute;
+          top: 40%;
+          left: 60%;
+          transform: translate(-50%, -50%) scale(.8);
+          z-index: 500;
+          pointer-events: none;
+          border-radius: 12px;
+          padding: 22px 28px;
+          font-weight: 980;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .big-card.show {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+          transition: all .18s ease-out;
+        }
+
+        .big-card.hide {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(.85);
+          transition: all .18s ease-in;
+        }
+
+        .big-card.yellow {
+          background: linear-gradient(180deg, #fff7d8, #ffd24a);
+          color: #000;
+        }
+
+        .big-card.red {
+          background: linear-gradient(180deg, #ff9b9b, #ff3d3d);
+          color: #fff;
+        }
+
+        .big-card.white {
+          background: linear-gradient(180deg, #e6f0ff, #9fb7ff);
+          color: #03204a;
+        }
+
+        /* winner highlight */
+        .winner-highlight {
+          box-shadow: 0 0 0 6px var(--gold-glow), 0 28px 80px rgba(255, 191, 59, 0.06);
+          transform: translateY(-6px);
+          transition: all .22s;
+        }
+
+        /* operator controls compact */
+        .operator-panel {
+          margin-top: 18px;
+          background: rgba(255, 255, 255, 0.02);
+          padding: 12px;
+          border-radius: 10px;
+        }
+
+        .btn-score {
+          min-width: 110px;
+          margin: 6px 6px 6px 0;
+          font-weight: 700;
+        }
+
+        .small-cardline {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          justify-content: flex-end;
+          margin-top: 8px;
+        }
+
+        /* responsive */
+        @media (max-width:900px) {
+          .score-big {
+            font-size: 46px;
+          }
+
+          .overlay-tech {
+            font-size: 34px;
+            padding: 12px 18px;
+            top: 8%;
+          }
+
+          .big-card {
+            font-size: 32px;
+            padding: 12px 16px;
+            top: 36%;
+          }
+
+          .card-pill {
+            width: 34px;
+            height: 60px;
+          }
+
+          .score-num {
+            font-size: 26px;
+          }
+        }
+
+        /* misc */
+        .log-area {
+          max-height: 260px;
+          overflow: auto;
+          background: rgba(0, 0, 0, 0.18);
+          padding: 10px;
+          border-radius: 8px;
+          color: var(--muted);
+        }
+
+        .event-row {
+          padding: 6px 6px;
+          border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+          font-size: 14px;
+        }
+
+        .tech-note {
+          font-size: 13px;
+          color: var(--muted);
+          margin-top: 6px;
+        }
