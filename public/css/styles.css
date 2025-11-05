@@ -60,15 +60,16 @@
         }
 
         .fighter-left {
-          background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
-          color: #fff;
+          background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
+          color: #000;
           border-radius: 10px;
           padding: 14px;
         }
 
+        /* Fighter B (right) – Blue panel */
         .fighter-right {
-          background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
-          color: #000;
+          background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
+          color: #fff;
           border-radius: 10px;
           padding: 14px;
         }

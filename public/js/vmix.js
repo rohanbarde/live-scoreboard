@@ -22,11 +22,16 @@ function updateStatus(message, isError = false) {
     }
 }
 
-// Initialize Firebase
-updateStatus('Initializing Firebase...');
+// Initialize Firebase if not already initialized
+updateStatus('Checking Firebase initialization...');
 try {
-    firebase.initializeApp(firebaseConfig);
-    updateStatus('Firebase initialized successfully');
+    if (!firebase.apps.length) {
+        updateStatus('Initializing Firebase...');
+        firebase.initializeApp(firebaseConfig);
+        updateStatus('Firebase initialized successfully');
+    } else {
+        updateStatus('Using existing Firebase instance');
+    }
 } catch (error) {
     updateStatus(`Firebase init error: ${error.message}`, true);
     throw error;
