@@ -142,12 +142,19 @@
   document.getElementById('statusB').textContent = match.fighterB.club;
 
   // Ensure input fields reflect the current state
-  document.getElementById('nameA').value = match.fighterA.name;
-  document.getElementById('clubA').value = match.fighterA.club;
-  document.getElementById('weightA').value = match.fighterA.weight;
-  document.getElementById('nameB').value = match.fighterB.name;
-  document.getElementById('clubB').value = match.fighterB.club;
-  document.getElementById('weightB').value = match.fighterB.weight;
+  const nameA = document.getElementById('nameA');
+  const clubA = document.getElementById('clubA');
+  const weightA = document.getElementById('weightA');
+  const nameB = document.getElementById('nameB');
+  const clubB = document.getElementById('clubB');
+  const weightB = document.getElementById('weightB');
+  
+  if (nameA) nameA.value = match.fighterA.name;
+  if (clubA) clubA.value = match.fighterA.club;
+  if (weightA) weightA.value = match.fighterA.weight || '';
+  if (nameB) nameB.value = match.fighterB.name;
+  if (clubB) clubB.value = match.fighterB.club;
+  if (weightB) weightB.value = match.fighterB.weight || '';
 
   // Update other UI elements
   renderSmallCards();
@@ -235,25 +242,7 @@ function renderSmallCards() {
 
     /* Sound (WebAudio) */
     const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
-    function playDing() {
-      if (audioCtx) {
-        try {
-          const o = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          o.type = 'sine';
-          o.frequency.setValueAtTime(880, audioCtx.currentTime);
-          g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-          o.connect(g);
-          g.connect(audioCtx.destination);
-          g.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
-          o.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.12);
-          g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.36);
-          o.stop(audioCtx.currentTime + 0.36);
-        } catch (e) {
-          console.warn('Web Audio error', e);
-        }
-      }
-    }
+
 
     /* Overlay management */
     let techTimeout = null;
@@ -268,7 +257,6 @@ function renderSmallCards() {
       el.innerHTML = text || '';
       el.className = 'big-card ' + colorClass + ' show';
       el.setAttribute('aria-hidden', 'false');
-      playDing();
       if (side === 'A') {
         if (bigCardTimeoutA) clearTimeout(bigCardTimeoutA);
         bigCardTimeoutA = setTimeout(() => {
@@ -473,7 +461,6 @@ function startGoldenScore() {
   match.remainingSec = 0; // Reset to 0 and start counting up
   pushLog('System', 'Golden Score', 'Golden Score period started');
   showTechniqueCenter('GOLDEN SCORE', 'ippon');
-  playDing();
 }
 
    function resetTimer() {
@@ -539,19 +526,28 @@ function endMatch() {
 
     /* save/load local */
     function saveMatch() {
-      const matchNumber = document.getElementById("matchNumber").value;
-      const matchTime = document.getElementById("matchTime").value;
+      // Safely get element values with null checks
+      const getSafeValue = (id, defaultValue = '') => {
+        const el = document.getElementById(id);
+        return el ? el.value : defaultValue;
+      };
+      
+      const matchNumber = getSafeValue("matchNumber");
+      const matchTime = getSafeValue("matchTime");
+      const matchDuration = Number(getSafeValue("matchDuration", 4));
+      const notes = getSafeValue("matchNotes");
+      
       const payload = {
         created: new Date().toISOString(),
-        durationMin: Number(document.getElementById("matchDuration").value),
+        durationMin: matchDuration,
         fighterA: match.fighterA,
         fighterB: match.fighterB,
         log: match.log,
-        winner: match.winnerName,
-        notes: document.getElementById("matchNotes").value,
-        location: match.location,
+        winner: match.winnerName || '',
+        notes: notes,
+        location: match.location || '',
         matchNumber: matchNumber,
-        matNumber: match.matNumber,
+        matNumber: match.matNumber || 1,
         matchTime: matchTime
       };
       localStorage.setItem("last_judo_match_v3", JSON.stringify(payload));
