@@ -100,76 +100,55 @@
 .fighter-flag {
     width: 4vw;
     height: auto;
-}
 .fighter-club {
     font-weight: bold;
     margin-left: 1vw;
 }
 
-        .fighter-name {
-            font-size: 2.5vw;
-            font-weight: bold;
-            margin: 1vw 0;
-        }
-
-        .score-indicators {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 2vw;
-            margin: 1vw 0 0.5vw;
-        }
-        
-        .score-box {
-            width: 5vw;
-            height: 5vw;
-            min-width: 40px;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid #fff;
-            border-radius: 8px;
-            background: none; /* ✅ Remove background */
-            color: #fff;
-            font-weight: 800;
-            font-size: 2vw;
-            text-shadow: 0 2px 3px rgba(0,0,0,0.4);
-        }
-        
-        .score-box.ippon {
-            background-color: #d9534f; /* Red */
-        }
-
-        .score-box.waza {
-            background-color: #f0ad4e; /* Orange */
-        }
-
-        .score-box.yuko {
-            background-color: #5bc0de; /* Light blue */
-        }
-
-        .score-box.shido {
-            background-color: #5cb85c; /* Green */
-        }
-        
-        .score-labels {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 2vw;
-            margin-top: 0.3vw;
-            font-size: 1vw;
-            font-weight: 700;
-            color: var(--yellow);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-       .score-label {
-           width: 4vw;
-           text-align: center;
+        /* Score Grid Styles */
+       .score-grid {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           gap: 4vw;                /* Increased spacing between numbers */
+           margin: 0.5vw 0 1vw;
+           white-space: nowrap;      /* Prevent wrapping */
+           width: 100%;
+           padding: 0 2vw;          /* Add some padding on sides */
        }
+
+       .score-cell {
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
+           min-width: 6vw;          /* Ensure minimum width for each score */
+       }
+
+        .fighter-left  {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .fighter-right  {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .score-num {
+            font-size: 5vw;
+            font-weight: 800;
+            line-height: 1;
+            margin: 0;
+            padding: 0;
+        }
+
+        .fighter-left .score-num {
+            color: #000;
+            text-shadow: 0 2px 3px rgba(255, 255, 255, 0.4);
+        }
+
+        .fighter-right .score-num {
+            color: #fff;
+            text-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+        }
         
         .fighter-score {
             display: none; /* Hide the single score display */
