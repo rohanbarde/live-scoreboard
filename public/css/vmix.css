@@ -35,15 +35,16 @@
             text-align: center;
         }
 
-        .fighter-left {
-            background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
-            color: white;
-        }
+       .fighter-left {
+           background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
+           color: #000;
+       }
 
-        .fighter-right {
-            background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
-            color: black;
-        }
+       /* Fighter B – Blue side (right) */
+       .fighter-right {
+           background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
+           color: #fff;
+       }
 
         .fighter-name {
             font-size: 3vw;
