@@ -58,16 +58,16 @@ connectedRef.on("value", function(snap) {
 updateStatus('Setting up Firebase listener...');
 try {
     const matchRef = database.ref('current_match');
-    
+
     matchRef.on('value', (snapshot) => {
         updateStatus('Received update from Firebase');
         const data = snapshot.val();
-        
+
         if (!data) {
             updateStatus('No data received from Firebase');
             return;
         }
-        
+
         console.log('Received update from Firebase:', data);
 
         // Update Fighter A
@@ -75,7 +75,11 @@ try {
             const fighterA = data.fighterA;
             document.getElementById('fighterAName').textContent = fighterA.name || 'Fighter A';
             document.getElementById('fighterAClub').textContent = fighterA.club || 'Team A';
-            document.getElementById('scoreA').textContent = fighterA.score || 0;
+            
+            // Update score indicators
+            if (fighterA.ippon !== undefined) document.getElementById('ipponA').textContent = fighterA.ippon || 0;
+            if (fighterA.waza !== undefined) document.getElementById('wazaA').textContent = fighterA.waza || 0;
+            if (fighterA.yuko !== undefined) document.getElementById('yukoA').textContent = fighterA.yuko || 0;
         }
 
         // Update Fighter B
@@ -83,7 +87,11 @@ try {
             const fighterB = data.fighterB;
             document.getElementById('fighterBName').textContent = fighterB.name || 'Fighter B';
             document.getElementById('fighterBClub').textContent = fighterB.club || 'Team B';
-            document.getElementById('scoreB').textContent = fighterB.score || 0;
+            
+            // Update score indicators
+            if (fighterB.ippon !== undefined) document.getElementById('ipponB').textContent = fighterB.ippon || 0;
+            if (fighterB.waza !== undefined) document.getElementById('wazaB').textContent = fighterB.waza || 0;
+            if (fighterB.yuko !== undefined) document.getElementById('yukoB').textContent = fighterB.yuko || 0;
         }
 
         // Update timer if available
@@ -108,7 +116,7 @@ try {
     }, (error) => {
         updateStatus(`Firebase read error: ${error.message}`, true);
     });
-    
+
     updateStatus('Firebase listener active and waiting for updates...');
 } catch (error) {
     updateStatus(`Error setting up Firebase listener: ${error.message}`, true);

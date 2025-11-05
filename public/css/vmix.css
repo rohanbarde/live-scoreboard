@@ -40,19 +40,12 @@
            color: #000;
        }
 
-       /* Fighter B – Blue side (right) */
        .fighter-right {
            background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
            color: #fff;
        }
 
         .fighter-name {
-            font-size: 3vw;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .fighter-club {
             font-size: 2vw;
             margin-bottom: 15px;
         }
@@ -107,22 +100,56 @@
 .fighter-flag {
     width: 4vw;
     height: auto;
-}
 .fighter-club {
-    font-size: 2vw;
     font-weight: bold;
     margin-left: 1vw;
 }
 
-        .fighter-name {
-    font-size: 3vw;
-    font-weight: bold;
-    margin-bottom: 10px;
-    margin-top: -20vw;
-}
+        /* Score Grid Styles */
+       .score-grid {
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           gap: 4vw;                /* Increased spacing between numbers */
+           margin: 0.5vw 0 1vw;
+           white-space: nowrap;      /* Prevent wrapping */
+           width: 100%;
+           padding: 0 2vw;          /* Add some padding on sides */
+       }
 
+       .score-cell {
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
+           min-width: 6vw;          /* Ensure minimum width for each score */
+       }
+
+        .fighter-left  {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .fighter-right  {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .score-num {
+            font-size: 5vw;
+            font-weight: 800;
+            line-height: 1;
+            margin: 0;
+            padding: 0;
+        }
+
+        .fighter-left .score-num {
+            color: #000;
+            text-shadow: 0 2px 3px rgba(255, 255, 255, 0.4);
+        }
+
+        .fighter-right .score-num {
+            color: #fff;
+            text-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+        }
+        
         .fighter-score {
-    font-size: 5vw;
-    font-weight: bold;
-    margin-top: -8vw;
-}
+            display: none; /* Hide the single score display */
+        }
