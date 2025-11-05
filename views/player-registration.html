@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Register players for the tournament">
+    <title>&#x1F3C6; Player Registration | Tournament</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/player-registration.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <p class="subtitle">Register for the upcoming tournament</p>
+        </div>
+
+        <form id="playerForm">
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="playerName" placeholder="Enter player name" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-weight"></i>
+                    <input type="number" id="playerWeight" placeholder="Weight (kg)" required min="20" max="200">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-users"></i>
+                    <input type="text" id="playerTeam" placeholder="Team / Location" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Register Player
+            </button>
+        </form>
+
+        <div id="successMessage" class="alert success hidden">
+            <i class="fas fa-check-circle"></i>
+            <span>Player registered successfully!</span>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2023 Tournament Scoreboard. All rights reserved.</p>
+    </div>
+</div>
+
+<script src="/public/js/player-registration.js"></script>
+</body>
+</html>
