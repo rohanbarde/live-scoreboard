@@ -19,9 +19,9 @@ console.log('🔥 firebase-updates (fixed) started');
 // Helper: safe read text/number
 function elText(id) {
   const e = document.getElementById(id);
-  if (!e) return null;
-  if ('value' in e) return e.value;
-  return e.textContent;
+  if (!e) return '';
+  if ('value' in e && typeof e.value === 'string') return e.value;
+  return (e.textContent ?? '').toString();
 }
 function elNumber(id) {
   const v = elText(id);
@@ -60,7 +60,7 @@ function buildMatchDataFromDOM() {
   fighterB.score = computeScoreFromParts(fighterB);
 
   const timerText = elText('timerDisplay') || '04:00';
-  const matchInfo = `Match ${(elText('matchNumber') || '1')}`;
+  const matchInfo = `Match ${elText('matchNumber') || '1'}`;
   const weightCategory = elText('weightCategory') || '';
 
   return {

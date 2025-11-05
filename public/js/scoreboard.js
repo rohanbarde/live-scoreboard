@@ -253,93 +253,87 @@ function renderSmallCards() {
       el.className = 'big-card ' + colorClass + ' show';
       el.setAttribute('aria-hidden', 'false');
       playDing();
-      if (side === 'A') { if (bigCardTimeoutA) clearTimeout(bigCardTimeoutA); bigCardTimeoutA = setTimeout(() => { el.className = 'big-card ' + colorClass + ' hide'; el.setAttribute('aria-hidden', 'true'); }, BIG_CARD_MS); }
-      else { if (bigCardTimeoutB) clearTimeout(bigCardTimeoutB); bigCardTimeoutB = setTimeout(() => { el.className = 'big-card ' + colorClass + ' hide'; el.setAttribute('aria-hidden', 'true'); }, BIG_CARD_MS); }
+      if (side === 'A') {
+        if (bigCardTimeoutA) clearTimeout(bigCardTimeoutA);
+        bigCardTimeoutA = setTimeout(() => {
+          el.className = 'big-card ' + colorClass + ' hide';
+          el.setAttribute('aria-hidden', 'true');
+        }, BIG_CARD_MS);
+      } else {
+        if (bigCardTimeoutB) clearTimeout(bigCardTimeoutB);
+        bigCardTimeoutB = setTimeout(() => {
+          el.className = 'big-card ' + colorClass + ' hide';
+          el.setAttribute('aria-hidden', 'true');
+        }, BIG_CARD_MS);
+      }
     }
 
     /* Shido pointer animation removed - unused in current UI */
 
     /* scoring logic */
-    function doTechnique(side, tech) {
-      // Check if timer is running
-      if (!isActionAllowed()) return;
-      // side: 'A' or 'B' ; tech: 'Ippon'|'Waza'|'Yuko'|'Shido'
-      const f = (side === 'A') ? match.fighterA : match.fighterB;
-      const opp = (side === 'A') ? match.fighterB : match.fighterA;
-      if (tech === 'Ippon') {
+function doTechnique(side, tech) {
+  if (!isActionAllowed()) return;
 
-        if (f.ippon < 1) {
-          f.ippon = 1;  // Set to exactly 1 (not increment)
-          pushLog(f.name, 'Ippon', `${f.name} awarded Ippon`);
-          match.winnerName = f.name;
-          showBigCard(side, 'yellow', 'IPPON');
-          // do NOT auto-stop the timer (manual control)
-        } else {
-          return;  // Already has ippon, ignore additional clicks
-        }
-        //f.ippon += 1;
-        //pushLog(f.name, 'Ippon', `${f.name} awarded Ippon`);
-        //match.winnerName = f.name;
+  const f = side === 'A' ? match.fighterA : match.fighterB;
+  const opp = side === 'A' ? match.fighterB : match.fighterA;
 
-<!--        showBigCard(side, 'yellow', 'IPPON');-->
-        // do NOT auto-stop the timer (manual control)
-      } else if (tech === 'Waza') {
+  const actions = {
+    Ippon: () => handleIppon(f, side),
+    Waza: () => handleWaza(f, side),
+    Yuko: () => handleYuko(f, side),
+    Shido: () => handleShido(f, opp, side)
+  };
 
-        if (f.waza < 2) {
-          f.waza += 1;
-          pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
-          showBigCard(side, 'white', 'WAZA-ARI');
-          if (f.waza >= 2) {
-            // awasete ippon
-            f.ippon = 1;  // Set to exactly 1 (not increment)
-            pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
-            match.winnerName = f.name;
-            showBigCard(side, 'yellow', 'IPPON');
-          }
-        }
-        // f.waza += 1;
-        // pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
+  const action = actions[tech];
+  if (action) action();
 
-        // showBigCard(side, 'white', 'WAZA-ARI');
-        // if (f.waza >= 2) {
-        //   // awasete ippon
-        //   f.ippon += 1;
-        //   pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
-        //   match.winnerName = f.name;
+  refreshUI();
+}
 
-        //   showBigCard(side, 'yellow', 'IPPON');
-        // }
-      } else if (tech === 'Yuko') {
-        f.yuko += 1;
-        pushLog(f.name, 'Yuko', `${f.name} awarded Yuko`);
+/* ---------- Helper functions ---------- */
 
-        showBigCard(side, 'white', 'YUKO');
-      } else if (tech === 'Shido') {
-        f.shido += 1;
-        pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido`);
+function handleIppon(f, side) {
+  if (f.ippon >= 1) return; // already has ippon
+  f.ippon = 1;
+  pushLog(f.name, 'Ippon', `${f.name} awarded Ippon`);
+  match.winnerName = f.name;
+  showBigCard(side, 'yellow', 'IPPON');
+}
 
-        showBigCard(side, 'yellow', 'SHIDO');
-        // show pointer near shido count
-<!--        showShidoPointer(side);-->
-        // hansoku check
-        if (f.shido >= HANSOKU_THRESHOLD) {
-          // hansoku-make
-          pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})`);
-          match.winnerName = opp.name;
+function handleWaza(f, side) {
+  if (f.waza >= 2) return;
+  f.waza += 1;
+  pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
+  showBigCard(side, 'white', 'WAZA-ARI');
 
-          // show red big card as well
-          showBigCard(side, 'red', 'HANSOKU');
-        }
+  if (f.waza === 2) {
+    f.ippon = 1;
+    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
+    match.winnerName = f.name;
+    showBigCard(side, 'yellow', 'IPPON');
+  }
+}
 
-        if (side === 'A') {
-          document.getElementById('statusA').textContent = 'Yellow Card';
-        } else {
-          document.getElementById('statusB').textContent = 'Yellow Card';
-        }
+function handleYuko(f, side) {
+  f.yuko += 1;
+  pushLog(f.name, 'Yuko', `${f.name} awarded Yuko`);
+  showBigCard(side, 'white', 'YUKO');
+}
 
-      }
-      refreshUI();
-    }
+function handleShido(f, opp, side) {
+  f.shido += 1;
+  pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido`);
+  showBigCard(side, 'yellow', 'SHIDO');
+
+  if (f.shido >= HANSOKU_THRESHOLD) {
+    pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})`);
+    match.winnerName = opp.name;
+    showBigCard(side, 'red', 'HANSOKU');
+  }
+
+  const statusId = side === 'A' ? 'statusA' : 'statusB';
+  document.getElementById(statusId).textContent = 'Yellow Card';
+}
 
     /* red card manual */
     function giveRedCard(side) {
@@ -360,42 +354,55 @@ function renderSmallCards() {
     }
 
     /* undo last action for a side */
-    function undoLast(side) {
-      // Check if timer is running
-      if (!isActionAllowed()) return;
-      // Check if timer is running
-      if (!isActionAllowed()) return;
-      const fighterName = (side === 'A') ? match.fighterA.name : match.fighterB.name;
-      for (let i = match.log.length - 1; i >= 0; i--) {
-        const e = match.log[i];
-        if (e.actor === fighterName) {
-          // reverse by action label
-          if (e.action === 'Ippon' || e.action === 'Waza-ari Awasete Ippon') {
-            const f = (side === 'A') ? match.fighterA : match.fighterB;
-            if (f.ippon > 0) f.ippon--;
-            if (e.action === 'Waza-ari Awasete Ippon') f.waza = Math.max(0, f.waza - 2);
-          } else if (e.action === 'Waza-ari') {
-            const f = (side === 'A') ? match.fighterA : match.fighterB;
-            f.waza = Math.max(0, f.waza - 1);
-          } else if (e.action === 'Yuko') {
-            const f = (side === 'A') ? match.fighterA : match.fighterB;
-            f.yuko = Math.max(0, f.yuko - 1);
-          } else if (e.action === 'Shido') {
-            const f = (side === 'A') ? match.fighterA : match.fighterB;
-            f.shido = Math.max(0, f.shido - 1);
-          } else if (e.action === 'Red Card (Hansoku-make)' || e.action === 'Hansoku-make') {
-            match.winnerName = null;
-          } else if (e.action === 'Ippon' && match.winnerName) {
-            match.winnerName = null;
-          }
-          match.log.splice(i, 1);
-          pushLog('System', 'Undo', `Undo last for ${fighterName}`);
-          refreshUI();
-          return;
-        }
-      }
-      alert('No recent action found for this fighter');
+function undoLast(side) {
+  if (!isActionAllowed()) return;
+
+  const fighter = side === 'A' ? match.fighterA : match.fighterB;
+  const fighterName = fighter.name;
+  const lastActionIndex = findLastActionIndex(fighterName);
+
+  if (lastActionIndex === -1) {
+    alert('No recent action found for this fighter');
+    return;
+  }
+
+  const event = match.log[lastActionIndex];
+  undoAction(event.action, fighter, side);
+  match.log.splice(lastActionIndex, 1);
+
+  pushLog('System', 'Undo', `Undo last for ${fighterName}`);
+  refreshUI();
+}
+
+/* ---------------- Helper functions ---------------- */
+
+function findLastActionIndex(fighterName) {
+  for (let i = match.log.length - 1; i >= 0; i--) {
+    if (match.log[i].actor === fighterName) {
+      return i;
     }
+  }
+  return -1;
+}
+
+function undoAction(action, fighter, side) {
+  const actionsMap = {
+    'Ippon': () => { if (fighter.ippon > 0) fighter.ippon--; match.winnerName = null; },
+    'Waza-ari Awasete Ippon': () => {
+      if (fighter.ippon > 0) fighter.ippon--;
+      fighter.waza = Math.max(0, fighter.waza - 2);
+      match.winnerName = null;
+    },
+    'Waza-ari': () => { fighter.waza = Math.max(0, fighter.waza - 1); },
+    'Yuko': () => { fighter.yuko = Math.max(0, fighter.yuko - 1); },
+    'Shido': () => { fighter.shido = Math.max(0, fighter.shido - 1); },
+    'Hansoku-make': () => { match.winnerName = null; },
+    'Red Card (Hansoku-make)': () => { match.winnerName = null; }
+  };
+
+  const handler = actionsMap[action];
+  if (handler) handler();
+}
 
     /* declare winner manually */
     function declareWinner(side) {
@@ -466,7 +473,14 @@ function startGoldenScore() {
   match.remainingSec = match.durationMin * 60;
   updateTimerDisplay();
 }
-    function endMatch() { if (!confirm('End match now?')) return; match.remainingSec = 0; updateTimerDisplay(); onTimeExpired(); }
+function endMatch() {
+  const confirmEnd = confirm('End match now?');
+  if (!confirmEnd) return;
+
+  match.remainingSec = 0;
+  updateTimerDisplay();
+  onTimeExpired();
+}
 
     /* when time finishes determine winner */
     function onTimeExpired() {
@@ -627,7 +641,7 @@ function startGoldenScore() {
     /* Save to PDF (open print) */
     function savePdf() {
   const w = window.open('', '_blank');
-  const matchNumber = document.getElementById("matchNumber").value;
+//  const matchNumber = document.getElementById("matchNumber").value;
 <!--  const matchTime = document.getElementById("matchTime").value;-->
   const weightCategory = document.getElementById("weightCategory").value;
   const matNumber = document.getElementById("matNumber").value;  // Get mat number
@@ -679,16 +693,22 @@ function startGoldenScore() {
       w.document.write('</tbody></table>');
       w.document.write('</body></html>');
       w.document.close();
-      setTimeout(() => { try { w.print(); } catch (e) { } }, 350);
+setTimeout(() => {
+  try {
+    w.print();
+  } catch (e) {
+    alert('⚠️ Printing failed. Please check your browser settings.');
+  }
+}, 350);
     }
 
     /* Stage mode toggle: hide operator-like controls for audience */
     let stageMode = false;
     function toggleStageMode() {
       stageMode = !stageMode;
-      const controls = document.querySelectorAll('.btn-score, .operator-panel, .card-surface .btn-outline-light, #stageToggle');
+//      const controls = document.querySelectorAll('.btn-score, .operator-panel, .card-surface .btn-outline-light, #stageToggle');
       // We'll hide operator area by hiding the operator actions only (we kept layout fields)
-      const operatorPanel = document.querySelector('.operator-panel');
+//      const operatorPanel = document.querySelector('.operator-panel');
       // We used individual buttons - easier: hide action button groups (they are in fighter boxes)
       const actionButtons = document.querySelectorAll('.fighter-box .btn-score, .fighter-box .btn-light, .fighter-box .btn-outline-danger, .fighter-box .btn-outline-warning');
       if (stageMode) {
@@ -697,12 +717,15 @@ function startGoldenScore() {
         document.querySelectorAll('.card-surface > .d-flex .btn, .card-surface .export-btn').forEach(x => x.style.display = 'none');
         document.getElementById('stageToggle').textContent = '🔧 Operator Mode';
         // optionally go fullscreen
-        try { document.documentElement.requestFullscreen(); } catch (e) { }
+document.documentElement.requestFullscreen()
+  .catch(e => console.warn('Fullscreen request failed:', e));
       } else {
         actionButtons.forEach(b => b.style.display = 'inline-block');
         document.querySelectorAll('.card-surface > .d-flex .btn, .card-surface .export-btn').forEach(x => x.style.display = 'inline-block');
         document.getElementById('stageToggle').textContent = '🎥 Stage Mode';
-        try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) { }
+if (document.fullscreenElement) {
+  document.exitFullscreen().catch(e => console.warn('Exit fullscreen failed:', e));
+}
       }
     }
 
