@@ -51,12 +51,7 @@
     <!-- Firebase SDK (using CDN) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
-    <!-- Debug Info -->
-    <div id="debug-info" style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 1000;">
-        <div>Status: <span id="connection-status">Connecting...</span></div>
-        <div>Last Update: <span id="last-update">Never</span></div>
-    </div>
+
 
     <!-- Application Script -->
     <script src="/public/js/vmix.js"></script>
@@ -67,15 +62,7 @@
         console.log('Auto-refreshing page...');
         window.location.reload();
     }, 30 * 60 * 1000);
-    
-    // Update debug info
-    function updateDebugInfo(status) {
-        document.getElementById('connection-status').textContent = status;
-        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
-    }
-    
-    // Make it available globally for vmix.js
-    window.updateDebugInfo = updateDebugInfo;
+
     </script>
 </body>
 </html>
