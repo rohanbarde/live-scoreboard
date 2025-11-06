@@ -283,32 +283,64 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to open match in scoreboard
     const openMatchInScoreboard = async (matchId) => {
         try {
+            console.log('Opening match:', matchId);
+            
+            // Make sure we have the latest players data
+            await tournamentDraw.loadPlayers();
             const matches = await tournamentDraw.getAllMatches();
             const match = matches.find(m => m.id === matchId);
             
             if (!match) {
+                console.error('Match not found:', matchId);
                 showNotification('Match not found', 'error');
                 return;
             }
             
-            // Get player details
+            console.log('Found match:', match);
+            
+            // Get player details with debug logging
             const playerA = tournamentDraw.players.find(p => p.id === match.playerA);
             const playerB = tournamentDraw.players.find(p => p.id === match.playerB);
             
+            console.log('Player A:', playerA);
+            console.log('Player B:', playerB);
+            
             // Create URL parameters for the scoreboard
-            const params = new URLSearchParams({
-                matchId: match.id,
-                fighterAName: playerA?.fullName || 'Player A',
-                fighterBName: playerB?.fullName || 'Player B',
-                fighterAClub: playerA?.playerInfo?.team || 'N/A',
-                fighterBClub: playerB?.playerInfo?.team || 'N/A',
-                weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : 'N/A',
-                matchNumber: `Match ${match.id.slice(0, 4)}`,
-                round: getRoundName(match.round, 5)
-            });
+            const params = new URLSearchParams();
+            
+            // Add player A info if available
+            if (playerA) {
+                params.append('fighterAName', playerA.fullName || 'Player A');
+                if (playerA.playerInfo?.team) {
+                    params.append('fighterAClub', playerA.playerInfo.team);
+                }
+            } else {
+                params.append('fighterAName', 'Player A');
+            }
+            
+            // Add player B info if available
+            if (playerB) {
+                params.append('fighterBName', playerB.fullName || 'Player B');
+                if (playerB.playerInfo?.team) {
+                    params.append('fighterBClub', playerB.playerInfo.team);
+                }
+            } else {
+                params.append('fighterBName', 'Player B');
+            }
+            
+            // Add match info
+            params.append('matchId', match.id);
+            if (playerA?.playerInfo?.weight) {
+                params.append('weightCategory', `${playerA.playerInfo.weight}kg`);
+            }
+            params.append('matchNumber', `Match ${match.id.slice(0, 4)}`);
+            params.append('round', getRoundName(match.round, 5));
+            
+            console.log('URL Params:', params.toString());
             
             // Open scoreboard in a new tab with match data
             const scoreboardUrl = `/views/index.html?${params.toString()}`;
+            console.log('Opening URL:', scoreboardUrl);
             window.open(scoreboardUrl, '_blank');
             
             // Mark match as started
@@ -321,28 +353,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Add event listeners to match cards
+    // Add event listeners to match cards using event delegation
     const addMatchCardEventListeners = () => {
-        // Add click handler for Start Match buttons
-        document.querySelectorAll('.start-match-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        // Use event delegation for Start Match buttons
+        document.addEventListener('click', (e) => {
+            // Handle Start Match button clicks
+            const startBtn = e.target.closest('.start-match-btn');
+            if (startBtn) {
+                e.preventDefault();
                 e.stopPropagation();
-                const matchId = e.currentTarget.getAttribute('data-match-id');
+                const matchId = startBtn.getAttribute('data-match-id');
                 if (matchId) {
                     openMatchInScoreboard(matchId);
                 }
-            });
-        });
-        
-        // Keep existing card click handler
-        document.querySelectorAll('.match-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.btn')) return; // Don't trigger if clicking on buttons
-                const matchId = card.getAttribute('data-match-id');
+                return;
+            }
+            
+            // Handle match card clicks (but not on buttons)
+            const matchCard = e.target.closest('.match-card');
+            if (matchCard && !e.target.closest('.btn')) {
+                const matchId = matchCard.getAttribute('data-match-id');
                 if (matchId) {
                     openMatchInScoreboard(matchId);
                 }
-            });
+            }
         });
     };
 
