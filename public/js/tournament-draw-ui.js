@@ -33,31 +33,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Generate draw button click handler
     const handleGenerateDraw = async () => {
+        // Get button reference and store original text before any async operations
+        const button = generateDrawBtn || generateFirstDrawBtn;
+        const originalText = button ? button.innerHTML : '<i class="fas fa-random"></i> Generate Draw';
+        
         try {
             const confirmGenerate = confirm('Are you sure you want to generate a new draw? This will replace any existing draw.');
             if (!confirmGenerate) return;
 
             // Show loading state
-            const button = generateDrawBtn || generateFirstDrawBtn;
-            const originalText = button.innerHTML;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            }
+
+            // Clear the current display first
+            if (bracketContainer) {
+                bracketContainer.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Generating draw...</p></div>';
+            }
 
             // Generate the draw
             await tournamentDraw.generateDraw();
             
+            // Force reload players to ensure we have the latest data
+            await tournamentDraw.loadPlayers();
+            
+            // Clear the current matches and reload
+            tournamentDraw.matches = [];
+            
             // Refresh the display
             await loadDraw();
+            
+            // Switch to bracket view to show the new draw
+            if (tabs && tabs.length > 0) {
+                tabs[0].click();
+            }
             
             // Show success message
             showNotification('Draw generated successfully!', 'success');
         } catch (error) {
             console.error('Error generating draw:', error);
             showNotification(`Error: ${error.message}`, 'error');
+            
+            // Try to reload the draw in case of partial failure
+            try {
+                await loadDraw();
+            } catch (e) {
+                console.error('Error reloading draw after failure:', e);
+            }
         } finally {
-            const button = generateDrawBtn || generateFirstDrawBtn;
-            button.disabled = false;
-            button.innerHTML = originalText || '<i class="fas fa-random"></i> Generate Draw';
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
         }
     };
 
