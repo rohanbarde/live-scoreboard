@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadPlayers() {
     showLoading(true);
     
-    const playersRef = database.ref('registrations').orderByChild('userType').equalTo('player');
+    const playersRef = database.ref('registrations');
     
     playersRef.on('value', (snapshot) => {
         players = [];
@@ -43,15 +43,19 @@ function loadPlayers() {
             const player = childSnapshot.val();
             player.id = childSnapshot.key;
             
-            if (player.userType === 'player') {
+            // Check if this is a player and has the required data
+            if (player.userType === 'player' && player.playerInfo) {
                 players.push(player);
                 
                 // Add weight to weights set if it exists
-                if (player.playerInfo?.weight) {
+                if (player.playerInfo.weight) {
                     weights.add(player.playerInfo.weight);
                 }
             }
         });
+        
+        console.log('Loaded players:', players);
+        console.log('Available weights:', Array.from(weights));
         
         // Update weight filter
         updateWeightFilter();
@@ -70,23 +74,33 @@ function loadPlayers() {
 // Update weight filter dropdown
 function updateWeightFilter() {
     const weightFilterEl = document.getElementById('drawWeightFilter');
+    if (!weightFilterEl) return;
+    
     const currentValue = weightFilterEl.value;
     
     // Clear existing options except the first one
     weightFilterEl.innerHTML = '<option value="">All Weights</option>';
     
+    // Convert weights to array and sort numerically
+    const sortedWeights = Array.from(weights)
+        .filter(weight => weight !== undefined && weight !== null && weight !== '')
+        .sort((a, b) => {
+            // Try to convert to numbers for proper numeric sorting
+            const numA = parseFloat(a);
+            const numB = parseFloat(b);
+            return numA - numB;
+        });
+    
     // Add weight options
-    Array.from(weights).sort().forEach(weight => {
-        if (weight) {
-            const option = document.createElement('option');
-            option.value = weight;
-            option.textContent = `${weight} kg`;
-            weightFilterEl.appendChild(option);
-        }
+    sortedWeights.forEach(weight => {
+        const option = document.createElement('option');
+        option.value = weight;
+        option.textContent = `${weight} kg`;
+        weightFilterEl.appendChild(option);
     });
     
     // Restore previous value if it still exists
-    if (Array.from(weights).includes(currentValue)) {
+    if (currentValue && sortedWeights.includes(currentValue)) {
         weightFilterEl.value = currentValue;
     }
 }
@@ -100,23 +114,28 @@ function setupEventListeners() {
 
 // Filter players and render draws
 function filterAndRenderDraws() {
-    const selectedGender = genderFilter.value;
-    const selectedWeight = weightFilter.value;
+    const selectedGender = genderFilter ? genderFilter.value : '';
+    const selectedWeight = weightFilter ? weightFilter.value : '';
+    
+    console.log('Filtering with - Gender:', selectedGender, 'Weight:', selectedWeight);
     
     // Filter players
     const filteredPlayers = players.filter(player => {
+        // Skip if player doesn't have playerInfo
+        if (!player.playerInfo) return false;
+        
         // Filter by gender
-        const matchesGender = !selectedGender || 
-            (player.playerInfo?.gender && 
-             player.playerInfo.gender.toLowerCase() === selectedGender.toLowerCase());
+        const playerGender = player.playerInfo.gender ? player.playerInfo.gender.toLowerCase() : '';
+        const matchesGender = !selectedGender || playerGender === selectedGender.toLowerCase();
         
         // Filter by weight
-        const matchesWeight = !selectedWeight || 
-            (player.playerInfo?.weight && 
-             player.playerInfo.weight.toString() === selectedWeight);
+        const playerWeight = player.playerInfo.weight ? player.playerInfo.weight.toString() : '';
+        const matchesWeight = !selectedWeight || playerWeight === selectedWeight;
         
         return matchesGender && matchesWeight;
     });
+    
+    console.log('Filtered players count:', filteredPlayers.length);
     
     // Render the filtered players
     renderDraws(filteredPlayers);
