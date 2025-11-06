@@ -260,8 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="match-actions">
-                    <button class="btn btn-sm">
-                        <i class="fas fa-edit"></i> Update Score
+                    <button class="btn btn-sm start-match-btn" data-match-id="${match.id}">
+                        <i class="fas fa-play"></i> Start Match
                     </button>
                 </div>
             </div>
@@ -280,14 +280,68 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Function to open match in scoreboard
+    const openMatchInScoreboard = async (matchId) => {
+        try {
+            const matches = await tournamentDraw.getAllMatches();
+            const match = matches.find(m => m.id === matchId);
+            
+            if (!match) {
+                showNotification('Match not found', 'error');
+                return;
+            }
+            
+            // Get player details
+            const playerA = tournamentDraw.players.find(p => p.id === match.playerA);
+            const playerB = tournamentDraw.players.find(p => p.id === match.playerB);
+            
+            if (!playerA || !playerB) {
+                showNotification('Player information not found', 'error');
+                return;
+            }
+            
+            // Create URL parameters for the scoreboard
+            const params = new URLSearchParams({
+                matchId: match.id,
+                fighterAName: playerA.fullName,
+                fighterBName: playerB.fullName,
+                fighterAClub: playerA.playerInfo?.team || 'N/A',
+                fighterBClub: playerB.playerInfo?.team || 'N/A',
+                weightCategory: playerA.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : 'N/A',
+                matchNumber: `Match ${match.id.slice(0, 4)}`,
+                round: getRoundName(match.round, 5)
+            });
+            
+            // Open scoreboard in a new tab with match data
+            window.open(`/views/index.html?${params.toString()}`, '_blank');
+            
+        } catch (error) {
+            console.error('Error opening match in scoreboard:', error);
+            showNotification('Failed to open match', 'error');
+        }
+    };
+
     // Add event listeners to match cards
     const addMatchCardEventListeners = () => {
-        document.querySelectorAll('.match-card .btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const matchCard = e.target.closest('.match-card');
-                const matchId = matchCard.getAttribute('data-match-id');
-                // Handle update score button click
-                updateMatchScore(matchId);
+        // Add click handler for Start Match buttons
+        document.querySelectorAll('.start-match-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const matchId = e.currentTarget.getAttribute('data-match-id');
+                if (matchId) {
+                    openMatchInScoreboard(matchId);
+                }
+            });
+        });
+        
+        // Keep existing card click handler
+        document.querySelectorAll('.match-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.btn')) return; // Don't trigger if clicking on buttons
+                const matchId = card.getAttribute('data-match-id');
+                if (matchId) {
+                    openMatchInScoreboard(matchId);
+                }
             });
         });
     };
