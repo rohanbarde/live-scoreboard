@@ -55,13 +55,13 @@ function loadPlayers() {
                 players.push(player);
                 
                 // Add team to teams set if it exists
-                if (player.team) {
-                    teams.add(player.team);
+                if (player.playerInfo?.team) {
+                    teams.add(player.playerInfo.team);
                 }
                 
                 // Add weight to weights set if it exists
-                if (player.weight) {
-                    weights.add(player.weight);
+                if (player.playerInfo?.weight) {
+                    weights.add(player.playerInfo.weight);
                 }
             }
         });
@@ -191,9 +191,9 @@ function renderPlayers() {
                         </div>
                     </div>
                 </td>
-                <td>${player.weight ? player.weight + ' kg' : 'N/A'}</td>
-                <td>${player.team || 'N/A'}</td>
-                <td>${player.gender ? player.gender.charAt(0).toUpperCase() + player.gender.slice(1) : 'N/A'}</td>
+                <td>${player.playerInfo?.weight ? player.playerInfo.weight + ' kg' : 'N/A'}</td>
+                <td>${player.playerInfo?.team || 'N/A'}</td>
+                <td>${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : 'N/A'}</td>
                 <td>${player.phone || 'N/A'}</td>
             </tr>
         `;
