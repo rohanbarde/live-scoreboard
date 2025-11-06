@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Draw | Judo Competition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/tournament-draw.css">
+
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-trophy"></i> Tournament Draw</h1>
+            <div class="actions">
+                <button id="generateDraw" class="btn btn-primary">
+                    <i class="fas fa-random"></i> Generate Draw
+                </button>
+                <button id="viewUpcoming" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Upcoming Matches
+                </button>
+                <a href="/views/player-registration.html" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i> Back to Registration
+                </a>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="bracket">Bracket View</button>
+            <button class="tab" data-tab="list">List View</button>
+        </div>
+
+        <div id="bracketView" class="tab-content active">
+            <div id="bracketContainer" class="bracket-container">
+                <!-- Bracket will be rendered here -->
+                <div class="no-draw">
+                    <i class="fas fa-chess-board"></i>
+                    <p>No draw has been generated yet.</p>
+                    <button id="generateFirstDraw" class="btn btn-primary">
+                        <i class="fas fa-random"></i> Generate Draw
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="listView" class="tab-content">
+            <div class="matches-list">
+                <h2><i class="fas fa-list-ol"></i> Upcoming Matches</h2>
+                <div id="matchesContainer">
+                    <!-- Matches will be listed here -->
+                    <div class="no-matches">
+                        <i class="fas fa-calendar-times"></i>
+                        <p>No upcoming matches found.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="players-panel">
+            <h2><i class="fas fa-users"></i> Registered Players</h2>
+            <div class="search-box">
+                <input type="text" id="playerSearch" placeholder="Search players...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div id="playersList" class="players-list">
+                <!-- Players will be listed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Firebase config and initialization -->
+    <script src="../public/js/firebase.js"></script>
+    <script src="../public/js/tournament-draw.js"></script>
+    <script src="../public/js/tournament-draw-ui.js"></script>
+</body>
+</html>
