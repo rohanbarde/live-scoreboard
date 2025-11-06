@@ -61,8 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Clear the current matches and reload
             tournamentDraw.matches = [];
             
-            // Refresh the display
-            await loadDraw();
+            // Refresh both bracket and list views
+            await Promise.all([
+                loadDraw(),
+                loadUpcomingMatches()
+            ]);
             
             // Switch to bracket view to show the new draw
             if (tabs && tabs.length > 0) {
