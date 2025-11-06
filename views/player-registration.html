@@ -47,6 +47,11 @@
             <i class="fas fa-check-circle"></i>
             <span>Player registered successfully!</span>
         </div>
+        
+        <div id="errorMessage" class="alert error hidden">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Error registering player. Please try again.</span>
+        </div>
     </div>
     
     <div class="footer">
@@ -54,6 +59,40 @@
     </div>
 </div>
 
-<script src="/public/js/player-registration.js"></script>
+    <!-- Load Firebase SDKs first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Firebase config and initialization -->
+    <script>
+      // Add a global error handler for uncaught errors
+      window.addEventListener('error', function(error) {
+        console.error('Global error:', error);
+        alert('An error occurred. Please check the console for details.');
+      });
+      
+      // Add a global promise rejection handler
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+      });
+    </script>
+    
+    <!-- Firebase initialization -->
+    <script src="/public/js/firebase.js"></script>
+    
+    <!-- Player registration logic -->
+    <script src="/public/js/player-registration.js"></script>
+    
+    <!-- Initialize app after everything is loaded -->
+    <script>
+      // Check if Firebase is properly initialized
+      document.addEventListener('DOMContentLoaded', function() {
+        if (!window.firebase || !window.firebase.apps || !window.firebase.apps.length) {
+          console.error('Firebase not properly initialized!');
+        } else {
+          console.log('Firebase is ready:', firebase.app().name);
+        }
+      });
+    </script>
 </body>
 </html>
