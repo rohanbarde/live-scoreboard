@@ -91,7 +91,6 @@ body {
 .btn-outline:hover {
     background: rgba(67, 97, 238, 0.1);
 }
-
 .actions {
     display: flex;
     gap: 10px;
@@ -99,16 +98,114 @@ body {
 
 /* Search and Filter */
 .search-container {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
     gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+    margin: 0;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.filter-options {
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    flex-wrap: wrap;
+}
+
+.form-control {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 150px;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+}
+
+/* Print Styles */
+@media print {
+    /* Hide elements not needed in print */
+    .search-container,
+    .actions,
+    .player-stats,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Ensure proper spacing and layout for print */
+    .container {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Style tables for print */
+    .player-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+        font-size: 12px;
+    }
+    
+    .player-table th,
+    .player-table td {
+        padding: 6px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    
+    .player-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+    
+    /* Page breaks */
+    tr {
+        page-break-inside: avoid;
+    }
+    
+    /* Print header */
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
 }
 
 .search-box {

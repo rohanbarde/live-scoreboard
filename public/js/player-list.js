@@ -7,10 +7,12 @@ let weights = new Set();
 
 // DOM Elements
 const playersTableBody = document.getElementById('playersTableBody');
+const searchBox = document.querySelector('.search-box');
 const searchInput = document.getElementById('searchInput');
 const weightFilter = document.getElementById('weightFilter');
 const teamFilter = document.getElementById('teamFilter');
 const genderFilter = document.getElementById('genderFilter');
+const printButton = document.getElementById('printButton');
 const totalPlayersEl = document.getElementById('totalPlayers');
 const totalTeamsEl = document.getElementById('totalTeams');
 const weightCategoriesEl = document.getElementById('weightCategories');
@@ -102,6 +104,134 @@ function setupEventListeners() {
     weightFilter.addEventListener('change', filterAndRenderPlayers);
     teamFilter.addEventListener('change', filterAndRenderPlayers);
     genderFilter.addEventListener('change', filterAndRenderPlayers);
+    
+    // Print button
+    if (printButton) {
+        printButton.addEventListener('click', handlePrint);
+    }
+}
+
+// Handle print functionality
+function handlePrint() {
+    // Create a print-friendly version of the player list
+    const printWindow = window.open('', '_blank');
+    const currentDate = new Date().toLocaleDateString();
+    
+    // Get the filtered players data
+    const playersToPrint = filteredPlayers.length > 0 ? filteredPlayers : players;
+    
+    // Group players by weight category for better organization
+    const playersByWeight = {};
+    playersToPrint.forEach(player => {
+        const weight = player.playerInfo?.weight || 'No Weight';
+        if (!playersByWeight[weight]) {
+            playersByWeight[weight] = [];
+        }
+        playersByWeight[weight].push(player);
+    });
+    
+    // Generate the HTML for the print view
+    let printHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Player List - ${currentDate}</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { text-align: center; margin-bottom: 20px; }
+            .print-header { margin-bottom: 20px; text-align: center; }
+            .print-header p { margin: 5px 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .weight-category { margin-top: 30px; font-size: 1.2em; font-weight: bold; }
+            .no-print { display: none; }
+            .print-footer { margin-top: 30px; text-align: right; font-size: 0.9em; color: #666; }
+        </style>
+    </head>
+    <body>
+        <div class="print-header">
+            <h1>Player List</h1>
+            <p>Date: ${currentDate}</p>
+            <p>Total Players: ${playersToPrint.length}</p>
+        </div>
+    `;
+    
+    // Add filter information if any filter is active
+    const activeFilters = [];
+    if (weightFilter.value) activeFilters.push(`Weight: ${weightFilter.options[weightFilter.selectedIndex].text}`);
+    if (teamFilter.value) activeFilters.push(`Team: ${teamFilter.value}`);
+    if (genderFilter.value) activeFilters.push(`Gender: ${genderFilter.options[genderFilter.selectedIndex].text}`);
+    
+    if (activeFilters.length > 0) {
+        printHTML += `
+        <div class="filters">
+            <p><strong>Filters Applied:</strong> ${activeFilters.join(', ')}</p>
+        </div>
+        `;
+    }
+    
+    // Add players grouped by weight category
+    Object.entries(playersByWeight).forEach(([weight, playersInWeight]) => {
+        printHTML += `
+        <div class="weight-category">
+            Weight: ${weight} kg (${playersInWeight.length} players)
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Team</th>
+                    <th>Weight</th>
+                    <th>Contact</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        playersInWeight.forEach((player, index) => {
+            printHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${player.fullName || 'N/A'}</td>
+                <td>${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : 'N/A'}</td>
+                <td>${player.playerInfo?.team || 'N/A'}</td>
+                <td>${player.playerInfo?.weight ? player.playerInfo.weight + ' kg' : 'N/A'}</td>
+                <td>${player.phone || player.email || 'N/A'}</td>
+            </tr>
+            `;
+        });
+        
+        printHTML += `
+            </tbody>
+        </table>
+        `;
+    });
+    
+    // Add footer
+    printHTML += `
+        <div class="print-footer">
+            <p>Generated on ${new Date().toLocaleString()}</p>
+        </div>
+    </body>
+    </html>`;
+    
+    // Write the content and trigger print
+    printWindow.document.open();
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+    
+    // Wait for content to load before printing
+    printWindow.onload = function() {
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.onafterprint = function() {
+                printWindow.close();
+            };
+        }, 500);
+    };
 }
 
 // Update filter dropdowns
