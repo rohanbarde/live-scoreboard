@@ -295,25 +295,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const playerA = tournamentDraw.players.find(p => p.id === match.playerA);
             const playerB = tournamentDraw.players.find(p => p.id === match.playerB);
             
-            if (!playerA || !playerB) {
-                showNotification('Player information not found', 'error');
-                return;
-            }
-            
             // Create URL parameters for the scoreboard
             const params = new URLSearchParams({
                 matchId: match.id,
-                fighterAName: playerA.fullName,
-                fighterBName: playerB.fullName,
-                fighterAClub: playerA.playerInfo?.team || 'N/A',
-                fighterBClub: playerB.playerInfo?.team || 'N/A',
-                weightCategory: playerA.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : 'N/A',
+                fighterAName: playerA?.fullName || 'Player A',
+                fighterBName: playerB?.fullName || 'Player B',
+                fighterAClub: playerA?.playerInfo?.team || 'N/A',
+                fighterBClub: playerB?.playerInfo?.team || 'N/A',
+                weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : 'N/A',
                 matchNumber: `Match ${match.id.slice(0, 4)}`,
                 round: getRoundName(match.round, 5)
             });
             
             // Open scoreboard in a new tab with match data
-            window.open(`/views/index.html?${params.toString()}`, '_blank');
+            const scoreboardUrl = `/views/index.html?${params.toString()}`;
+            window.open(scoreboardUrl, '_blank');
+            
+            // Mark match as started
+            match.started = true;
+            await tournamentDraw.updateMatch(match);
             
         } catch (error) {
             console.error('Error opening match in scoreboard:', error);

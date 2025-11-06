@@ -321,6 +321,48 @@
 <script src="/public/js/scoreboard.js"></script>
 <script src="/public/js/app.js"></script>
 
+<script>
+// Function to get URL parameters
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        fighterAName: params.get('fighterAName') || '',
+        fighterBName: params.get('fighterBName') || '',
+        fighterAClub: params.get('fighterAClub') || '',
+        fighterBClub: params.get('fighterBClub') || '',
+        weightCategory: params.get('weightCategory') || '',
+        matchNumber: params.get('matchNumber') || '',
+        round: params.get('round') || ''
+    };
+}
+
+// Function to auto-fill player information
+function autoFillPlayerInfo() {
+    const params = getUrlParams();
+    
+    // Only auto-fill if we have at least one player's name
+    if (params.fighterAName || params.fighterBName) {
+        // Set player names
+        if (params.fighterAName) document.getElementById('nameA').value = params.fighterAName;
+        if (params.fighterBName) document.getElementById('nameB').value = params.fighterBName;
+        
+        // Set clubs/teams
+        if (params.fighterAClub && params.fighterAClub !== 'N/A') document.getElementById('clubA').value = params.fighterAClub;
+        if (params.fighterBClub && params.fighterBClub !== 'N/A') document.getElementById('clubB').value = params.fighterBClub;
+        
+        // Set weight category and match info
+        if (params.weightCategory && params.weightCategory !== 'N/A') document.getElementById('weightCategory').value = params.weightCategory;
+        if (params.matchNumber) document.getElementById('matchNumber').value = params.matchNumber;
+        
+        // Add a log entry
+        addLogEntry(`Match loaded from tournament draw: ${params.fighterAName || 'Player A'} vs ${params.fighterBName || 'Player B'}`);
+    }
+}
+
+// Call auto-fill when the document is loaded
+document.addEventListener('DOMContentLoaded', autoFillPlayerInfo);
+</script>
+
 <!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
