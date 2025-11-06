@@ -1,6 +1,6 @@
-// firebase-updates.js (REPLACEMENT)
-// -- make sure this is loaded after your scoreboard.html script block --
-/* Firebase configuration */
+// Firebase configuration with enhanced error handling
+console.log('🚀 Initializing Firebase...');
+
 const firebaseConfig = {
   apiKey: "AIzaSyDTANQqo4uFuur5WzpeSgTBz3qUwnpx9_c",
   authDomain: "maha-judo-scorecard.firebaseapp.com",
@@ -11,10 +11,37 @@ const firebaseConfig = {
   appId: "1:802933098247:web:6a651753eb6743e01fe7a2",
   measurementId: "G-KDLM8D3ZE1"
 };
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
 
-console.log('🔥 firebase-updates (fixed) started');
+// Initialize Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  console.log('✅ Firebase initialized successfully');
+  
+  // Initialize Firebase services
+  const database = firebase.database();
+  
+  // Test database connection
+  const connectedRef = database.ref('.info/connected');
+  connectedRef.on('value', (snap) => {
+    if (snap.val() === true) {
+      console.log('✅ Connected to Firebase Realtime Database');
+    } else {
+      console.warn('⚠️ Not connected to Firebase Realtime Database');
+    }
+  });
+  
+  // Log any database errors
+  database.ref().on('value', () => {}, (error) => {
+    console.error('Firebase Database Error:', error);
+  });
+  
+  // Make database available globally
+  window.database = database;
+  
+} catch (error) {
+  console.error('❌ Firebase initialization error:', error);
+  throw error;
+}
 
 // Helper: safe read text/number
 function elText(id) {
