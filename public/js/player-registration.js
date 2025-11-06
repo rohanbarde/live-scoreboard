@@ -16,6 +16,31 @@ database.ref('.info/connected').on('value', (snapshot) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Function to update form based on user type
+  function updateFormForUserType(userType) {
+    // Show/hide fields based on user type
+    if (userType === 'player') {
+      playerFields.style.display = 'block';
+      coachRefereeFields.style.display = 'none';
+      // Make player-specific fields required
+      document.getElementById('weight').required = true;
+      document.getElementById('team').required = true;
+      document.getElementById('licenseNumber').required = false;
+    } else if (['coach', 'referee'].includes(userType)) {
+      playerFields.style.display = 'none';
+      coachRefereeFields.style.display = 'block';
+      document.getElementById('weight').required = false;
+      document.getElementById('team').required = false;
+      document.getElementById('licenseNumber').required = true;
+    } else {
+      playerFields.style.display = 'none';
+      coachRefereeFields.style.display = 'none';
+      document.getElementById('weight').required = false;
+      document.getElementById('team').required = false;
+      document.getElementById('licenseNumber').required = false;
+    }
+  }
+  
   // Toggle fields based on user type selection
   const userTypeSelect = document.getElementById('userType');
   const playerFields = document.getElementById('playerFields');
@@ -24,24 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (userTypeSelect) {
     userTypeSelect.addEventListener('change', () => {
       const userType = userTypeSelect.value;
-      
-      // Show/hide fields based on user type
-      if (userType === 'player') {
-        playerFields.style.display = 'block';
-        coachRefereeFields.style.display = 'none';
-        // Make player-specific fields required
-        document.getElementById('weight').required = true;
-        document.getElementById('team').required = true;
-        document.getElementById('licenseNumber').required = false;
-      } else if (['coach', 'referee'].includes(userType)) {
-        playerFields.style.display = 'none';
-        coachRefereeFields.style.display = 'block';
-        document.getElementById('licenseNumber').required = true;
-      } else {
-        playerFields.style.display = 'none';
-        coachRefereeFields.style.display = 'none';
-      }
+      updateFormForUserType(userType);
     });
+    
+    // Initialize form for the default selection
+    updateFormForUserType(userTypeSelect.value);
   }
   console.log('DOM fully loaded, setting up event listeners...');
   const form = document.getElementById('registrationForm');
@@ -69,8 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         userType: userType,
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        status: 'pending' // Can be 'pending', 'approved', 'rejected'
+        createdAt: firebase.database.ServerValue.TIMESTAMP
       };
 
       // Add user type specific data
@@ -102,12 +113,19 @@ document.addEventListener('DOMContentLoaded', () => {
       
       console.log('User registration saved successfully with ID:', userId);
       
-      // Reset the form
+      // Reset the form but keep the user type
+      const selectedUserType = document.getElementById('userType').value;
       form.reset();
       
+      // Restore the selected user type
+      document.getElementById('userType').value = selectedUserType;
+      
+      // Update the form based on the selected user type
+      updateFormForUserType(selectedUserType);
+      
       // Hide all dynamic fields
-      playerFields.style.display = 'none';
-      coachRefereeFields.style.display = 'none';
+      playerFields.style.display = selectedUserType === 'player' ? 'block' : 'none';
+      coachRefereeFields.style.display = (selectedUserType === 'coach' || selectedUserType === 'referee') ? 'block' : 'none';
 
       // Show success message
       const successMsg = `${userType.charAt(0).toUpperCase() + userType.slice(1)} registration submitted successfully!`;
