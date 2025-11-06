@@ -10,6 +10,7 @@ const playersTableBody = document.getElementById('playersTableBody');
 const searchInput = document.getElementById('searchInput');
 const weightFilter = document.getElementById('weightFilter');
 const teamFilter = document.getElementById('teamFilter');
+const genderFilter = document.getElementById('genderFilter');
 const totalPlayersEl = document.getElementById('totalPlayers');
 const totalTeamsEl = document.getElementById('totalTeams');
 const weightCategoriesEl = document.getElementById('weightCategories');
@@ -100,6 +101,7 @@ function setupEventListeners() {
     // Filter dropdowns
     weightFilter.addEventListener('change', filterAndRenderPlayers);
     teamFilter.addEventListener('change', filterAndRenderPlayers);
+    genderFilter.addEventListener('change', filterAndRenderPlayers);
 }
 
 // Update filter dropdowns
@@ -140,6 +142,7 @@ function filterAndRenderPlayers() {
     const searchTerm = searchInput.value.toLowerCase();
     const selectedWeight = weightFilter.value;
     const selectedTeam = teamFilter.value;
+    const selectedGender = genderFilter.value;
     
     filteredPlayers = players.filter(player => {
         // Filter by search term (name, email, or phone)
@@ -148,15 +151,19 @@ function filterAndRenderPlayers() {
             (player.email && player.email.toLowerCase().includes(searchTerm)) ||
             (player.phone && player.phone.includes(searchTerm));
         
-        // Filter by weight
+        // Filter by weight (using playerInfo.weight)
         const matchesWeight = !selectedWeight || 
-            (player.weight && player.weight.toString() === selectedWeight);
+            (player.playerInfo?.weight && player.playerInfo.weight.toString() === selectedWeight);
         
-        // Filter by team
+        // Filter by team (using playerInfo.team)
         const matchesTeam = !selectedTeam || 
-            (player.team && player.team === selectedTeam);
+            (player.playerInfo?.team && player.playerInfo.team === selectedTeam);
         
-        return matchesSearch && matchesWeight && matchesTeam;
+        // Filter by gender (using playerInfo.gender)
+        const matchesGender = !selectedGender || 
+            (player.playerInfo?.gender && player.playerInfo.gender.toLowerCase() === selectedGender.toLowerCase());
+        
+        return matchesSearch && matchesWeight && matchesTeam && matchesGender;
     });
     
     renderPlayers();
