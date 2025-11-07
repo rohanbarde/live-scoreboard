@@ -401,3 +401,87 @@ body {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+
+/* Animated draw CSS */
+#animatedBracket {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.match-slot {
+  width: 90%;
+  max-width: 720px;
+  background: linear-gradient(180deg,#fff,#f2f6fb);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 18px rgba(3,15,40,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: #111;
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform 350ms ease, opacity 350ms ease;
+}
+
+.match-slot.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.match-slot .slot-left,
+.match-slot .slot-right {
+  width: 48%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.floating-clone {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform 700ms cubic-bezier(.2,.9,.25,1), opacity 300ms ease;
+  will-change: transform;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(3,15,40,0.12);
+  padding: 8px 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* small visual for avatar inside clone */
+.floating-clone .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:700;
+}
+
+/* small fade-in indicator when shuffle starts */
+.shuffle-overlay {
+  width:100%;
+  text-align:center;
+  padding: 14px 0;
+  color: #ffbf3b;
+  font-weight:700;
+  font-size:1rem;
+  opacity:0;
+  transform:scale(0.98);
+  transition:opacity 260ms, transform 260ms;
+}
+.shuffle-overlay.visible {
+  opacity:1;
+  transform:scale(1);
+}

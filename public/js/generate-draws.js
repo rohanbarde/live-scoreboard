@@ -206,31 +206,32 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Set up generate draw button
         if (generateDrawBtn) {
-            generateDrawBtn.addEventListener('click', async () => {
-                try {
-                    const confirmGenerate = confirm('Are you sure you want to generate a new draw? This will replace any existing draw.');
-                    if (!confirmGenerate) return;
-                    
-                    generateDrawBtn.disabled = true;
-                    const originalText = generateDrawBtn.innerHTML;
-                    generateDrawBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-                    
-                    await tournamentDraw.generateDraw();
-                    alert('Tournament draw generated successfully!');
-                    
-                    // Refresh the page to show the updated draw
-                    window.location.reload();
-                } catch (error) {
-                    console.error('Error generating draw:', error);
-                    alert('Error generating draw: ' + error.message);
-                } finally {
-                    if (generateDrawBtn) {
-                        generateDrawBtn.disabled = false;
-                        generateDrawBtn.innerHTML = originalText;
-                    }
-                }
-            });
+          generateDrawBtn.addEventListener('click', async () => {
+            try {
+              const confirmGenerate = confirm('Animate draw generation and save it?');
+              if (!confirmGenerate) return;
+
+              generateDrawBtn.disabled = true;
+              const originalText = generateDrawBtn.innerHTML;
+              generateDrawBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Drawing...';
+
+              // Run animated draw
+              await animateGenerateDraw();
+
+              // optionally re-enable and restore text
+              generateDrawBtn.disabled = false;
+              generateDrawBtn.innerHTML = originalText;
+            } catch (error) {
+              console.error('Error during animated draw:', error);
+              alert('Error generating draw: ' + (error && error.message || error));
+              if (generateDrawBtn) {
+                generateDrawBtn.disabled = false;
+                generateDrawBtn.innerHTML = originalText;
+              }
+            }
+          });
         }
+
     } catch (error) {
         console.error('Error initializing application:', error);
         showError('Failed to initialize the application. Please check your internet connection.');
@@ -349,6 +350,217 @@ function filterAndRenderDraws() {
     renderDraws(filteredPlayers);
 }
 
+/* ---------------------------
+  Animated Draw / Fly-to-Bracket
+   --------------------------- */
+
+async function animateGenerateDraw() {
+  // Prepare current filtered players (same filter logic as filterAndRenderDraws)
+  const selectedGender = genderFilter ? genderFilter.value : '';
+  const selectedWeight = weightFilter ? weightFilter.value : '';
+
+  const visiblePlayers = players.filter(player => {
+    if (!player.playerInfo) return false;
+    const playerGender = player.playerInfo.gender ? player.playerInfo.gender.toLowerCase() : '';
+    const matchesGender = !selectedGender || playerGender === selectedGender.toLowerCase();
+    const playerWeight = player.playerInfo.weight ? player.playerInfo.weight.toString() : '';
+    const matchesWeight = !selectedWeight || playerWeight === selectedWeight;
+    return matchesGender && matchesWeight;
+  });
+
+  if (visiblePlayers.length < 2) {
+    alert('Need at least 2 players to create a draw.');
+    return;
+  }
+
+  // Create bracket container
+  const existing = document.getElementById('animatedBracket');
+  if (existing) existing.remove();
+
+  const bracket = document.createElement('div');
+  bracket.id = 'animatedBracket';
+
+  // add a shuffle overlay
+  const shuffle = document.createElement('div');
+  shuffle.className = 'shuffle-overlay';
+  shuffle.textContent = 'Shuffling players...';
+  drawsContent.prepend(shuffle);
+
+  // show shuffle for a moment
+  requestAnimationFrame(() => shuffle.classList.add('visible'));
+  await new Promise(r => setTimeout(r, 900));
+
+  // shuffle array
+  const shuffled = [...visiblePlayers].sort(() => Math.random() - 0.5);
+
+  // Create placeholder match slots (half of players rounded up)
+  const numMatches = Math.ceil(shuffled.length / 2);
+  const matchSlots = [];
+  for (let i = 0; i < numMatches; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'match-slot';
+    slot.dataset.slotIndex = i;
+    slot.innerHTML = `
+      <div class="slot-left"><div class="slot-name">Waiting...</div></div>
+      <div class="slot-right"><div class="slot-name">Waiting...</div></div>
+    `;
+    bracket.appendChild(slot);
+    matchSlots.push(slot);
+  }
+
+  drawsContent.appendChild(bracket);
+
+  // allow CSS insertion then reveal
+  await new Promise(r => requestAnimationFrame(r));
+  matchSlots.forEach((s, idx) => {
+    setTimeout(() => s.classList.add('visible'), idx * 80);
+  });
+
+  // small pause before animation begins
+  await new Promise(r => setTimeout(r, 350));
+
+  // For each pair, animate two clones from the player-card to the slot positions
+  for (let i = 0; i < shuffled.length; i += 2) {
+    const pA = shuffled[i];
+    const pB = shuffled[i + 1]; // may be undefined -> BYE
+
+    // Determine source DOM elements using the rendered player-cards (they are in the players-grid)
+    // We gave player cards no id earlier — match by data attribute or by text content
+    // So ensure renderDraws sets data-player-id attribute on .player-card. If not present, fallback to search by name.
+
+    const sourceA = document.querySelector(`.player-card[data-player-id="${pA.id}"]`) ||
+                    document.querySelector(`.player-card h4:contains("${pA.fullName}")`) ||
+                    document.querySelector(`.player-card`); // fallback
+    const sourceB = pB ? (document.querySelector(`.player-card[data-player-id="${pB.id}"]`) ||
+                    document.querySelector(`.player-card h4:contains("${pB.fullName}")`)) : null;
+
+    // target slot
+    const slot = matchSlots[Math.floor(i / 2)];
+
+    // compute target positions (slot left and right)
+    const slotLeftEl = slot.querySelector('.slot-left .slot-name');
+    const slotRightEl = slot.querySelector('.slot-right .slot-name');
+
+    // animate player A -> slot left
+    if (sourceA) {
+      await animatePlayerToSlot(sourceA, slotLeftEl, pA);
+    } else {
+      // directly populate if source not found
+      slotLeftEl.textContent = pA.fullName || 'N/A';
+    }
+
+    // animate player B -> slot right (or BYE)
+    if (pB) {
+      if (sourceB) {
+        await animatePlayerToSlot(sourceB, slotRightEl, pB);
+      } else {
+        slotRightEl.textContent = pB.fullName || 'N/A';
+      }
+    } else {
+      // BYE
+      slotRightEl.textContent = 'BYE';
+    }
+
+    // small delay between matches for visual rhythm
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  // remove shuffle overlay after completion
+  shuffle.classList.remove('visible');
+  setTimeout(() => shuffle.remove(), 300);
+
+  // Optional: save generated matches to Firebase using tournamentDraw.generateDraw()
+  // but to keep animation in sync, call generateDraw after animation
+  try {
+    // Convert shuffled into the format your generateDraw expects (set tournamentDraw.players before call)
+    // We'll set tournamentDraw.players to the current visiblePlayers then call generateDraw()
+    // Slight note: your TournamentDraw.generateDraw loads players from DB. If you want to persist this animated order,
+    // you can call tournamentDraw.createBracket(shuffled) and then save matchesRef.set(matches).
+    const matches = tournamentDraw.createBracket(shuffled);
+    await tournamentDraw.matchesRef.set(matches);
+    console.log('Animated matches saved to Firebase.');
+    // show a toast / alert
+    alert('Draw generated and saved!');
+    // optional reload or re-render
+    // window.location.reload();
+  } catch (err) {
+    console.error('Error saving animated draw:', err);
+  }
+}
+
+/* Animate a DOM element clone from `sourceEl` to overlay target name element `targetNameEl`.
+   pData is the player data used to fill clone visuals. */
+function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
+  return new Promise((resolve) => {
+    // If sourceEl is jQuery text search fallback (pseudo-selector) it might not work;
+    // best case: renderDraws sets data-player-id on .player-card so source query works.
+    const rectSrc = sourceEl.getBoundingClientRect();
+    const rectTarget = targetNameEl.getBoundingClientRect();
+
+    // create clone
+    const clone = document.createElement('div');
+    clone.className = 'floating-clone';
+    clone.style.left = `${rectSrc.left}px`;
+    clone.style.top = `${rectSrc.top}px`;
+    clone.style.width = `${rectSrc.width}px`;
+    clone.style.height = `${rectSrc.height}px`;
+    clone.style.opacity = '1';
+    clone.innerHTML = `
+      <div class="avatar" style="background:${getColorForString(pData.fullName || 'A')}">${getInitials(pData.fullName || '')}</div>
+      <div style="font-weight:700">${pData.fullName || 'N/A'}</div>
+    `;
+    document.body.appendChild(clone);
+
+    // force layout
+    clone.getBoundingClientRect();
+
+    // compute translation
+    const dx = rectTarget.left + rectTarget.width / 2 - (rectSrc.left + rectSrc.width / 2);
+    const dy = rectTarget.top + rectTarget.height / 2 - (rectSrc.top + rectSrc.height / 2);
+
+    clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.92)`;
+    clone.style.opacity = '0.98';
+
+    // after transition ends, remove clone and set target text
+    const cleanup = () => {
+      clone.style.opacity = '0';
+      setTimeout(() => {
+        clone.remove();
+        // set the target text (animated slot content)
+        targetNameEl.textContent = pData.fullName || 'N/A';
+        resolve();
+      }, 180);
+    };
+
+    // in case transitionend doesn't fire consistently, set timeout fallback
+    const t = setTimeout(cleanup, 820);
+
+    clone.addEventListener('transitionend', () => {
+      clearTimeout(t);
+      cleanup();
+    }, { once: true });
+  });
+}
+
+/* small utility to produce initials (reuse) */
+function getInitials(name) {
+  if (!name) return '??';
+  return name.split(' ')
+      .map(part => part[0] || '')
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+}
+
+/* quick deterministic-ish avatar color by string */
+function getColorForString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h} 75% 55%)`;
+}
+
+
 // Render the draws
 function renderDraws(players) {
     if (!players || players.length === 0) {
@@ -382,7 +594,7 @@ function renderDraws(players) {
                 <h3>${weightTitle} (${weightPlayers.length} players)</h3>
                 <div class="players-grid">
                     ${weightPlayers.map(player => `
-                        <div class="player-card">
+<div class="player-card" data-player-id="${player.id}">
                             <div class="player-avatar">
                                 ${getInitials(player.fullName || '')}
                             </div>
