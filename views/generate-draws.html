@@ -8,6 +8,127 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../public/css/player-list.css">
     <style>
+        /* Layout */
+        .draws-layout {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .players-column {
+            flex: 1;
+            min-width: 300px;
+            max-width: 50%;
+        }
+        
+        .animation-column {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .animation-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Player Cards */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .player-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .player-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .player-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .player-info h4 {
+            margin: 0;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-details {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        
+        /* Animation Area */
+        #drawsContent {
+            position: relative;
+            overflow: visible;
+        }
+        
+        .no-players,
+        .no-draw {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
+        
+        .no-players i,
+        .no-draw i {
+            font-size: 2rem;
+            opacity: 0.5;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .draws-layout {
+                flex-direction: column;
+            }
+            
+            .players-column,
+            .animation-column {
+                max-width: 100%;
+            }
+        }
+        
         .draws-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -156,11 +277,28 @@
         </div>
 
         <div class="draws-content">
-            <div id="drawsContent">
-                <!-- Draws will be populated here by JavaScript -->
-                <div class="no-players">
-                    <i class="fas fa-users" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
-                    <p>Select filters to view tournament draws</p>
+            <div class="draws-layout">
+                <!-- Left Column: Player List -->
+                <div class="players-column">
+                    <h3>Registered Players</h3>
+                    <div id="playersList" class="players-grid">
+                        <!-- Players will be populated here by JavaScript -->
+                        <div class="no-players">
+                            <i class="fas fa-users" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                            <p>Select filters to view players</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Draw Animation -->
+                <div class="animation-column">
+                    <h3>Draw Preview</h3>
+                    <div id="drawsContent" class="animation-container">
+                        <div class="no-draw">
+                            <i class="fas fa-random" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                            <p>Click "Generate Draw" to create tournament matches</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

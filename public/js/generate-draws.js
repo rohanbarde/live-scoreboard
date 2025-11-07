@@ -554,19 +554,21 @@ function getInitials(name) {
 
 /* quick deterministic-ish avatar color by string */
 function getColorForString(str) {
+  if (!str) return '#4361ee';
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   const h = Math.abs(hash) % 360;
   return `hsl(${h} 75% 55%)`;
 }
 
-
-// Render the draws
-function renderDraws(players) {
+// Render the player list in the left column
+function renderPlayerList(players) {
+    const playersList = document.getElementById('playersList');
+    
     if (!players || players.length === 0) {
-        drawsContent.innerHTML = `
+        playersList.innerHTML = `
             <div class="no-players">
-                <i class="fas fa-users-slash" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                <i class="fas fa-users-slash"></i>
                 <p>No players found matching the selected criteria</p>
             </div>
         `;
@@ -590,12 +592,12 @@ function renderDraws(players) {
         const weightTitle = weight === 'No Weight' ? 'No Weight Category' : `${weight} kg`;
         
         html += `
-            <div class="draws-section">
-                <h3>${weightTitle} (${weightPlayers.length} players)</h3>
+            <div class="weight-category">
+                <h4>${weightTitle} (${weightPlayers.length} players)</h4>
                 <div class="players-grid">
                     ${weightPlayers.map(player => `
-<div class="player-card" data-player-id="${player.id}">
-                            <div class="player-avatar">
+                        <div class="player-card" data-player-id="${player.id}">
+                            <div class="player-avatar" style="background: ${getColorForString(player.fullName || '')}">
                                 ${getInitials(player.fullName || '')}
                             </div>
                             <div class="player-info">
@@ -612,7 +614,35 @@ function renderDraws(players) {
         `;
     }
     
-    drawsContent.innerHTML = html;
+    playersList.innerHTML = html;
+}
+
+// Render the draws in the right column
+function renderDraws(players) {
+    // First render the player list in the left column
+    renderPlayerList(players);
+    
+    // Then show the draw area in the right column
+    const drawsContent = document.getElementById('drawsContent');
+    if (!drawsContent) return;
+    
+    if (!players || players.length === 0) {
+        drawsContent.innerHTML = `
+            <div class="no-draw">
+                <i class="fas fa-users-slash"></i>
+                <p>No players available to generate a draw</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show the initial state of the draw area
+    drawsContent.innerHTML = `
+        <div class="no-draw">
+            <i class="fas fa-random"></i>
+            <p>Click "Generate Draw" to create tournament matches</p>
+        </div>
+    `;
 }
 
 // Helper function to get initials from name
