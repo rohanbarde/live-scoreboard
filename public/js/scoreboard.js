@@ -327,16 +327,28 @@ function handleYuko(f, side) {
 function handleShido(f, opp, side) {
   f.shido += 1;
   pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido`);
-  showBigCard(side, 'yellow', 'SHIDO');
-
+  
+  // Determine card color based on shido count
+  let cardColor, cardText, statusText;
+  
   if (f.shido >= HANSOKU_THRESHOLD) {
+    // 3rd shido = Red card (Hansoku-make)
+    cardColor = 'red';
+    cardText = 'HANSOKU';
+    statusText = 'Red Card';
     pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})`);
     match.winnerName = opp.name;
-    showBigCard(side, 'red', 'HANSOKU');
+  } else {
+    // 1st and 2nd shido = Yellow card
+    cardColor = 'yellow';
+    cardText = 'SHIDO';
+    statusText = 'Yellow Card';
   }
+  
+  showBigCard(side, cardColor, cardText);
 
   const statusId = side === 'A' ? 'statusA' : 'statusB';
-  document.getElementById(statusId).textContent = 'Yellow Card';
+  document.getElementById(statusId).textContent = statusText;
 }
 
     /* red card manual */
