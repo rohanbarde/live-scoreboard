@@ -941,7 +941,7 @@ if (document.fullscreenElement) {
       startHoldTimer('B', 10, 'waza-ari');
     }
 
-    // Make functions available globally
+    // Make functions and match object available globally
     window.declareWinner = declareWinner;
     window.startPauseTimer = startPauseTimer;
     window.resetTimer = resetTimer;
@@ -956,3 +956,4 @@ if (document.fullscreenElement) {
     window.startHoldWhiteAfterWazaAri = startHoldWhiteAfterWazaAri;
     window.startHoldBlueAfterWazaAri = startHoldBlueAfterWazaAri;
     window.stopHoldTimer = stopHoldTimer;
+    window.match = match; // Expose match object for Firebase sync

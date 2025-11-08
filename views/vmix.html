@@ -81,6 +81,59 @@
             justify-content: center !important;
         }
 
+        /* Hold Timer Styles for vMix */
+        .hold-timer-display {
+            background: rgba(255, 215, 0, 0.15);
+            border: 0.2vw solid #ffd700;
+            border-radius: 1vw;
+            padding: 0.8vw 1.2vw;
+            text-align: center;
+            min-width: 8vw;
+            margin-left: 2vw;
+        }
+
+        .hold-timer-label {
+            font-size: 1.2vw;
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 0.2vw;
+            text-shadow: 0 0.1vw 0.3vw rgba(0, 0, 0, 0.8);
+        }
+
+        .hold-timer-time {
+            font-size: 3vw;
+            font-weight: 900;
+            color: #ffd700;
+            line-height: 1;
+            text-shadow: 0 0.2vw 0.5vw rgba(0, 0, 0, 0.8);
+        }
+
+        .hold-timer-player {
+            font-size: 1vw;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 0.2vw;
+            opacity: 0.9;
+            text-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.8);
+        }
+
+        /* Color states for hold timer */
+        .hold-timer-display.warning .hold-timer-time {
+            color: #ff6600;
+            border-color: #ff6600;
+        }
+
+        .hold-timer-display.critical .hold-timer-time {
+            color: #ff0000;
+            border-color: #ff0000;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 1; }
+            to { opacity: 0.7; }
+        }
+
         /* Responsive adjustments for smaller screens */
         @media (max-width: 900px) {
             .vmix-card-pill {
@@ -91,6 +144,24 @@
             
             .shido-cards {
                 height: 5vw !important;
+            }
+
+            .hold-timer-display {
+                min-width: 6vw;
+                padding: 0.6vw 1vw;
+                margin-left: 1.5vw;
+            }
+
+            .hold-timer-label {
+                font-size: 1vw;
+            }
+
+            .hold-timer-time {
+                font-size: 2.5vw;
+            }
+
+            .hold-timer-player {
+                font-size: 0.8vw;
             }
         }
     </style>
@@ -159,6 +230,12 @@
             <div class="weight-category" id="weightCategory">-60kg</div>
         </div>
         <div class="timer-display" id="timerDisplay">04:00</div>
+        <!-- Hold Timer Display -->
+        <div class="hold-timer-display" id="holdTimerDisplay" style="display:none;">
+            <div class="hold-timer-label">HOLD</div>
+            <div class="hold-timer-time" id="holdTimerTime">20</div>
+            <div class="hold-timer-player" id="holdTimerPlayer">White</div>
+        </div>
     </div>
 </div>
 
