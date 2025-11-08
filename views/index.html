@@ -96,11 +96,10 @@
                                 </div>
                                 <div class="score-cell">
                                     <div class="score-label">SHIDO</div>
-                                    <div id="shidoA" class="score-num">0</div>
-                                    <div class="small-cardline mt-2">
-                                        <div id="smallCardA" style="display:flex;align-items:center;justify-content:center;gap:4px;"></div>
-                                        <div class="card-count" id="cardCountA">0</div>
+                                    <div id="shidoA" class="score-num-cards">
+                                        <div id="smallCardA" style="display:flex;align-items:center;justify-content:center;gap:4px;min-height:50px;"></div>
                                     </div>
+                                    <div class="card-count" id="cardCountA" style="display:none;">0</div>
                                 </div>
                             </div>
                         </div>
@@ -216,11 +215,10 @@
                                 </div>
                                 <div class="score-cell">
                                     <div class="score-label">SHIDO</div>
-                                    <div id="shidoB" class="score-num">0</div>
-                                    <div class="small-cardline mt-2">
-                                        <div id="smallCardB" style="display:flex;align-items:center;justify-content:center;gap:4px;"></div>
-                                        <div class="card-count" id="cardCountB">0</div>
+                                    <div id="shidoB" class="score-num-cards">
+                                        <div id="smallCardB" style="display:flex;align-items:center;justify-content:center;gap:4px;min-height:50px;"></div>
                                     </div>
+                                    <div class="card-count" id="cardCountB" style="display:none;">0</div>
                                 </div>
                             </div>
                         </div>
@@ -407,6 +405,21 @@ if (document.readyState === 'loading') {
     // DOM already loaded, run immediately
     autoFillPlayerInfo();
 }
+
+// Test card rendering on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Testing card rendering...');
+    
+    // Force render cards after a short delay
+    setTimeout(() => {
+        if (typeof renderSmallCards === 'function') {
+            console.log('Calling renderSmallCards...');
+            renderSmallCards();
+        } else {
+            console.error('renderSmallCards function not found');
+        }
+    }, 500);
+});
 </script>
 
 <!-- Bootstrap Bundle with Popper -->

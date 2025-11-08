@@ -112,20 +112,14 @@
           margin-top: 6px;
         }
 
-    /* Hide shido score numbers */
-        #shidoA, #shidoB {
-          visibility: hidden;
-          position: relative;
-          height: 55px;
-          border-radius: 12px;
-          display: inline-flex;
+        .score-num-cards {
+          display: flex;
           align-items: center;
           justify-content: center;
-          margin-right: 8px;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-          font-weight: 900;
-          font-size: 18px;
+          min-height: 50px;
+          margin-top: 6px;
         }
+
 
         /* Base card pill styling */
         .card-pill {

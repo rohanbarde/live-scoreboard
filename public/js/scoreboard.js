@@ -185,7 +185,15 @@ function renderSmallCards() {
 
   // Function to render cards for a fighter
   function renderCards(container, shidoCount) {
-    if (shidoCount >= 3) {
+    if (shidoCount === 0) {
+      // Show "0" when no shidos
+      const el = document.createElement('div');
+      el.className = 'score-num';
+      el.textContent = '0';
+      el.style.fontSize = '36px';
+      el.style.fontWeight = '800';
+      container.appendChild(el);
+    } else if (shidoCount >= 3) {
       // Show red card for 3 or more shidos
       const el = document.createElement('div');
       el.className = 'card-pill red';
