@@ -19,6 +19,12 @@ function renderVmixCards(containerId, shidoCount) {
         el.textContent = '0';
         el.style.fontSize = '5vw';
         el.style.fontWeight = '800';
+        el.style.lineHeight = '1';
+        el.style.margin = '0';
+        el.style.padding = '0';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
         el.style.color = 'inherit';
         container.appendChild(el);
     } else if (shidoCount >= 3) {

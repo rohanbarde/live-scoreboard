@@ -19,6 +19,7 @@
             justify-content: center;
             min-height: 5vw;
             gap: 0.5vw;
+            height: 5vw; /* Fixed height to match score numbers */
         }
 
         .vmix-card-pill {
@@ -49,12 +50,47 @@
             text-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.7);
         }
 
+        /* Enhanced alignment for score grid */
+        .score-grid {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 4vw !important;
+            margin: 0.5vw 0 1vw !important;
+            white-space: nowrap !important;
+            width: 100% !important;
+            padding: 0 2vw !important;
+        }
+
+        .score-cell {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 6vw !important;
+            height: 5vw !important; /* Fixed height for all cells */
+        }
+
+        .score-num {
+            font-size: 5vw !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
         /* Responsive adjustments for smaller screens */
         @media (max-width: 900px) {
             .vmix-card-pill {
                 width: 3vw;
                 height: 4vw;
                 font-size: 1.5vw;
+            }
+            
+            .shido-cards {
+                height: 5vw !important;
             }
         }
     </style>
