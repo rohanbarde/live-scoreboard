@@ -24,7 +24,14 @@
       fighterA: { name: 'Fighter A', club: 'Club A', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0 },
       fighterB: { name: 'Fighter B', club: 'Club B', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0 },
       log: [],
-      winnerName: null
+      winnerName: null,
+      // Hold timer state
+      holdTimer: {
+        active: false,
+        player: null, // 'A' or 'B'
+        remainingSec: 20,
+        timerId: null
+      }
     };
 
     /* helpers */
@@ -454,6 +461,21 @@ function updateTimerDisplay() {
   if (!match.running) {
     match.running = true;
     btn.textContent = 'Pause';
+    
+    // Resume hold timer if it was active
+    if (match.holdTimer.active && !match.holdTimer.timerId) {
+      match.holdTimer.timerId = setInterval(() => {
+        match.holdTimer.remainingSec--;
+        updateHoldTimerDisplay();
+        
+        // Check if hold timer completed
+        if (match.holdTimer.remainingSec <= 0) {
+          completeHoldTimer();
+        }
+      }, 1000);
+      pushLog('System', 'Hold Timer Resumed', 'Hold timer resumed with match timer');
+    }
+    
     match.timerId = setInterval(() => {
       if (match.goldenScoreActive) {
         // In golden score, count up
@@ -473,6 +495,12 @@ function updateTimerDisplay() {
     match.running = false;
     btn.textContent = 'Start';
     clearInterval(match.timerId);
+    
+    // Also pause hold timer when main timer is paused
+    if (match.holdTimer.active) {
+      clearInterval(match.holdTimer.timerId);
+      pushLog('System', 'Hold Timer Paused', 'Hold timer paused with match timer');
+    }
   }
 }
 
@@ -490,6 +518,10 @@ function startGoldenScore() {
     document.getElementById('startBtn').textContent = 'Start';
   }
   match.goldenScoreActive = false;
+  
+  // Stop hold timer when main timer is reset
+  stopHoldTimer();
+  
   // Update durationMin from the input field
   match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
   // Then set remaining seconds based on the updated duration
@@ -538,6 +570,9 @@ function endMatch() {
       match.location = document.getElementById('matchLocation').value || '';
       match.matchNumber = Number(document.getElementById('matchNumber').value) || 1;
       match.matNumber = Number(document.getElementById('matNumber').value) || 1;
+
+      // Reset hold timer
+      stopHoldTimer();
 
       resetTimer();
       pushLog('System', 'Reset', 'Match reset');
@@ -779,6 +814,113 @@ if (document.fullscreenElement) {
       } else { document.exitFullscreen && document.exitFullscreen(); }
     }
 
+    /* Hold Timer Functions */
+    function updateHoldTimerDisplay() {
+      const display = document.getElementById('holdTimerDisplay');
+      const timeDisplay = document.getElementById('holdTimerTime');
+      const playerDisplay = document.getElementById('holdTimerPlayer');
+      
+      if (match.holdTimer.active) {
+        display.style.display = 'block';
+        timeDisplay.textContent = match.holdTimer.remainingSec;
+        const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
+        const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
+        playerDisplay.textContent = `${playerColor} (${playerName})`;
+        
+        // Change color based on time remaining
+        if (match.holdTimer.remainingSec <= 5) {
+          timeDisplay.style.color = '#ff4444'; // Red for last 5 seconds
+        } else if (match.holdTimer.remainingSec <= 10) {
+          timeDisplay.style.color = '#ffaa00'; // Orange for last 10 seconds
+        } else {
+          timeDisplay.style.color = '#ffd700'; // Gold for normal time
+        }
+      } else {
+        display.style.display = 'none';
+      }
+    }
+
+    function startHoldTimer(player) {
+      // Check if match is running
+      if (!match.running) {
+        alert('Please start the match timer before starting hold timer.');
+        return;
+      }
+
+      // Stop any existing hold timer
+      if (match.holdTimer.active) {
+        clearInterval(match.holdTimer.timerId);
+      }
+
+      // Initialize hold timer
+      match.holdTimer.active = true;
+      match.holdTimer.player = player;
+      match.holdTimer.remainingSec = 20;
+      
+      const playerName = player === 'A' ? match.fighterA.name : match.fighterB.name;
+      const playerColor = player === 'A' ? 'White' : 'Blue';
+      
+      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer started for ${playerName}`);
+      
+      // Update display immediately
+      updateHoldTimerDisplay();
+      
+      // Start countdown
+      match.holdTimer.timerId = setInterval(() => {
+        match.holdTimer.remainingSec--;
+        updateHoldTimerDisplay();
+        
+        // Check if hold timer completed
+        if (match.holdTimer.remainingSec <= 0) {
+          completeHoldTimer();
+        }
+      }, 1000);
+    }
+
+    function completeHoldTimer() {
+      const player = match.holdTimer.player;
+      const fighter = player === 'A' ? match.fighterA : match.fighterB;
+      const playerColor = player === 'A' ? 'White' : 'Blue';
+      
+      // Stop timer
+      clearInterval(match.holdTimer.timerId);
+      match.holdTimer.active = false;
+      
+      // Award Ippon
+      fighter.ippon = 1;
+      match.winnerName = fighter.name;
+      
+      pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via 20-second hold (${playerColor})`);
+      showBigCard(player, 'yellow', 'IPPON');
+      
+      // Update display
+      updateHoldTimerDisplay();
+      refreshUI();
+    }
+
+    function stopHoldTimer() {
+      if (match.holdTimer.active) {
+        clearInterval(match.holdTimer.timerId);
+        const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
+        const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
+        
+        pushLog('System', 'Hold Timer Stop', `${playerColor} hold timer stopped for ${playerName}`);
+        
+        match.holdTimer.active = false;
+        match.holdTimer.player = null;
+        match.holdTimer.remainingSec = 20;
+        updateHoldTimerDisplay();
+      }
+    }
+
+    function startHoldWhite() {
+      startHoldTimer('A');
+    }
+
+    function startHoldBlue() {
+      startHoldTimer('B');
+    }
+
     // Make functions available globally
     window.declareWinner = declareWinner;
     window.startPauseTimer = startPauseTimer;
@@ -789,3 +931,6 @@ if (document.fullscreenElement) {
     window.exportLog = exportLog;
     window.printLog = printLog;
     window.savePdf = savePdf;
+    window.startHoldWhite = startHoldWhite;
+    window.startHoldBlue = startHoldBlue;
+    window.stopHoldTimer = stopHoldTimer;

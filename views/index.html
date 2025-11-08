@@ -137,6 +137,14 @@
                 <div class="mb-2 small-muted">Timer</div>
                 <div class="card-surface" style="padding:12px;">
                     <div id="timerDisplay" class="score-big">04:00</div>
+                    
+                    <!-- Hold Timer Display -->
+                    <div id="holdTimerDisplay" style="display:none; margin-top:10px; padding:8px; background:rgba(255,255,255,0.1); border-radius:6px;">
+                        <div class="small-muted text-center">HOLD TIMER</div>
+                        <div id="holdTimerTime" class="text-center" style="font-size:24px; font-weight:800; color:#ffd700;">20</div>
+                        <div id="holdTimerPlayer" class="text-center small-muted"></div>
+                    </div>
+                    
                     <div class="mt-2">
                         <button class="btn btn-sm btn-outline-light me-1" onclick="startPauseTimer()" id="startBtn">
                             Start
@@ -147,13 +155,17 @@
                     <div class="mt-3 small-muted"></div>
 
                     <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-light me-1" id="startHoldWhite">Start Hold
+                        <button class="btn btn-sm btn-outline-light me-1" onclick="startHoldWhite()" id="startHoldWhite">Start Hold
                             (White)
                         </button>
                     </div>
                     <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-light me-1" id="startHoldBlue">Start Hold
+                        <button class="btn btn-sm btn-outline-light me-1" onclick="startHoldBlue()" id="startHoldBlue">Start Hold
                             (Blue)
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-danger me-1" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold
                         </button>
                     </div>
                     <div class="mt-2">
