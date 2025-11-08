@@ -30,7 +30,8 @@
         active: false,
         player: null, // 'A' or 'B'
         remainingSec: 20,
-        timerId: null
+        timerId: null,
+        type: 'normal' // 'normal' (20s) or 'waza-ari' (10s)
       }
     };
 
@@ -825,13 +826,17 @@ if (document.fullscreenElement) {
         timeDisplay.textContent = match.holdTimer.remainingSec;
         const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
         const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
-        playerDisplay.textContent = `${playerColor} (${playerName})`;
+        const holdType = match.holdTimer.type === 'waza-ari' ? ' (after Waza-ari)' : '';
+        playerDisplay.textContent = `${playerColor} (${playerName})${holdType}`;
         
-        // Change color based on time remaining
-        if (match.holdTimer.remainingSec <= 5) {
-          timeDisplay.style.color = '#ff4444'; // Red for last 5 seconds
-        } else if (match.holdTimer.remainingSec <= 10) {
-          timeDisplay.style.color = '#ffaa00'; // Orange for last 10 seconds
+        // Change color based on time remaining and timer type
+        const warningThreshold = match.holdTimer.type === 'waza-ari' ? 3 : 5;
+        const cautionThreshold = match.holdTimer.type === 'waza-ari' ? 5 : 10;
+        
+        if (match.holdTimer.remainingSec <= warningThreshold) {
+          timeDisplay.style.color = '#ff4444'; // Red for final seconds
+        } else if (match.holdTimer.remainingSec <= cautionThreshold) {
+          timeDisplay.style.color = '#ffaa00'; // Orange for caution
         } else {
           timeDisplay.style.color = '#ffd700'; // Gold for normal time
         }
@@ -840,7 +845,7 @@ if (document.fullscreenElement) {
       }
     }
 
-    function startHoldTimer(player) {
+    function startHoldTimer(player, duration = 20, type = 'normal') {
       // Check if match is running
       if (!match.running) {
         alert('Please start the match timer before starting hold timer.');
@@ -855,12 +860,14 @@ if (document.fullscreenElement) {
       // Initialize hold timer
       match.holdTimer.active = true;
       match.holdTimer.player = player;
-      match.holdTimer.remainingSec = 20;
+      match.holdTimer.remainingSec = duration;
+      match.holdTimer.type = type;
       
       const playerName = player === 'A' ? match.fighterA.name : match.fighterB.name;
       const playerColor = player === 'A' ? 'White' : 'Blue';
+      const holdTypeText = type === 'waza-ari' ? ' (after Waza-ari)' : '';
       
-      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer started for ${playerName}`);
+      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName} - ${duration}s`);
       
       // Update display immediately
       updateHoldTimerDisplay();
@@ -881,6 +888,9 @@ if (document.fullscreenElement) {
       const player = match.holdTimer.player;
       const fighter = player === 'A' ? match.fighterA : match.fighterB;
       const playerColor = player === 'A' ? 'White' : 'Blue';
+      const holdType = match.holdTimer.type;
+      const duration = holdType === 'waza-ari' ? '10-second' : '20-second';
+      const holdTypeText = holdType === 'waza-ari' ? ' after Waza-ari' : '';
       
       // Stop timer
       clearInterval(match.holdTimer.timerId);
@@ -890,7 +900,7 @@ if (document.fullscreenElement) {
       fighter.ippon = 1;
       match.winnerName = fighter.name;
       
-      pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via 20-second hold (${playerColor})`);
+      pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
       showBigCard(player, 'yellow', 'IPPON');
       
       // Update display
@@ -903,12 +913,14 @@ if (document.fullscreenElement) {
         clearInterval(match.holdTimer.timerId);
         const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
         const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
+        const holdTypeText = match.holdTimer.type === 'waza-ari' ? ' (after Waza-ari)' : '';
         
-        pushLog('System', 'Hold Timer Stop', `${playerColor} hold timer stopped for ${playerName}`);
+        pushLog('System', 'Hold Timer Stop', `${playerColor} hold timer${holdTypeText} stopped for ${playerName}`);
         
         match.holdTimer.active = false;
         match.holdTimer.player = null;
         match.holdTimer.remainingSec = 20;
+        match.holdTimer.type = 'normal';
         updateHoldTimerDisplay();
       }
     }
@@ -919,6 +931,14 @@ if (document.fullscreenElement) {
 
     function startHoldBlue() {
       startHoldTimer('B');
+    }
+
+    function startHoldWhiteAfterWazaAri() {
+      startHoldTimer('A', 10, 'waza-ari');
+    }
+
+    function startHoldBlueAfterWazaAri() {
+      startHoldTimer('B', 10, 'waza-ari');
     }
 
     // Make functions available globally
@@ -933,4 +953,6 @@ if (document.fullscreenElement) {
     window.savePdf = savePdf;
     window.startHoldWhite = startHoldWhite;
     window.startHoldBlue = startHoldBlue;
+    window.startHoldWhiteAfterWazaAri = startHoldWhiteAfterWazaAri;
+    window.startHoldBlueAfterWazaAri = startHoldBlueAfterWazaAri;
     window.stopHoldTimer = stopHoldTimer;
