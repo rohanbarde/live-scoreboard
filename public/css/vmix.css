@@ -153,3 +153,54 @@
         .fighter-score {
             display: none; /* Hide the single score display */
         }
+
+
+        .bottom-bar {
+            position: relative;
+            width: 100%;
+            padding: 0.8vw 2vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 20, 0.9);
+        }
+
+        .timer-display {
+            font-size: 6vw;
+            font-weight: 900;
+            color: var(--yellow);
+            text-shadow: 0 0.3vw 0.6vw rgba(0, 0, 0, 0.8);
+            line-height: 1;
+        }
+
+        .hold-timer-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 215, 0, 0.15);
+            border: 0.2vw solid #ffd700;
+            border-radius: 1vw;
+            padding: 0.8vw 1.2vw;
+            text-align: center;
+            min-width: 8vw;
+        }
+
+        .hold-timer-label {
+            font-size: 1vw;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .hold-timer-time {
+            font-size: 3vw;
+            font-weight: 900;
+            color: #ffd700;
+            line-height: 1;
+        }
+
+        .hold-timer-player {
+            font-size: 0.9vw;
+            color: #fff;
+            opacity: 0.9;
+        }

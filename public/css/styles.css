@@ -376,3 +376,8 @@
           color: var(--muted);
           margin-top: 6px;
         }
+
+        .container-fluid {
+            padding-bottom: 12vh; /* Prevent overlap with bottom bar */
+        }
+
