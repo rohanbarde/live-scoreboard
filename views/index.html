@@ -50,6 +50,9 @@
                     </div>
                 </div>
                 <div class="mt-2">
+                    <button id="vmixScorecard" class="btn btn-outline-primary btn-sm" onclick="openVmixScorecard()">Scorecard</button>
+                </div>
+                <div class="mt-2">
                     <button id="stageToggle" class="btn btn-outline-light btn-sm">🎥 Stage Mode</button>
                 </div>
             </div>
@@ -435,6 +438,26 @@ if (document.readyState === 'loading') {
 <!--    document.body.classList.add('stage-mode');-->
 <!--}-->
 <!--</script>-->
+
+<script>
+// Function to open vMix Scorecard
+function openVmixScorecard() {
+    // Get current match ID from URL parameters if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('matchId');
+    
+    // Build vMix URL with match ID if available
+    let vmixUrl = '/views/vmix.html';
+    if (matchId) {
+        vmixUrl += `?matchId=${matchId}`;
+    }
+    
+    // Open vMix scorecard in a new window/tab
+    window.open(vmixUrl, '_blank', 'noopener,noreferrer');
+    
+    console.log('Opening vMix Scorecard:', vmixUrl);
+}
+</script>
 
 </body>
 </html>
