@@ -79,13 +79,13 @@
         }
 
         .timer-display {
-            font-size: 8vw;
-            font-weight: bold;
-            display: flex;
-            margin-top: -8vw;
-  justify-content: center;
-  color: var(--yellow);
-
+            font-size: 6vw;
+            font-weight: 900;
+            color: var(--yellow);
+            text-shadow: 0 0.3vw 0.6vw rgba(0, 0, 0, 0.8);
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
         }
 
         /* Hide all controls in vMix mode */
@@ -100,6 +100,8 @@
 .fighter-flag {
     width: 4vw;
     height: auto;
+}
+
 .fighter-club {
     font-weight: bold;
     margin-left: 1vw;
@@ -159,19 +161,20 @@
             position: relative;
             width: 100%;
             padding: 0.8vw 2vw;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
             background: rgba(10, 10, 20, 0.9);
         }
 
-        .timer-display {
-            font-size: 6vw;
-            font-weight: 900;
-            color: var(--yellow);
-            text-shadow: 0 0.3vw 0.6vw rgba(0, 0, 0, 0.8);
-            line-height: 1;
+        .timer-container {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 1 !important;
+            gap: 2vw !important;
         }
+
 
         .hold-timer-display {
             display: flex;
