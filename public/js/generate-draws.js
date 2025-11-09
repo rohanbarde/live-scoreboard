@@ -208,8 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (generateDrawBtn) {
           generateDrawBtn.addEventListener('click', async () => {
             try {
-              const confirmGenerate = confirm('Animate draw generation and save it?');
-              if (!confirmGenerate) return;
 
               generateDrawBtn.disabled = true;
               const originalText = generateDrawBtn.innerHTML;
@@ -223,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
               generateDrawBtn.innerHTML = originalText;
             } catch (error) {
               console.error('Error during animated draw:', error);
-              alert('Error generating draw: ' + (error && error.message || error));
               if (generateDrawBtn) {
                 generateDrawBtn.disabled = false;
                 generateDrawBtn.innerHTML = originalText;
@@ -369,7 +366,6 @@ async function animateGenerateDraw() {
   });
 
   if (visiblePlayers.length < 2) {
-    alert('Need at least 2 players to create a draw.');
     return;
   }
 
@@ -479,8 +475,6 @@ async function animateGenerateDraw() {
     const matches = tournamentDraw.createBracket(shuffled);
     await tournamentDraw.matchesRef.set(matches);
     console.log('Animated matches saved to Firebase.');
-    // show a toast / alert
-    alert('Draw generated and saved!');
     // optional reload or re-render
     // window.location.reload();
   } catch (err) {
@@ -667,5 +661,4 @@ function showLoading(show) {
 function showError(message) {
     // You can implement a more user-friendly error display
     console.error('Error:', message);
-    alert(message);
 }
