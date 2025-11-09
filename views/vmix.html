@@ -159,6 +159,19 @@
             padding: 0 !important;
         }
 
+        .right-side-container {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            flex: 0 0 15vw !important;
+            padding-right: 1vw !important;
+        }
+
+        .right-side-container .hold-timer-display {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
         /* Responsive adjustments for smaller screens */
         @media (max-width: 900px) {
             .vmix-card-pill {
@@ -250,23 +263,23 @@
 
     <!-- Bottom Bar with Timer and Match Info -->
     <div class="bottom-bar d-flex justify-content-between align-items-center px-4 py-2" style="background: rgba(0,0,0,0.7);">
-        <div class="match-info text-start" style="flex: 0 0 15vw;">
+        <div class="match-info text-start" >
             <div class="match-number" id="matchInfo">Match 1</div>
             <div class="weight-category" id="weightCategory">-60kg</div>
         </div>
 
         <div class="timer-container">
             <div class="timer-display" id="timerDisplay">04:00</div>
+        </div>
 
-            <!-- Hold Timer next to main timer -->
+        <!-- Hold Timer on right side -->
+        <div class="right-side-container">
             <div class="hold-timer-display" id="holdTimerDisplay" style="display:none;">
                 <div class="hold-timer-label">HOLD</div>
                 <div class="hold-timer-time" id="holdTimerTime">20</div>
                 <div class="hold-timer-player" id="holdTimerPlayer">White</div>
             </div>
         </div>
-
-        <div style="flex: 0 0 15vw;"><!-- right-side spacer for balance --></div>
     </div>
 
 </div>
