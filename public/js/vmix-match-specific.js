@@ -31,14 +31,14 @@ function renderVmixCards(containerId, shidoCount) {
         // Show red card for 3 or more shidos
         const el = document.createElement('div');
         el.className = 'vmix-card-pill red';
-        el.textContent = 'R';
+        el.textContent = '';
         container.appendChild(el);
     } else {
         // Show yellow cards for 1-2 shidos
         for (let i = 0; i < shidoCount; i++) {
             const el = document.createElement('div');
             el.className = 'vmix-card-pill yellow';
-            el.textContent = 'Y';
+            el.textContent = '';
             container.appendChild(el);
         }
     }
