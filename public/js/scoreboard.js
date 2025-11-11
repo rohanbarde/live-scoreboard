@@ -917,22 +917,62 @@ if (document.fullscreenElement) {
      refreshUI();
    }
 
-    function stopHoldTimer() {
-      if (match.holdTimer.active) {
-        clearInterval(match.holdTimer.timerId);
-        const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
-        const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
-        const holdTypeText = match.holdTimer.type === 'waza-ari' ? ' (after Waza-ari)' : '';
-        
-        pushLog('System', 'Hold Timer Stop', `${playerColor} hold timer${holdTypeText} stopped for ${playerName}`);
-        
-        match.holdTimer.active = false;
-        match.holdTimer.player = null;
-        match.holdTimer.remainingSec = 20;
-        match.holdTimer.type = 'normal';
-        updateHoldTimerDisplay();
-      }
+function stopHoldTimer() {
+  if (!match.holdTimer.active) return;
+
+  clearInterval(match.holdTimer.timerId);
+
+  const elapsed = match.holdTimer.elapsedSec || 0;
+  const player = match.holdTimer.player;
+  const fighter = player === 'A' ? match.fighterA : match.fighterB;
+  const opp = player === 'A' ? match.fighterB : match.fighterA;
+  const playerName = fighter.name;
+  const playerColor = player === 'A' ? 'White' : 'Blue';
+
+  let awarded = 'No Score';
+
+  if (elapsed >= 20) {
+    // IPPON
+    fighter.ippon = 1;
+    match.winnerName = fighter.name;
+    showBigCard(player, 'yellow', 'IPPON');
+    awarded = 'Ippon';
+    stopMainTimer();
+  } else if (elapsed >= 10) {
+    // WAZA-ARI
+    fighter.waza += 1;
+    if (fighter.waza >= 2) {
+      fighter.ippon = 1;
+      match.winnerName = fighter.name;
+      showBigCard(player, 'yellow', 'IPPON');
+      awarded = 'Waza-ari Awasete Ippon';
+      stopMainTimer();
+    } else {
+      showBigCard(player, 'white', 'WAZA-ARI');
+      awarded = 'Waza-ari';
     }
+  } else if (elapsed >= 5) {
+    // YUKO
+    fighter.yuko += 1;
+    showBigCard(player, 'white', 'YUKO');
+    awarded = 'Yuko';
+  }
+
+  pushLog(
+    'System',
+    'Hold Timer Stop',
+    `${playerColor} (${playerName}) hold stopped at ${elapsed}s → ${awarded}`
+  );
+
+  match.holdTimer.active = false;
+  match.holdTimer.player = null;
+  match.holdTimer.elapsedSec = 0;
+  match.holdTimer.type = 'normal';
+
+  updateHoldTimerDisplay();
+  refreshUI();
+}
+
 
     function stopMainTimer() {
       if (match.running && match.timerId) {
