@@ -1,0 +1,172 @@
+// vMix Card Rendering Functions
+// This file extends the main vMix functionality to handle SHIDO penalty cards
+
+// Function to render penalty cards in vMix
+function renderVmixCards(containerId, shidoCount) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.warn(`Container ${containerId} not found`);
+        return;
+    }
+    
+    // Clear existing cards
+    container.innerHTML = '';
+    
+    if (shidoCount === 0) {
+        // Show "0" when no shidos
+        const el = document.createElement('div');
+        el.className = 'score-num';
+        el.textContent = '0';
+        el.style.fontSize = '5vw';
+        el.style.fontWeight = '800';
+        el.style.lineHeight = '1';
+        el.style.margin = '0';
+        el.style.padding = '0';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.style.color = 'inherit';
+        container.appendChild(el);
+    } else if (shidoCount >= 3) {
+        // Show red card for 3 or more shidos
+        const el = document.createElement('div');
+        el.className = 'vmix-card-pill red';
+        el.textContent = 'R';
+        container.appendChild(el);
+    } else {
+        // Show yellow cards for 1-2 shidos
+        for (let i = 0; i < shidoCount; i++) {
+            const el = document.createElement('div');
+            el.className = 'vmix-card-pill yellow';
+            el.textContent = 'Y';
+            container.appendChild(el);
+        }
+    }
+    
+    console.log(`Rendered ${shidoCount} shido cards in ${containerId}`);
+}
+
+// Function to update hold timer display in vMix
+function updateVmixHoldTimer(holdTimerData) {
+    const display = document.getElementById('holdTimerDisplay');
+    const timeDisplay = document.getElementById('holdTimerTime');
+    const playerDisplay = document.getElementById('holdTimerPlayer');
+    
+    if (!display || !timeDisplay || !playerDisplay) {
+        console.warn('Hold timer elements not found in vMix');
+        return;
+    }
+    
+    if (holdTimerData && holdTimerData.active) {
+        display.style.display = 'block';
+        timeDisplay.textContent = holdTimerData.remainingSec || 0;
+        
+        // Determine player info
+        const playerColor = holdTimerData.player === 'A' ? 'White' : 'Blue';
+        const holdType = holdTimerData.type === 'waza-ari' ? ' (Waza-ari)' : '';
+        playerDisplay.textContent = `${playerColor}${holdType}`;
+        
+        // Update label based on type
+        const labelElement = document.querySelector('.hold-timer-label');
+        if (labelElement) {
+            labelElement.textContent = holdTimerData.type === 'waza-ari' ? 'HOLD (W)' : 'HOLD';
+        }
+        
+        // Apply color states based on remaining time and type
+        const warningThreshold = holdTimerData.type === 'waza-ari' ? 3 : 5;
+        const cautionThreshold = holdTimerData.type === 'waza-ari' ? 5 : 10;
+        
+        // Remove existing state classes
+        display.classList.remove('warning', 'critical');
+        
+        if (holdTimerData.remainingSec <= warningThreshold) {
+            display.classList.add('critical');
+        } else if (holdTimerData.remainingSec <= cautionThreshold) {
+            display.classList.add('warning');
+        }
+        
+        console.log(`Hold timer updated: ${holdTimerData.remainingSec}s, ${playerColor}, ${holdTimerData.type}`);
+    } else {
+        display.style.display = 'none';
+        console.log('Hold timer hidden');
+    }
+}
+
+// Enhanced Firebase listener that includes SHIDO data
+function setupEnhancedFirebaseListener() {
+    if (typeof database === 'undefined') {
+        console.error('Firebase database not available');
+        return;
+    }
+    
+    const matchRef = database.ref('current_match');
+    
+    matchRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (!data) {
+            console.log('No enhanced data received from Firebase');
+            return;
+        }
+        
+        console.log('Enhanced Firebase update received:', data);
+        
+        // Update Fighter A SHIDO cards
+        if (data.fighterA && data.fighterA.shido !== undefined) {
+            renderVmixCards('shidoCardsA', data.fighterA.shido || 0);
+        }
+        
+        // Update Fighter B SHIDO cards
+        if (data.fighterB && data.fighterB.shido !== undefined) {
+            renderVmixCards('shidoCardsB', data.fighterB.shido || 0);
+        }
+        
+        // Update Hold Timer
+        if (data.holdTimer !== undefined) {
+            updateVmixHoldTimer(data.holdTimer);
+        }
+    }, (error) => {
+        console.error('Enhanced Firebase read error:', error.message);
+    });
+    
+    console.log('Enhanced Firebase listener active for SHIDO cards and hold timer');
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('vMix enhanced system initializing (cards + hold timer)...');
+    
+    // Initialize with zero cards
+    renderVmixCards('shidoCardsA', 0);
+    renderVmixCards('shidoCardsB', 0);
+    
+    // Initialize hold timer as hidden
+    updateVmixHoldTimer({ active: false });
+    
+    // Set up enhanced listener after a short delay to ensure main vMix script loads first
+    setTimeout(() => {
+        setupEnhancedFirebaseListener();
+    }, 1000);
+    
+    console.log('vMix enhanced system initialized (cards + hold timer)');
+});
+
+// Fallback: Also try to initialize if DOM is already loaded
+if (document.readyState === 'loading') {
+    // DOM is still loading, event listener will handle it
+} else {
+    // DOM already loaded, initialize immediately
+    console.log('DOM already loaded, initializing vMix enhanced system immediately');
+    
+    // Initialize with zero cards
+    renderVmixCards('shidoCardsA', 0);
+    renderVmixCards('shidoCardsB', 0);
+    
+    // Initialize hold timer as hidden
+    updateVmixHoldTimer({ active: false });
+    
+    // Set up enhanced listener
+    setTimeout(() => {
+        setupEnhancedFirebaseListener();
+    }, 1000);
+}

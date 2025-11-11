@@ -90,12 +90,30 @@ function buildMatchDataFromDOM() {
   const matchInfo = `Match ${elText('matchNumber') || '1'}`;
   const weightCategory = elText('weightCategory') || '';
 
+  // Get hold timer data from global match object if available
+  let holdTimer = {
+    active: false,
+    player: null,
+    remainingSec: 20,
+    type: 'normal'
+  };
+
+  if (typeof window.match !== 'undefined' && window.match.holdTimer) {
+    holdTimer = {
+      active: window.match.holdTimer.active || false,
+      player: window.match.holdTimer.player || null,
+      remainingSec: window.match.holdTimer.remainingSec || 20,
+      type: window.match.holdTimer.type || 'normal'
+    };
+  }
+
   return {
     fighterA,
     fighterB,
     timer: timerText,
     matchInfo,
     weightCategory,
+    holdTimer,
     lastUpdated: firebase.database.ServerValue.TIMESTAMP
   };
 }

@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="theme-color" content="#0b1320"/>
+    <meta name="description" content="Judo Bharat — Live Scorecard for Judo Matches"/>
+    <title>JUDO BHARAT — Live Scorecard</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/public/assets/favicon.ico" type="image/x-icon">
+    
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/public/css/styles.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+
+<body class="scoreboard-app">
+<div class="container">
+    <div class="card-surface" id="rootSurface">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div class="flex-grow-1">
+                <h1 class="mb-2">JUDO BHARAT — Scorecard <span id="connectionStatus" class="badge bg-success ms-2"></span></h1>
+                <div class="small-muted">Operational match controller · live scoring · log & export</div>
+            </div>
+
+            <div class="d-flex align-items-start gap-4 ms-4">
+                <!-- Match Duration -->
+                <div class="text-center">
+                    <div class="small-muted mb-1">Duration (min)</div>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <input id="matchDuration" type="number" class="form-control form-control-sm text-center"
+                               style="width:70px" value="4" min="1">
+                        <span class="small-muted ms-1">min</span>
+                    </div>
+                </div>
+
+                <div class="vr align-self-stretch" style="opacity: 0.3;"></div>
+
+                <!-- Match Info -->
+                <div class="text-center">
+                    <div class="small-muted mb-1">Match Information</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="text" id="weightCategory" class="form-control form-control-sm text-center"
+                               placeholder="Weight" style="width: 100px;">
+                        <input type="text" id="matchNumber" class="form-control form-control-sm text-center"
+                               placeholder="Match #" style="width: 80px;">
+                        <input type="text" id="matNumber" class="form-control form-control-sm text-center"
+                               placeholder="Mat #" style="width: 70px;">
+                    </div>
+                </div>
+
+                <div class="vr align-self-stretch" style="opacity: 0.3;"></div>
+
+                <!-- Action Buttons -->
+                <div class="text-center">
+                    <div class="small-muted mb-1">Controls</div>
+                    <div class="d-flex flex-column gap-2">
+                        <button id="vmixScorecard" class="btn btn-outline-primary btn-sm" onclick="openVmixScorecard()">
+                            📺 Scorecard
+                        </button>
+                        <button id="stageToggle" class="btn btn-outline-light btn-sm">
+                            🎥 Stage Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- top area: fighters + timer -->
+        <div class="row g-3">
+            <!-- Fighter A -->
+            <div class="col-md-5">
+                <div class="fighter-box fighter-left" id="cardA">
+                    <div class="d-flex justify-content-between align-items-start mb-3 p-2"
+                         style="background:rgba(255,255,255,0.9);border-radius:8px;color:#000;">
+                        <div style="flex:1;">
+                            <div class="small-muted" style="color:#000;">Name</div>
+                            <input id="nameA" class="form-control form-control-sm mb-2" placeholder="Fighter A name"
+                                   value="Fighter A" style="color:#000;">
+                            <div class="small-muted" style="color:#000;">Club / Team</div>
+                            <input id="clubA" class="form-control form-control-sm" placeholder="Club / Team"
+                                   value="Club A"
+                                   style="color:#000;">
+                        </div>
+                        <div class="text-end ms-2" style="min-width:130px;">
+                            <div class="small-muted mt-2" style="color:#000;">Status</div>
+                            <div id="statusA" style="color:#000;font-weight:600;font-size:0.9rem;">Ready</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="score-grid mt-1">
+                                <div class="score-cell">
+                                    <div class="score-label">IPPON</div>
+                                    <div id="ipponA" class="score-num">0</div>
+                                </div>
+                                <div class="score-cell">
+                                    <div class="score-label">WAZA-ARI</div>
+                                    <div id="wazaA" class="score-num">0</div>
+                                </div>
+                                <div class="score-cell">
+                                    <div class="score-label">YUKO</div>
+                                    <div id="yukoA" class="score-num">0</div>
+                                </div>
+                                <div class="score-cell">
+                                    <div class="score-label">SHIDO</div>
+                                    <div id="shidoA" class="score-num-cards">
+                                        <div id="smallCardA" style="display:flex;align-items:center;justify-content:center;gap:4px;min-height:50px;"></div>
+                                    </div>
+                                    <div class="card-count" id="cardCountA" style="display:none;">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end" style="min-width:170px;">
+                            <div class="small-muted">Status</div>
+                            <div id="statusA" class="small-muted">—</div>
+                            <div id="hansokuA" class="tech-note" style="color:var(--red); font-weight:900;"></div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3"/>
+
+                    <div>
+                        <div class="mb-2 small-muted">Actions</div>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-success btn-score" onclick="doTechnique('A','Ippon')">Ippon</button>
+                            <button class="btn btn-warning btn-score" onclick="doTechnique('A','Waza')">Waza-ari
+                            </button>
+                            <button class="btn btn-secondary btn-score" onclick="doTechnique('A','Yuko')">Yuko</button>
+                            <button class="btn btn-outline-warning btn-score" onclick="doTechnique('A','Shido')">Shido
+                            </button>
+                            <button class="btn btn-outline-danger btn-score" onclick="giveRedCard('A')">Red Card
+                            </button>
+                            <button class="btn btn-light btn-score" onclick="undoLast('A')">Undo</button>
+                        </div>
+                    </div>
+                    <!-- big card overlay inside fighter box (pop in place) -->
+                    <div id="bigCardA" class="big-card" aria-hidden="true"></div>
+                </div>
+            </div>
+
+            <!-- center controls -->
+            <div class="col-md-2 text-center">
+                <div class="mb-2 small-muted"></div>
+                <div class="card-surface" style="padding:5px;">
+                    <div id="timerDisplay" class="score-big">04:00</div>
+
+                    <!-- Hold Timer Display -->
+                    <div id="holdTimerDisplay" style="display:none; margin-top:10px; padding:8px; background:rgba(255,255,255,0.1); border-radius:6px;">
+                        <div class="small-muted text-center">HOLD TIMER</div>
+                        <div id="holdTimerTime" class="text-center" style="font-size:24px; font-weight:800; color:#ffd700;">20</div>
+                        <div id="holdTimerPlayer" class="text-center small-muted"></div>
+                    </div>
+
+                    <!-- Main Timer Controls -->
+                    <div class="d-grid gap-2 mb-3">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-light" onclick="startPauseTimer()" id="startBtn">Start</button>
+                            <button class="btn btn-sm btn-outline-light" onclick="resetTimer()">Reset</button>
+                            <button class="btn btn-sm btn-outline-light" onclick="endMatch()">End</button>
+                        </div>
+                    </div>
+
+                    <!-- Hold Timer Controls -->
+                    <div class="small-muted mb-2">Hold Timer Controls</div>
+                    <div class="d-grid gap-1 mb-3">
+                        <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Hold (White)</button>
+                        <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Hold (Blue)</button>
+                        <button class="btn btn-xs btn-outline-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold</button>
+                    </div>
+
+                    <!-- Advanced Hold Controls -->
+                    <div class="d-grid gap-1 mb-3">
+                        <button class="btn btn-xs btn-outline-secondary" onclick="startHoldWhiteAfterWazaAri()" id="startHoldWhiteAfterWazaAri">Hold (White) + Waza</button>
+                        <button class="btn btn-xs btn-outline-secondary" onclick="startHoldBlueAfterWazaAri()" id="startHoldBlueAfterWazaAri">Hold (Blue) + Waza</button>
+                    </div>
+
+                    <!-- Utility Controls -->
+                    <div class="d-grid gap-1">
+                        <button class="btn btn-sm btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
+                        <button class="btn btn-sm btn-outline-light" onclick="resetMatch()">Reset Match</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fighter B -->
+            <div class="col-md-5">
+                <div class="fighter-box fighter-right" id="cardB">
+                    <div class="d-flex justify-content-between align-items-start mb-3 p-2"
+                         style="background:rgba(0,0,0,0.8);border-radius:8px;color:#fff;">
+                        <div style="flex:1;">
+                            <div class="small-muted" style="color:#bbb;">Name</div>
+                            <input id="nameB" class="form-control form-control-sm mb-2" placeholder="Fighter B name"
+                                   value="Fighter B" style="background:#1a1a1a;color:#fff;border-color:#444;">
+                            <div class="small-muted" style="color:#bbb;">Club / Team</div>
+                            <input id="clubB" class="form-control form-control-sm" placeholder="Club / Team"
+                                   value="Club B"
+                                   style="background:#1a1a1a;color:#fff;border-color:#444;">
+                        </div>
+                        <div class="text-end ms-2" style="min-width:130px;">
+                            <div class="small-muted mt-2" style="color:#bbb;">Status</div>
+                            <div id="statusB" style="color:#fff;font-weight:600;font-size:0.9rem;">Ready</div>
+                        </div>
+                    </div>
+
+                    <!-- Score Grid -->
+                    <div class="score-grid mt-3">
+                        <div class="score-cell">
+                            <div class="score-label">IPPON</div>
+                            <div id="ipponB" class="score-num">0</div>
+                        </div>
+                        <div class="score-cell">
+                            <div class="score-label">WAZA-ARI</div>
+                            <div id="wazaB" class="score-num">0</div>
+                        </div>
+                        <div class="score-cell">
+                            <div class="score-label">YUKO</div>
+                            <div id="yukoB" class="score-num">0</div>
+                        </div>
+                        <div class="score-cell">
+                            <div class="score-label">SHIDO</div>
+                            <div id="shidoB" class="score-num-cards">
+                                <div id="smallCardB" style="display:flex;align-items:center;justify-content:center;gap:4px;min-height:50px;"></div>
+                            </div>
+                            <div class="card-count" id="cardCountB" style="display:none;">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Status Display -->
+                    <div class="mt-3 text-center">
+                        <div id="hansokuB" class="tech-note" style="color:var(--red); font-weight:900; min-height:20px;"></div>
+                    </div>
+
+                    <hr class="my-3"/>
+
+                    <div>
+                        <div class="mb-2 small-muted">Actions</div>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-success btn-score" onclick="doTechnique('B','Ippon')">Ippon</button>
+                            <button class="btn btn-warning btn-score" onclick="doTechnique('B','Waza')">Waza-ari
+                            </button>
+                            <button class="btn btn-secondary btn-score" onclick="doTechnique('B','Yuko')">Yuko</button>
+                            <button class="btn btn-outline-warning btn-score" onclick="doTechnique('B','Shido')">Shido
+                            </button>
+                            <button class="btn btn-outline-danger btn-score" onclick="giveRedCard('B')">Red Card
+                            </button>
+                            <button class="btn btn-light btn-score" onclick="undoLast('B')">Undo</button>
+                        </div>
+                    </div>
+                    <!-- big card overlay for B -->
+                    <div id="bigCardB" class="big-card" aria-hidden="true"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- log and exports -->
+        <div class="row mt-4 g-3">
+            <div class="col-md-6">
+                <div class="card-surface">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div><strong>Event Log</strong> <span class="small-muted"> </span></div>
+                        <div>
+                            <button class="btn btn-outline-light btn-sm export-btn" onclick="exportLog('json')">Export
+                                JSON
+                            </button>
+                            <button class="btn btn-outline-light btn-sm export-btn" onclick="exportLog('csv')">Export
+                                CSV
+                            </button>
+                            <button class="btn btn-outline-light btn-sm export-btn" onclick="savePdf()">Save to PDF
+                            </button>
+                            <button class="btn btn-outline-light btn-sm export-btn" onclick="printLog()">Print</button>
+                        </div>
+                    </div>
+                    <div id="logArea" class="log-area" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card-surface">
+                    <div class="d-flex justify-content-between mb-2 align-items-center">
+                        <div><strong>Match Summary</strong></div>
+
+                    </div>
+
+                    <div class="mb-2">
+                        <div><strong>Winner:</strong> <span id="winnerLabel" class="small-muted">—</span></div>
+                        <div class="mt-3">
+                            <label for="matchNotes" class="form-label small-muted">Notes / Official remarks</label>
+                            <textarea id="matchNotes" class="form-control" rows="4"
+                                      placeholder="Add remarks, referee notes..."></textarea>
+                        </div>
+                    </div>
+
+
+                    <div class="mt-3">
+                        <button class="btn btn-success me-2" onclick="saveMatch()">Save Match (localStorage)</button>
+                        <button class="btn btn-outline-light" onclick="loadLastMatch()">Load Last Match</button>
+                    </div>
+
+                    <hr/>
+
+                    <div class="small-muted mt-2">
+                        <strong>Quick status</strong>
+                        <ul>
+                            <li>2 Waza-ari for same fighter → Ippon</li>
+                            <li>3 Shido → Hansoku-make (opponent wins) — automatic</li>
+                            <li>Red card button → Immediate Hansoku-make</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="/public/js/utils.js"></script>
+<script src="/public/js/timer.js"></script>
+<script src="/public/js/firebase.js"></script>
+<script src="/public/js/scoreboard.js"></script>
+<script src="/public/js/app.js"></script>
+
+<script>
+// Function to get URL parameters
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    console.log('URL Parameters:', Object.fromEntries(params.entries()));
+    return {
+        fighterAName: params.get('fighterAName') || '',
+        fighterBName: params.get('fighterBName') || '',
+        fighterAClub: params.get('fighterAClub') || '',
+        fighterBClub: params.get('fighterBClub') || '',
+        weightCategory: params.get('weightCategory') || '',
+        matchNumber: params.get('matchNumber') || '',
+        round: params.get('round') || ''
+    };
+}
+
+// Function to auto-fill player information
+function autoFillPlayerInfo() {
+    try {
+        const params = getUrlParams();
+        console.log('Auto-filling player info with:', params);
+        
+        // Set player names
+        const nameAInput = document.getElementById('nameA');
+        const nameBInput = document.getElementById('nameB');
+        const clubAInput = document.getElementById('clubA');
+        const clubBInput = document.getElementById('clubB');
+        const weightCategoryInput = document.getElementById('weightCategory');
+        const matchNumberInput = document.getElementById('matchNumber');
+        
+        if (nameAInput && params.fighterAName) {
+            nameAInput.value = params.fighterAName;
+            console.log('Set Fighter A name:', params.fighterAName);
+        }
+        
+        if (nameBInput && params.fighterBName) {
+            nameBInput.value = params.fighterBName;
+            console.log('Set Fighter B name:', params.fighterBName);
+        }
+        
+        // Set clubs/teams
+        if (clubAInput && params.fighterAClub && params.fighterAClub !== 'N/A') {
+            clubAInput.value = params.fighterAClub;
+            console.log('Set Fighter A club:', params.fighterAClub);
+        }
+        
+        if (clubBInput && params.fighterBClub && params.fighterBClub !== 'N/A') {
+            clubBInput.value = params.fighterBClub;
+            console.log('Set Fighter B club:', params.fighterBClub);
+        }
+        
+        // Set weight category and match info
+        if (weightCategoryInput && params.weightCategory && params.weightCategory !== 'N/A') {
+            weightCategoryInput.value = params.weightCategory;
+            console.log('Set weight category:', params.weightCategory);
+        }
+        
+        if (matchNumberInput && params.matchNumber) {
+            matchNumberInput.value = params.matchNumber;
+            console.log('Set match number:', params.matchNumber);
+        }
+        
+        // Add a log entry
+        if (params.fighterAName || params.fighterBName) {
+            const logMessage = `Match loaded from tournament draw: ${params.fighterAName || 'Player A'} vs ${params.fighterBName || 'Player B'}`;
+            console.log(logMessage);
+            if (typeof addLogEntry === 'function') {
+                addLogEntry(logMessage);
+            } else {
+                console.warn('addLogEntry function not available');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error in autoFillPlayerInfo:', error);
+    }
+}
+
+// Call auto-fill when the document is fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoFillPlayerInfo);
+} else {
+    // DOM already loaded, run immediately
+    autoFillPlayerInfo();
+}
+
+// Test card rendering on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Testing card rendering...');
+    
+    // Force render cards after a short delay
+    setTimeout(() => {
+        if (typeof renderSmallCards === 'function') {
+            console.log('Calling renderSmallCards...');
+            renderSmallCards();
+        } else {
+            console.error('renderSmallCards function not found');
+        }
+    }, 500);
+});
+</script>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<!-- Stage Mode Toggle -->
+<!--<script>-->
+<!--function toggleStageMode() {-->
+<!--    document.body.classList.toggle('stage-mode');-->
+<!--    const btn = document.getElementById('stageModeToggle');-->
+<!--    if (document.body.classList.contains('stage-mode')) {-->
+<!--        btn.innerHTML = '<i class="bi bi-display"></i> Control Mode';-->
+<!--        btn.classList.remove('btn-outline-light');-->
+<!--        btn.classList.add('btn-primary');-->
+<!--    } else {-->
+<!--        btn.innerHTML = '<i class="bi bi-display"></i> Stage Mode';-->
+<!--        btn.classList.remove('btn-primary');-->
+<!--        btn.classList.add('btn-outline-light');-->
+<!--    }-->
+<!--}-->
+
+<!--// Add stage mode class to body if needed-->
+<!--if (window.location.search.includes('stage=true')) {-->
+<!--    document.body.classList.add('stage-mode');-->
+<!--}-->
+<!--</script>-->
+
+<script>
+// Function to open vMix Scorecard
+function openVmixScorecard() {
+    // Get current match ID from URL parameters if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('matchId');
+    
+    // Build vMix URL with match ID if available
+    let vmixUrl = '/views/vmix.html';
+    if (matchId) {
+        vmixUrl += `?matchId=${matchId}`;
+    }
+    
+    // Open vMix scorecard in a new window/tab
+    window.open(vmixUrl, '_blank', 'noopener,noreferrer');
+    
+    console.log('Opening vMix Scorecard:', vmixUrl);
+}
+</script>
+
+</body>
+</html>
