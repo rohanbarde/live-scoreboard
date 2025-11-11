@@ -318,7 +318,10 @@ function handleIppon(f, side) {
   pushLog(f.name, 'Ippon', `${f.name} awarded Ippon`);
   match.winnerName = f.name;
   showBigCard(side, 'yellow', 'IPPON');
+
+  stopMainTimer();
 }
+
 
 function handleWaza(f, side) {
   if (f.waza >= 2) return;
@@ -326,12 +329,14 @@ function handleWaza(f, side) {
   pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
   showBigCard(side, 'white', 'WAZA-ARI');
 
-  if (f.waza === 2) {
-    f.ippon = 1;
-    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
-    match.winnerName = f.name;
-    showBigCard(side, 'yellow', 'IPPON');
-  }
+ if (f.waza === 2) {
+   f.ippon = 1;
+   pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
+   match.winnerName = f.name;
+   showBigCard(side, 'yellow', 'IPPON');
+
+   stopMainTimer();
+ }
 }
 
 function handleYuko(f, side) {
@@ -889,29 +894,28 @@ if (document.fullscreenElement) {
       }, 1000);
     }
 
-    function completeHoldTimer() {
-      const player = match.holdTimer.player;
-      const fighter = player === 'A' ? match.fighterA : match.fighterB;
-      const playerColor = player === 'A' ? 'White' : 'Blue';
-      const holdType = match.holdTimer.type;
-      const duration = holdType === 'waza-ari' ? '10-second' : '20-second';
-      const holdTypeText = holdType === 'waza-ari' ? ' after Waza-ari' : '';
-      
-      // Stop timer
-      clearInterval(match.holdTimer.timerId);
-      match.holdTimer.active = false;
-      
-      // Award Ippon
-      fighter.ippon = 1;
-      match.winnerName = fighter.name;
-      
-      pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
-      showBigCard(player, 'yellow', 'IPPON');
-      
-      // Update display
-      updateHoldTimerDisplay();
-      refreshUI();
-    }
+   function completeHoldTimer() {
+     const player = match.holdTimer.player;
+     const fighter = player === 'A' ? match.fighterA : match.fighterB;
+     const playerColor = player === 'A' ? 'White' : 'Blue';
+     const holdType = match.holdTimer.type;
+     const duration = holdType === 'waza-ari' ? '10-second' : '20-second';
+     const holdTypeText = holdType === 'waza-ari' ? ' after Waza-ari' : '';
+
+     clearInterval(match.holdTimer.timerId);
+     match.holdTimer.active = false;
+
+     fighter.ippon = 1;
+     match.winnerName = fighter.name;
+
+     pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
+     showBigCard(player, 'yellow', 'IPPON');
+
+     stopMainTimer();
+
+     updateHoldTimerDisplay();
+     refreshUI();
+   }
 
     function stopHoldTimer() {
       if (match.holdTimer.active) {
@@ -929,6 +933,16 @@ if (document.fullscreenElement) {
         updateHoldTimerDisplay();
       }
     }
+
+    function stopMainTimer() {
+      if (match.running && match.timerId) {
+        clearInterval(match.timerId);
+        match.running = false;
+        document.getElementById('startBtn').textContent = 'Start';
+        pushLog('System', 'Timer Stop', 'Main timer stopped (Ippon / match end)');
+      }
+    }
+
 
     function startHoldWhite() {
       startHoldTimer('A');
