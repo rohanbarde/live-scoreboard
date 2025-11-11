@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('URL Params:', params.toString());
             
             // Open scoreboard in a new tab with match data
-            const scoreboardUrl = `/views/index.html?${params.toString()}`;
+            const scoreboardUrl = `views/scoreboard.html?${params.toString()}`;
             console.log('Opening URL:', scoreboardUrl);
             window.open(scoreboardUrl, '_blank');
             
