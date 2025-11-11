@@ -77,13 +77,18 @@ function updateVmixHoldTimer(holdTimerData) {
         const warningThreshold = holdTimerData.type === 'waza-ari' ? 7 : 15; // 7s for waza-ari (10s total), 15s for normal (20s total)
         const cautionThreshold = holdTimerData.type === 'waza-ari' ? 5 : 10;  // 5s for waza-ari, 10s for normal
         
-        // Remove existing state classes
+        // Remove existing state classes and reset styles
         display.classList.remove('warning', 'critical');
+        timeDisplay.style.color = ''; // Reset to default
         
         if (elapsedSeconds >= warningThreshold) {
             display.classList.add('critical');
+            timeDisplay.style.color = '#ff4444'; // Red for final seconds
         } else if (elapsedSeconds >= cautionThreshold) {
             display.classList.add('warning');
+            timeDisplay.style.color = '#ffaa00'; // Orange for caution
+        } else {
+            timeDisplay.style.color = '#00ff00'; // Green for normal time
         }
         
         console.log(`Hold timer updated: ${elapsedSeconds}s elapsed, ${playerColor}, ${holdTimerData.type}`);
