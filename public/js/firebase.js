@@ -94,16 +94,20 @@ function buildMatchDataFromDOM() {
   let holdTimer = {
     active: false,
     player: null,
-    remainingSec: 20,
-    type: 'normal'
+    elapsedSec: 0,
+    duration: 20, // 20 for normal, 10 for waza-ari
+    type: 'normal',
+    timerId: null
   };
 
   if (typeof window.match !== 'undefined' && window.match.holdTimer) {
     holdTimer = {
       active: window.match.holdTimer.active || false,
       player: window.match.holdTimer.player || null,
-      remainingSec: window.match.holdTimer.remainingSec || 20,
-      type: window.match.holdTimer.type || 'normal'
+      elapsedSec: window.match.holdTimer.elapsedSec || 0,
+      duration: window.match.holdTimer.duration || (window.match.holdTimer.type === 'waza-ari' ? 10 : 20),
+      type: window.match.holdTimer.type || 'normal',
+      timerId: null // Don't sync the timer ID
     };
   }
 

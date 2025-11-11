@@ -823,22 +823,23 @@ if (document.fullscreenElement) {
       
       if (match.holdTimer.active) {
         display.style.display = 'block';
-        timeDisplay.textContent = match.holdTimer.remainingSec;
+        const elapsedSeconds = match.holdTimer.elapsedSec || 0;
+        timeDisplay.textContent = elapsedSeconds;
         const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
         const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
         const holdType = match.holdTimer.type === 'waza-ari' ? ' (after Waza-ari)' : '';
         playerDisplay.textContent = `${playerColor} (${playerName})${holdType}`;
         
-        // Change color based on time remaining and timer type
-        const warningThreshold = match.holdTimer.type === 'waza-ari' ? 3 : 5;
-        const cautionThreshold = match.holdTimer.type === 'waza-ari' ? 5 : 10;
+        // Change color based on time elapsed and timer type
+        const warningThreshold = match.holdTimer.type === 'waza-ari' ? 7 : 15; // 7s for waza-ari (10s total), 15s for normal (20s total)
+        const cautionThreshold = match.holdTimer.type === 'waza-ari' ? 5 : 10;  // 5s for waza-ari, 10s for normal
         
-        if (match.holdTimer.remainingSec <= warningThreshold) {
+        if (elapsedSeconds >= warningThreshold) {
           timeDisplay.style.color = '#ff4444'; // Red for final seconds
-        } else if (match.holdTimer.remainingSec <= cautionThreshold) {
+        } else if (elapsedSeconds >= cautionThreshold) {
           timeDisplay.style.color = '#ffaa00'; // Orange for caution
         } else {
-          timeDisplay.style.color = '#ffd700'; // Gold for normal time
+          timeDisplay.style.color = '#00ff00'; // Green for normal time
         }
       } else {
         display.style.display = 'none';
@@ -858,27 +859,31 @@ if (document.fullscreenElement) {
       }
 
       // Initialize hold timer
-      match.holdTimer.active = true;
-      match.holdTimer.player = player;
-      match.holdTimer.remainingSec = duration;
-      match.holdTimer.type = type;
+      match.holdTimer = {
+        active: true,
+        player: player,
+        elapsedSec: 0,
+        duration: duration, // 20 for normal, 10 for waza-ari
+        type: type,
+        timerId: null
+      };
       
       const playerName = player === 'A' ? match.fighterA.name : match.fighterB.name;
       const playerColor = player === 'A' ? 'White' : 'Blue';
       const holdTypeText = type === 'waza-ari' ? ' (after Waza-ari)' : '';
       
-      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName} - ${duration}s`);
+      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName}`);
       
       // Update display immediately
       updateHoldTimerDisplay();
       
-      // Start countdown
+      // Start count-up timer
       match.holdTimer.timerId = setInterval(() => {
-        match.holdTimer.remainingSec--;
+        match.holdTimer.elapsedSec++;
         updateHoldTimerDisplay();
         
         // Check if hold timer completed
-        if (match.holdTimer.remainingSec <= 0) {
+        if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
           completeHoldTimer();
         }
       }, 1000);

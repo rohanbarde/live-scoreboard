@@ -59,7 +59,8 @@ function updateVmixHoldTimer(holdTimerData) {
     
     if (holdTimerData && holdTimerData.active) {
         display.style.display = 'block';
-        timeDisplay.textContent = holdTimerData.remainingSec || 0;
+        const elapsedSeconds = holdTimerData.elapsedSec || 0;
+        timeDisplay.textContent = elapsedSeconds;
         
         // Determine player info
         const playerColor = holdTimerData.player === 'A' ? 'White' : 'Blue';
@@ -72,20 +73,20 @@ function updateVmixHoldTimer(holdTimerData) {
             labelElement.textContent = holdTimerData.type === 'waza-ari' ? 'HOLD (W)' : 'HOLD';
         }
         
-        // Apply color states based on remaining time and type
-        const warningThreshold = holdTimerData.type === 'waza-ari' ? 3 : 5;
-        const cautionThreshold = holdTimerData.type === 'waza-ari' ? 5 : 10;
+        // Apply color states based on elapsed time and type
+        const warningThreshold = holdTimerData.type === 'waza-ari' ? 7 : 15; // 7s for waza-ari (10s total), 15s for normal (20s total)
+        const cautionThreshold = holdTimerData.type === 'waza-ari' ? 5 : 10;  // 5s for waza-ari, 10s for normal
         
         // Remove existing state classes
         display.classList.remove('warning', 'critical');
         
-        if (holdTimerData.remainingSec <= warningThreshold) {
+        if (elapsedSeconds >= warningThreshold) {
             display.classList.add('critical');
-        } else if (holdTimerData.remainingSec <= cautionThreshold) {
+        } else if (elapsedSeconds >= cautionThreshold) {
             display.classList.add('warning');
         }
         
-        console.log(`Hold timer updated: ${holdTimerData.remainingSec}s, ${playerColor}, ${holdTimerData.type}`);
+        console.log(`Hold timer updated: ${elapsedSeconds}s elapsed, ${playerColor}, ${holdTimerData.type}`);
     } else {
         display.style.display = 'none';
         console.log('Hold timer hidden');
