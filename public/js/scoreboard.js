@@ -324,20 +324,22 @@ function handleIppon(f, side) {
 
 
 function handleWaza(f, side) {
-  if (f.waza >= 2) return;
+  if (f.ippon >= 1) return; // already has ippon
   f.waza += 1;
   pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
   showBigCard(side, 'white', 'WAZA-ARI');
 
- if (f.waza === 2) {
-   f.ippon = 1;
-   pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
-   match.winnerName = f.name;
-   showBigCard(side, 'yellow', 'IPPON');
-
-   stopMainTimer();
- }
+  if (f.waza >= 2) {
+    // Convert 2 Waza-ari → 1 Ippon
+    f.waza = 0;
+    f.ippon = 1;
+    match.winnerName = f.name;
+    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari → Ippon`);
+    showBigCard(side, 'yellow', 'IPPON');
+    stopMainTimer();
+  }
 }
+
 
 function handleYuko(f, side) {
   f.yuko += 1;
@@ -941,16 +943,18 @@ function stopHoldTimer() {
   } else if (elapsed >= 10) {
     // WAZA-ARI
     fighter.waza += 1;
-    if (fighter.waza >= 2) {
-      fighter.ippon = 1;
-      match.winnerName = fighter.name;
-      showBigCard(player, 'yellow', 'IPPON');
-      awarded = 'Waza-ari Awasete Ippon';
-      stopMainTimer();
-    } else {
-      showBigCard(player, 'white', 'WAZA-ARI');
-      awarded = 'Waza-ari';
-    }
+   if (fighter.waza >= 2) {
+     fighter.waza = 0; // Reset Waza-ari count
+     fighter.ippon = 1;
+     match.winnerName = fighter.name;
+     showBigCard(player, 'yellow', 'IPPON');
+     awarded = 'Waza-ari Awasete Ippon';
+     stopMainTimer();
+   } else {
+     showBigCard(player, 'white', 'WAZA-ARI');
+     awarded = 'Waza-ari';
+   }
+
   } else if (elapsed >= 5) {
     // YUKO
     fighter.yuko += 1;
