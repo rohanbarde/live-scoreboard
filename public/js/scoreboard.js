@@ -145,10 +145,6 @@
   document.getElementById('yukoB').textContent = match.fighterB.yuko;
   document.getElementById('shidoB').textContent = match.fighterB.shido;
 
-  // Update status and club displays
-  document.getElementById('statusA').textContent = match.fighterA.club;
-  document.getElementById('statusB').textContent = match.fighterB.club;
-
   // Ensure input fields reflect the current state
   const nameA = document.getElementById('nameA');
   const clubA = document.getElementById('clubA');
@@ -358,20 +354,17 @@ function handleShido(f, opp, side) {
     // 3rd shido = Red card (Hansoku-make)
     cardColor = 'red';
     cardText = 'HANSOKU';
-    statusText = 'Red Card';
     pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})`);
     match.winnerName = opp.name;
   } else {
     // 1st and 2nd shido = Yellow card
     cardColor = 'yellow';
     cardText = 'SHIDO';
-    statusText = 'Yellow Card';
   }
   
   showBigCard(side, cardColor, cardText);
 
-  const statusId = side === 'A' ? 'statusA' : 'statusB';
-  document.getElementById(statusId).textContent = statusText;
+  refreshUI();
 }
 
     /* red card manual */
@@ -380,11 +373,6 @@ function handleShido(f, opp, side) {
       if (!isActionAllowed()) return;
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
-      if (side === 'A') {
-        document.getElementById('statusA').textContent = 'Red Card';
-      } else {
-        document.getElementById('statusB').textContent = 'Red Card';
-      }
       pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
       match.winnerName = opp.name;
       showTechniqueCenter('HANSOKU-MAKE', 'hansoku');
@@ -808,7 +796,6 @@ function endMatch() {
     ${renderPointsGrid(match.fighterB)}
   </div>
 `);
-      w.document.write('</div>');
       w.document.write('</div>');
       w.document.write('<h3>Summary</h3>');
       w.document.write('<ul>');
