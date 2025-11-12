@@ -325,9 +325,12 @@ function renderPlayers() {
         }
         // Edit button
         const editBtn = `<button class='btn btn-sm btn-outline-primary' onclick='editPlayer("${player.id}")'>Edit</button>`;
+        // Always show MJA/2025/XX if present, else blank
+        const regId = player.playerId && /^MJA\/2025\/.+/.test(player.playerId) ? player.playerId : '';
         return `
             <tr>
                 <td>${index + 1}</td>
+                <td>${regId}</td>
                 <td>${photoHtml}</td>
                 <td>
                     <div class="d-flex align-items-center">
