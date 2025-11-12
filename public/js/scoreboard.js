@@ -459,6 +459,9 @@ function updateTimerDisplay() {
   const timerDisplay = document.getElementById('timerDisplay');
   if (match.goldenScoreActive) {
     timerDisplay.innerHTML = formatTimeFromSec(match.remainingSec) + ' <span style="color: gold; font-size: 0.7em;">GS</span>';
+  } else if (match.remainingSec <= 0) {
+    // Show 00:00 GS when time is up but golden score not started yet
+    timerDisplay.innerHTML = '00:00 <span style="color: gold; font-size: 0.7em;">GS</span>';
   } else {
     timerDisplay.textContent = formatTimeFromSec(match.remainingSec);
   }
@@ -488,15 +491,26 @@ function updateTimerDisplay() {
       if (match.goldenScoreActive) {
         // In golden score, count up
         match.remainingSec += 1;
+        updateTimerDisplay();
       } else {
         // Normal countdown
-        match.remainingSec = Math.max(0, match.remainingSec - 1);
-      }
-      updateTimerDisplay();
-
-      // Check for end of regular time
-      if (match.remainingSec <= 0 && !match.goldenScoreActive) {
-        startGoldenScore();
+        if (match.remainingSec > 0) {
+          match.remainingSec -= 1;
+          updateTimerDisplay();
+          
+          // Check if we just hit 0:00
+          if (match.remainingSec === 0) {
+            // Timer reached 0, stop the timer and prepare for golden score
+            clearInterval(match.timerId);
+            match.running = false;
+            match.goldenScoreActive = true; // Set GS flag
+            document.getElementById('startBtn').textContent = 'Start';
+            updateTimerDisplay();
+            pushLog('System', 'Time End', 'Match time ended');
+            showTechniqueCenter('GOLDEN SCORE', 'ippon');
+            return;
+          }
+        }
       }
     }, 1000);
   } else {
@@ -513,28 +527,59 @@ function updateTimerDisplay() {
 }
 
 function startGoldenScore() {
-  match.goldenScoreActive = true;
-  match.remainingSec = 0; // Reset to 0 and start counting up
-  pushLog('System', 'Golden Score', 'Golden Score period started');
-  showTechniqueCenter('GOLDEN SCORE', 'ippon');
+  // Only allow starting golden score if we're at 00:00 and not already in golden score
+  if (match.remainingSec === 0 || match.goldenScoreActive) {
+    if (!match.running) {
+      // Starting or resuming golden score
+      match.running = true;
+      match.goldenScoreActive = true;
+      document.getElementById('startBtn').textContent = 'Pause';
+      
+      if (match.remainingSec === 0) {
+        pushLog('System', 'Golden Score', 'Golden Score period started');
+        showTechniqueCenter('GOLDEN SCORE', 'ippon');
+      } else {
+        pushLog('System', 'Golden Score', 'Golden Score resumed');
+      }
+      
+      // Start the timer for golden score
+      match.timerId = setInterval(() => {
+        match.remainingSec += 1;
+        updateTimerDisplay();
+      }, 1000);
+    } else {
+      // Pause golden score
+      match.running = false;
+      clearInterval(match.timerId);
+      document.getElementById('startBtn').textContent = 'Start';
+      pushLog('System', 'Golden Score', 'Golden Score paused');
+    }
+  }
 }
 
    function resetTimer() {
+  // Clear any running timers
   if (match.running) {
     clearInterval(match.timerId);
-    match.running = false;
-    document.getElementById('startBtn').textContent = 'Start';
   }
+  
+  // Reset match state
+  match.running = false;
   match.goldenScoreActive = false;
+  
+  // Update duration from input field
+  match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
+  match.remainingSec = match.durationMin * 60;
+  
+  // Update UI
+  document.getElementById('startBtn').textContent = 'Start';
+  updateTimerDisplay();
   
   // Stop hold timer when main timer is reset
   stopHoldTimer();
   
-  // Update durationMin from the input field
-  match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
-  // Then set remaining seconds based on the updated duration
-  match.remainingSec = match.durationMin * 60;
-  updateTimerDisplay();
+  // Log the reset
+  pushLog('System', 'Timer Reset', `Match timer reset to ${match.durationMin} minutes`);
 }
 function endMatch() {
   const confirmEnd = confirm('End match now?');
