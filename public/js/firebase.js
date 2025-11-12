@@ -15,7 +15,7 @@ const firebaseConfig = {
 // Initialize Firebase
 try {
   firebase.initializeApp(firebaseConfig);
-  console.log('✅ Firebase initialized successfully');
+//  console.log('✅ Firebase initialized successfully');
   
   // Initialize Firebase services
   const database = firebase.database();
@@ -125,7 +125,7 @@ function buildMatchDataFromDOM() {
 function updateFirebase() {
   try {
     const data = buildMatchDataFromDOM();
-    console.log('📤 updateFirebase - sending:', data);
+//    console.log('📤 updateFirebase - sending:', data);
     database.ref('current_match').set(data)
       .then(() => console.log('✅ Firebase /current_match updated'))
       .catch(err => console.error('❌ Firebase set error', err));
