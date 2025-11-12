@@ -306,7 +306,7 @@ function renderPlayers() {
     if (filteredPlayers.length === 0) {
         playersTableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <i class="fas fa-users-slash" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
                     <p>No players found matching your criteria</p>
                 </td>
@@ -316,12 +316,19 @@ function renderPlayers() {
     }
     
     playersTableBody.innerHTML = filteredPlayers.map((player, index) => {
+        // Prepare photo HTML if available
+        let photoHtml = '';
+        if (player.photoBase64) {
+            photoHtml = `<img src="data:image/jpeg;base64,${player.photoBase64}" alt="Player Photo" class="player-photo" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">`;
+        } else {
+            photoHtml = `<div class="avatar">${getInitials(player.fullName || '')}</div>`;
+        }
         return `
             <tr>
                 <td>${index + 1}</td>
+                <td>${photoHtml}</td>
                 <td>
                     <div class="d-flex align-items-center">
-                        <div class="avatar">${getInitials(player.fullName || '')}</div>
                         <div>
                             <div class="fw-500">${player.fullName || 'N/A'}</div>
                             <small class="text-muted">${player.email || ''}</small>
