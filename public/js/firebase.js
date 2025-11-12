@@ -125,12 +125,16 @@ function buildMatchDataFromDOM() {
 function updateFirebase() {
   try {
     const data = buildMatchDataFromDOM();
-//    console.log('📤 updateFirebase - sending:', data);
+    // Add timer color info for vmix
+    const timerDisplay = document.getElementById('timerDisplay');
+    if (timerDisplay) {
+      data.timerColor = timerDisplay.style.color || '#fff';
+    }
     database.ref('current_match').set(data)
-      .then(() => console.log('✅ Firebase /current_match updated'))
+      .then(() => {/* ok */})
       .catch(err => console.error('❌ Firebase set error', err));
   } catch (e) {
-    console.error('❌ updateFirebase failed', e);
+    console.error('updateFirebase error', e);
   }
 }
 

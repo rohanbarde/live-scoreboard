@@ -413,13 +413,20 @@ function undoAction(action, fighter, side) {
     /* timer controls */
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById('timerDisplay');
+  if (!timerDisplay) return;
+  // GS: golden color, running: white, stopped: red
   if (match.goldenScoreActive) {
     timerDisplay.innerHTML = formatTimeFromSec(match.remainingSec) + ' <span style="color: gold; font-size: 0.7em;">GS</span>';
-  } else if (match.remainingSec <= 0) {
-    // Show 00:00 GS when time is up but golden score not started yet
-    timerDisplay.innerHTML = '00:00 <span style="color: gold; font-size: 0.7em;">GS</span>';
+    timerDisplay.style.color = '#FFD700';
+//    timerDisplay.style.textShadow = '0 0 8px #FFD700, 0 0 2px #fff';
+  } else if (match.running) {
+    timerDisplay.textContent = formatTimeFromSec(match.remainingSec);
+    timerDisplay.style.color = '#fff';
+//    timerDisplay.style.textShadow = '0 0 8px #fff, 0 0 2px #222';
   } else {
     timerDisplay.textContent = formatTimeFromSec(match.remainingSec);
+    timerDisplay.style.color = '#ff3333';
+//    timerDisplay.style.textShadow = '0 0 8px #ff3333, 0 0 2px #fff';
   }
 }
 
