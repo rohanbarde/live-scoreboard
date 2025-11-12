@@ -1,0 +1,40 @@
+/* Additional scoreboard alignment fix styles */
+.fighter-box {
+  min-height: 370px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.fighter-left, .fighter-right {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure both boxes have equal width and padding */
+.col-md-5 {
+  display: flex;
+  flex-direction: column;
+}
+
+#cardA, #cardB {
+  height: 100%;
+  min-height: 370px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Align hr above Actions for both fighters */
+.fighter-box hr.my-3 {
+  margin-top: 2.2rem !important;
+  margin-bottom: 1.2rem !important;
+}
+
+@media (min-width: 768px) {
+  .fighter-box {
+    height: 100%;
+    min-height: 410px;
+  }
+}
