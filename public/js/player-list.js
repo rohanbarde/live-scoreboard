@@ -306,7 +306,7 @@ function renderPlayers() {
     if (filteredPlayers.length === 0) {
         playersTableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-4">
+                <td colspan="8" class="text-center py-4">
                     <i class="fas fa-users-slash" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
                     <p>No players found matching your criteria</p>
                 </td>
@@ -323,6 +323,8 @@ function renderPlayers() {
         } else {
             photoHtml = `<div class="avatar">${getInitials(player.fullName || '')}</div>`;
         }
+        // Edit button
+        const editBtn = `<button class='btn btn-sm btn-outline-primary' onclick='editPlayer("${player.id}")'>Edit</button>`;
         return `
             <tr>
                 <td>${index + 1}</td>
@@ -339,6 +341,7 @@ function renderPlayers() {
                 <td>${player.playerInfo?.team || 'N/A'}</td>
                 <td>${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : 'N/A'}</td>
                 <td>${player.phone || 'N/A'}</td>
+                <td>${editBtn}</td>
             </tr>
         `;
     }).join('');
@@ -391,6 +394,49 @@ function debounce(func, wait) {
     };
 }
 
+// Edit player logic
+window.editPlayer = function(playerId) {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return alert('Player not found');
+    document.getElementById('editPlayerId').value = player.id;
+    document.getElementById('editFullName').value = player.fullName || '';
+    document.getElementById('editEmail').value = player.email || '';
+    document.getElementById('editPhone').value = player.phone || '';
+    document.getElementById('editTeam').value = player.playerInfo?.team || '';
+    document.getElementById('editWeight').value = player.playerInfo?.weight || '';
+    document.getElementById('editGender').value = player.playerInfo?.gender || '';
+    document.getElementById('editPhotoBase64').value = player.photoBase64 || '';
+    const modal = new bootstrap.Modal(document.getElementById('editPlayerModal'));
+    modal.show();
+};
+
+// Save edit
+const saveEditBtn = document.getElementById('saveEditPlayerBtn');
+if (saveEditBtn) {
+    saveEditBtn.onclick = function() {
+        const playerId = document.getElementById('editPlayerId').value;
+        const player = players.find(p => p.id === playerId);
+        if (!player) return alert('Player not found');
+        player.fullName = document.getElementById('editFullName').value;
+        player.email = document.getElementById('editEmail').value;
+        player.phone = document.getElementById('editPhone').value;
+        if (!player.playerInfo) player.playerInfo = {};
+        player.playerInfo.team = document.getElementById('editTeam').value;
+        player.playerInfo.weight = document.getElementById('editWeight').value;
+        player.playerInfo.gender = document.getElementById('editGender').value;
+        player.photoBase64 = document.getElementById('editPhotoBase64').value;
+        const updates = {};
+        updates[`/registrations/${playerId}`] = player;
+        updates[`/users/${playerId}`] = player;
+        database.ref().update(updates)
+          .then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('editPlayerModal')).hide();
+            loadPlayers();
+          })
+          .catch(err => alert('Update failed: ' + err.message));
+    };
+}
+
 // Add CSS for the avatar
 const style = document.createElement('style');
 style.textContent = `
@@ -439,3 +485,59 @@ document.querySelector('.player-list-container').prepend(loadingElement);
 
 // Show loading initially
 showLoading(true);
+
+// Add modal for editing player
+const modalHtml = `
+<div class="modal fade" id="editPlayerModal" tabindex="-1" aria-labelledby="editPlayerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPlayerModalLabel">Edit Player</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="hidden" id="editPlayerId">
+                    <div class="mb-3">
+                        <label for="editFullName" class="form-label">Full Name:</label>
+                        <input type="text" class="form-control" id="editFullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email:</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhone" class="form-label">Phone:</label>
+                        <input type="text" class="form-control" id="editPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTeam" class="form-label">Team:</label>
+                        <input type="text" class="form-control" id="editTeam">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWeight" class="form-label">Weight:</label>
+                        <input type="number" class="form-control" id="editWeight">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGender" class="form-label">Gender:</label>
+                        <select class="form-select" id="editGender">
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhotoBase64" class="form-label">Photo:</label>
+                        <input type="text" class="form-control" id="editPhotoBase64">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveEditPlayerBtn">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+document.body.appendChild(modalHtml);
