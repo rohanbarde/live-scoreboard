@@ -131,6 +131,23 @@ document.addEventListener('DOMContentLoaded', () => {
         createdAt: firebase.database.ServerValue.TIMESTAMP,
       };
 
+      // Generate unique playerId for player (MJA/2025/XX)
+      let playerId = '';
+      if (userType === 'player') {
+        // Fetch all player IDs to find the next available number
+        const snapshot = await registrationsRef.once('value');
+        let maxNum = 0;
+        snapshot.forEach(child => {
+          const p = child.val();
+          if (p.playerId && /^MJA\/2025\/(\d+)$/.test(p.playerId)) {
+            const num = parseInt(p.playerId.split('/').pop(), 10);
+            if (num > maxNum) maxNum = num;
+          }
+        });
+        playerId = `MJA/2025/${String(maxNum + 1).padStart(2, '0')}`;
+        userData.playerId = playerId;
+      }
+
       // Player data
       if (userType === 'player') {
         userData.playerInfo = {
