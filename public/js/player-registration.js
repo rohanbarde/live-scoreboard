@@ -1,157 +1,187 @@
-// Initialize Firebase (already done in firebase.js)
-console.log('Initializing registration system...');
+// ✅ Initialize Firebase (firebase.js must be included before this script)
+console.log('Initializing player registration system...');
 
-// Get Firebase database reference
 const database = firebase.database();
-console.log('Firebase database reference obtained');
-
-// References to different user types in Firebase
 const registrationsRef = database.ref('registrations');
 const usersRef = database.ref('users');
 
-// Test database connection
+// Connection check
 database.ref('.info/connected').on('value', (snapshot) => {
-  const status = snapshot.val() ? 'connected' : 'disconnected';
-  console.log('Firebase connection status:', status);
+  console.log('Firebase connection:', snapshot.val() ? 'connected' : 'disconnected');
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Function to update form based on user type
+  const userTypeSelect = document.getElementById('userType');
+  const playerFields = document.getElementById('playerFields');
+  const coachRefereeFields = document.getElementById('coachRefereeFields');
+  const form = document.getElementById('registrationForm');
+  const successMessage = document.getElementById('successMessage');
+  const errorMessage = document.getElementById('errorMessage');
+  const submitBtn = form?.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn?.innerHTML || '';
+
+  // 🔧 Toggle form sections depending on user type
   function updateFormForUserType(userType) {
-    // Show/hide fields based on user type
+    const photoInput = document.getElementById('photo');
+
     if (userType === 'player') {
       playerFields.style.display = 'block';
       coachRefereeFields.style.display = 'none';
-      // Make player-specific fields required
       document.getElementById('weight').required = true;
       document.getElementById('team').required = true;
       document.getElementById('licenseNumber').required = false;
+
+      // ✅ Require photo for players only
+      if (photoInput) {
+        photoInput.required = true;
+        photoInput.closest('.form-group').style.display = 'block';
+      }
     } else if (['coach', 'referee'].includes(userType)) {
       playerFields.style.display = 'none';
       coachRefereeFields.style.display = 'block';
       document.getElementById('weight').required = false;
       document.getElementById('team').required = false;
       document.getElementById('licenseNumber').required = true;
+
+      // hide photo field for others
+      if (photoInput) {
+        photoInput.required = false;
+        photoInput.closest('.form-group').style.display = 'none';
+      }
     } else {
       playerFields.style.display = 'none';
       coachRefereeFields.style.display = 'none';
-      document.getElementById('weight').required = false;
-      document.getElementById('team').required = false;
-      document.getElementById('licenseNumber').required = false;
+      if (photoInput) {
+        photoInput.required = false;
+        photoInput.closest('.form-group').style.display = 'none';
+      }
     }
   }
-  
-  // Toggle fields based on user type selection
-  const userTypeSelect = document.getElementById('userType');
-  const playerFields = document.getElementById('playerFields');
-  const coachRefereeFields = document.getElementById('coachRefereeFields');
-  
+
+  // 🖼️ Photo preview before upload
+  function setupPhotoPreview() {
+    const photoInput = document.getElementById('photo');
+    const previewImg = document.getElementById('photoPreview');
+
+    if (photoInput && previewImg) {
+      photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            previewImg.src = ev.target.result;
+            previewImg.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          previewImg.style.display = 'none';
+        }
+      });
+    }
+  }
+
   if (userTypeSelect) {
-    userTypeSelect.addEventListener('change', () => {
-      const userType = userTypeSelect.value;
-      updateFormForUserType(userType);
-    });
-    
-    // Initialize form for the default selection
+    userTypeSelect.addEventListener('change', () => updateFormForUserType(userTypeSelect.value));
     updateFormForUserType(userTypeSelect.value);
   }
-  console.log('DOM fully loaded, setting up event listeners...');
-  const form = document.getElementById('registrationForm');
-  const successMessage = document.getElementById('successMessage');
-  const errorMessage = document.getElementById('errorMessage');
-  const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
-  const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+
+  setupPhotoPreview();
 
   if (!form || !submitBtn) {
-    console.error('Form or submit button not found');
+    console.error('Form not found!');
     return;
   }
 
+  // 📤 Handle registration
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    
-    // Disable submit button and show loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
-    
+
     try {
       const userType = document.getElementById('userType').value;
+      let photoBase64 = '';
+
+      // ✅ Only for players — convert photo to Base64
+      if (userType === 'player') {
+        const photoInput = document.getElementById('photo');
+        const photoFile = photoInput?.files[0];
+
+        if (!photoFile) {
+          throw new Error('Player photo is required.');
+        }
+
+        photoBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result;
+            resolve(result.split(',')[1]); // remove data:image prefix
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(photoFile);
+        });
+      }
+
+      // Common data
       const userData = {
         fullName: document.getElementById('fullName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
-        userType: userType,
-        createdAt: firebase.database.ServerValue.TIMESTAMP
+        userType,
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
       };
 
-      // Add user type specific data
+      // Player data
       if (userType === 'player') {
         userData.playerInfo = {
           weight: parseFloat(document.getElementById('weight').value.trim()),
           team: document.getElementById('team').value.trim(),
-          gender: document.getElementById('gender').value
+          gender: document.getElementById('gender').value,
         };
-      } else if (['coach', 'referee'].includes(userType)) {
+        userData.photoBase64 = photoBase64; // ✅ Store Base64 photo in Firebase
+      }
+
+      // Coach / Referee data
+      if (['coach', 'referee'].includes(userType)) {
         userData.licenseInfo = {
           licenseNumber: document.getElementById('licenseNumber').value.trim(),
-          verified: false
+          verified: false,
         };
       }
 
-      console.log('Saving user registration:', userData);
-      
-      // Save the user registration to Firebase
+      console.log('Uploading data to Firebase:', userData);
+
+      // Save to both collections
       const newUserRef = registrationsRef.push();
       const userId = newUserRef.key;
-      
-      // Save to both registrations and users collections
-      const batch = {};
-      batch[`/registrations/${userId}`] = userData;
-      batch[`/users/${userId}`] = userData;
-      
-      await database.ref().update(batch);
-      
-      console.log('User registration saved successfully with ID:', userId);
-      
-      // Reset the form but keep the user type
-      const selectedUserType = document.getElementById('userType').value;
-      form.reset();
-      
-      // Restore the selected user type
-      document.getElementById('userType').value = selectedUserType;
-      
-      // Update the form based on the selected user type
-      updateFormForUserType(selectedUserType);
-      
-      // Hide all dynamic fields
-      playerFields.style.display = selectedUserType === 'player' ? 'block' : 'none';
-      coachRefereeFields.style.display = (selectedUserType === 'coach' || selectedUserType === 'referee') ? 'block' : 'none';
+      const updates = {};
+      updates[`/registrations/${userId}`] = userData;
+      updates[`/users/${userId}`] = userData;
 
-      // Show success message
-      const successMsg = `${userType.charAt(0).toUpperCase() + userType.slice(1)} registration submitted successfully!`;
-      showMessage(successMessage, successMsg);
-      
+      await database.ref().update(updates);
+      console.log('✅ Player registration saved:', userId);
+
+      // Reset form
+      const selectedType = document.getElementById('userType').value;
+      form.reset();
+      document.getElementById('userType').value = selectedType;
+      updateFormForUserType(selectedType);
+
+      showMessage(successMessage, `${userType.charAt(0).toUpperCase() + userType.slice(1)} registered successfully!`);
     } catch (error) {
-      console.error('Error during registration:', error);
-      showMessage(errorMessage, 'Error during registration. Please try again.');
+      console.error('❌ Registration error:', error);
+      showMessage(errorMessage, error.message || 'Error during registration.');
     } finally {
-      // Re-enable submit button and restore original text
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-      }
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText;
     }
   });
 
-  // Helper function to show messages
-  function showMessage(element, message) {
-    const messageText = element.querySelector('span');
-    messageText.textContent = message;
+  // Helper — message fade
+  function showMessage(element, text) {
+    const span = element.querySelector('span');
+    span.textContent = text;
     element.classList.remove('hidden');
-    
-    // Hide message after 5 seconds
-    setTimeout(() => {
-      element.classList.add('hidden');
-    }, 5000);
+    setTimeout(() => element.classList.add('hidden'), 5000);
   }
 });
