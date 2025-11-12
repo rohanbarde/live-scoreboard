@@ -898,7 +898,7 @@ if (document.fullscreenElement) {
       }
     }
 
-    function startHoldTimer(player, duration = 20, type = 'normal') {
+    function startHoldTimer(player) {
       // Check if match is running
       if (!match.running) {
         alert('Please start the match timer before starting hold timer.');
@@ -910,30 +910,38 @@ if (document.fullscreenElement) {
         clearInterval(match.holdTimer.timerId);
       }
 
+      // Determine duration: 10s if player has previous waza-ari, else 20s
+      let duration = 20;
+      let type = 'normal';
+      if ((player === 'A' && match.fighterA.waza > 0) || (player === 'B' && match.fighterB.waza > 0)) {
+        duration = 10;
+        type = 'waza-ari';
+      }
+
       // Initialize hold timer
       match.holdTimer = {
         active: true,
         player: player,
         elapsedSec: 0,
-        duration: duration, // 20 for normal, 10 for waza-ari
+        duration: duration,
         type: type,
         timerId: null
       };
-      
+
       const playerName = player === 'A' ? match.fighterA.name : match.fighterB.name;
       const playerColor = player === 'A' ? 'White' : 'Blue';
       const holdTypeText = type === 'waza-ari' ? ' (after Waza-ari)' : '';
-      
+
       pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName}`);
-      
+
       // Update display immediately
       updateHoldTimerDisplay();
-      
+
       // Start count-up timer
       match.holdTimer.timerId = setInterval(() => {
         match.holdTimer.elapsedSec++;
         updateHoldTimerDisplay();
-        
+
         // Check if hold timer completed
         if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
           completeHoldTimer();
@@ -1041,14 +1049,6 @@ function stopHoldTimer() {
       startHoldTimer('B');
     }
 
-    function startHoldWhiteAfterWazaAri() {
-      startHoldTimer('A', 10, 'waza-ari');
-    }
-
-    function startHoldBlueAfterWazaAri() {
-      startHoldTimer('B', 10, 'waza-ari');
-    }
-
     // Make functions and match object available globally
     window.declareWinner = declareWinner;
     window.startPauseTimer = startPauseTimer;
@@ -1061,7 +1061,5 @@ function stopHoldTimer() {
     window.savePdf = savePdf;
     window.startHoldWhite = startHoldWhite;
     window.startHoldBlue = startHoldBlue;
-    window.startHoldWhiteAfterWazaAri = startHoldWhiteAfterWazaAri;
-    window.startHoldBlueAfterWazaAri = startHoldBlueAfterWazaAri;
     window.stopHoldTimer = stopHoldTimer;
     window.match = match; // Expose match object for Firebase sync
