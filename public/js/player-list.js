@@ -543,4 +543,6 @@ const modalHtml = `
     </div>
 </div>
 `;
-document.body.appendChild(modalHtml);
+const modalContainer = document.createElement('div');
+modalContainer.innerHTML = modalHtml;
+document.body.appendChild(modalContainer.firstElementChild);
