@@ -2,7 +2,7 @@
        - preserves all fields from your previous versions
        - timer-based logs (use match timer time)
        - big card overlays (pop-in), technique center overlay
-       - 3-shido hansoku-make, pointer animation, stage mode, PDF/export
+       - 3-shido hansoku-make, pointer animation, PDF/export
     */
 
     /* CONFIG */
@@ -88,38 +88,6 @@
         document.getElementById('weightA').value = e.target.value;
         refreshUI();
       });
-
-      // stage toggle
-      const stageToggle = document.getElementById('stageToggle');
-      const matchLocation = document.getElementById('matchLocation');
-      const matchNumber = document.getElementById('matchNumber');
-      const matNumber = document.getElementById('matNumber');
-
-      if (stageToggle) {
-        stageToggle.addEventListener('click', toggleStageMode);
-      }
-
-      if (matchLocation) {
-        matchLocation.addEventListener('input', (e) => {
-          match.location = e.target.value;
-          saveMatch();
-        });
-      }
-
-      if (matchNumber) {
-        matchNumber.addEventListener('input', (e) => {
-          match.matchNumber = Math.max(1, Number(e.target.value) || 1);
-          saveMatch();
-        });
-      }
-
-      if (matNumber) {
-        matNumber.addEventListener('input', (e) => {
-          match.matNumber = Math.max(1, Number(e.target.value) || 1);
-          saveMatch();
-        });
-      }
-
 
       // initial render
       refreshUI();
@@ -818,33 +786,6 @@ setTimeout(() => {
     alert('⚠️ Printing failed. Please check your browser settings.');
   }
 }, 350);
-    }
-
-    /* Stage mode toggle: hide operator-like controls for audience */
-    let stageMode = false;
-    function toggleStageMode() {
-      stageMode = !stageMode;
-//      const controls = document.querySelectorAll('.btn-score, .operator-panel, .card-surface .btn-outline-light, #stageToggle');
-      // We'll hide operator area by hiding the operator actions only (we kept layout fields)
-//      const operatorPanel = document.querySelector('.operator-panel');
-      // We used individual buttons - easier: hide action button groups (they are in fighter boxes)
-      const actionButtons = document.querySelectorAll('.fighter-box .btn-score, .fighter-box .btn-light, .fighter-box .btn-outline-danger, .fighter-box .btn-outline-warning');
-      if (stageMode) {
-        // hide buttons and log controls to keep pure scoreboard
-        actionButtons.forEach(b => b.style.display = 'none');
-        document.querySelectorAll('.card-surface > .d-flex .btn, .card-surface .export-btn').forEach(x => x.style.display = 'none');
-        document.getElementById('stageToggle').textContent = '🔧 Operator Mode';
-        // optionally go fullscreen
-document.documentElement.requestFullscreen()
-  .catch(e => console.warn('Fullscreen request failed:', e));
-      } else {
-        actionButtons.forEach(b => b.style.display = 'inline-block');
-        document.querySelectorAll('.card-surface > .d-flex .btn, .card-surface .export-btn').forEach(x => x.style.display = 'inline-block');
-        document.getElementById('stageToggle').textContent = '🎥 Stage Mode';
-if (document.fullscreenElement) {
-  document.exitFullscreen().catch(e => console.warn('Exit fullscreen failed:', e));
-}
-      }
     }
 
     /* fullscreen helper */
