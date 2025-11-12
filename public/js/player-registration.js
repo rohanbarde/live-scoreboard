@@ -166,6 +166,17 @@ document.addEventListener('DOMContentLoaded', () => {
       form.reset();
       document.getElementById('userType').value = selectedType;
       updateFormForUserType(selectedType);
+      
+      // Clear photo preview and reset file input
+      const photoInput = document.getElementById('photo');
+      const previewImg = document.getElementById('photoPreview');
+      if (photoInput) {
+        photoInput.value = ''; // Clear the file input
+      }
+      if (previewImg) {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+      }
 
       showMessage(successMessage, `${userType.charAt(0).toUpperCase() + userType.slice(1)} registered successfully!`);
     } catch (error) {
