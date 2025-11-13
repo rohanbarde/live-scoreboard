@@ -984,6 +984,90 @@ function stopHoldTimer() {
       startHoldTimer('B');
     }
 
+
+
+    /* ---------------- Technique and Penalty Dropdowns ---------------- */
+
+    // Data extracted from Excel (trimmed to key examples)
+    const judoTechniques = [
+      { name: "SEOI-NAGE", code: "SON" },
+      { name: "IPPON-SEOI-NAGE", code: "ISN" },
+      { name: "SEOI-OTOSHI", code: "SOO" },
+      { name: "TAI-OTOSHI", code: "TOS" },
+      { name: "KATA-GURUMA", code: "KGU" },
+      { name: "UCHI-MATA", code: "UMA" },
+      { name: "HARAI-GOSHI", code: "HGO" },
+      { name: "O-GOSHI", code: "OGO" },
+      { name: "SASAE-TSURIKOMI-ASHI", code: "STA" },
+      { name: "KO-SOTO-GARI", code: "KSG" },
+      // ... add more as needed
+    ];
+
+    const judoPenalties = [
+      { name: "NEGATIVE JUDO", code: "PS1" },
+      { name: "FALSE ATTACK", code: "PS2" },
+      { name: "PULL DOWN", code: "PS3" },
+      { name: "NON COMBATIVITY", code: "PS4" },
+      { name: "PUSH OUT", code: "PS5" },
+      { name: "GRABBING BELOW BELT", code: "PS6" },
+      { name: "AVOIDING GRIP", code: "PS7" },
+      { name: "STEPPING OUTSIDE AREA", code: "PS8" }
+    ];
+
+    // Populate dropdowns dynamically
+    function populateDropdowns() {
+      ["A", "B"].forEach(side => {
+        const techSelect = document.getElementById(`techniqueSelect${side}`);
+        const penSelect = document.getElementById(`penaltySelect${side}`);
+        if (techSelect) {
+          judoTechniques.forEach(t => {
+            const opt = document.createElement("option");
+            opt.value = t.name;
+            opt.textContent = `${t.name} (${t.code})`;
+            techSelect.appendChild(opt);
+          });
+        }
+        if (penSelect) {
+          judoPenalties.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.name;
+            opt.textContent = `${p.name} (${p.code})`;
+            penSelect.appendChild(opt);
+          });
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", populateDropdowns);
+
+    // Handle apply buttons
+    function applyTechnique(side) {
+      const select = document.getElementById(`techniqueSelect${side}`);
+      const value = select.value;
+      if (!value) return alert("Select a technique first.");
+      doTechnique(side, "Waza"); // all listed moves → Waza-ari
+      pushLog(
+        match[`fighter${side}`].name,
+        "Technique",
+        `Performed ${value}`
+      );
+      select.value = "";
+    }
+
+    function applyPenalty(side) {
+      const select = document.getElementById(`penaltySelect${side}`);
+      const value = select.value;
+      if (!value) return alert("Select a penalty reason.");
+      doTechnique(side, "Shido");
+      pushLog(
+        match[`fighter${side}`].name,
+        "Penalty",
+        `Shido given for ${value}`
+      );
+      select.value = "";
+    }
+
+
     // Make functions and match object available globally
     window.declareWinner = declareWinner;
     window.startPauseTimer = startPauseTimer;
