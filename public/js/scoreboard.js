@@ -740,14 +740,16 @@ function endMatch() {
   w.document.write('<html><head><title>Match Report</title>');
   w.document.write('<style>@media print { body, .card-pill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style>');
   w.document.write('</head><body style="font-family:Arial;color:#000;padding:18px">');
-  // HEADER with all logos and match name
-  w.document.write('<div style="display:grid;grid-template-columns:54px 1fr 54px;align-items:center;gap:0;margin-bottom:18px;">');
-  w.document.write('<img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;justify-self:start;">');
-  w.document.write('<div style="display:flex;flex-direction:column;align-items:center;width:100%;">');
-  w.document.write('<img src="/public/assets/punit%20p.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;margin-bottom:8px;">');
-  w.document.write('<h1 style="font-size:1.6rem;font-weight:700;line-height:1.2;text-align:center;margin:0;">52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI</h1>');
+  // HEADER: match scoreboard style (exact match, flex)
+  w.document.write('<div style="background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 4px 14px rgba(0,0,0,0.2);margin-bottom:14px;">');
+  w.document.write('<div style="display:flex;align-items:center;justify-content:center;gap:44px;">');
+  w.document.write('<img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">');
+  w.document.write('<img src="/public/assets/punitBalan.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">');
+  w.document.write('<img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">');
   w.document.write('</div>');
-  w.document.write('<img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;justify-self:end;">');
+  w.document.write('<h1 style="font-size:1.5rem;font-weight:700;line-height:1.3;text-align:center;color:#000;margin:16px 0 0 0;">');
+  w.document.write('52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI');
+  w.document.write('</h1>');
   w.document.write('</div>');
   w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
   if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${weightCategory}</p>`);
