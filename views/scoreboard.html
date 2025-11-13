@@ -23,11 +23,24 @@
 <body class="scoreboard-app">
 <div class="container">
     <div class="card-surface" id="rootSurface">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div class="flex-grow-1">
-                <h1 class="mb-2">52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, Mumbai <span id="connectionStatus" class="badge bg-success ms-2"></span></h1>
-                <div class="small-muted">Operational match controller · live scoring · log & export</div>
+        <!-- HEADER: Logo + Name -->
+        <div class="scoreboard-header d-flex flex-column align-items-center mb-4" style="gap:10px;">
+            <div class="d-flex flex-row align-items-center justify-content-center" style="gap:18px;">
+                <img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;order:1;">
+                <img src="/public/assets/punit%20p.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;order:2;margin:0 48px;">
+                <img src="/public/assets/mum_m.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;order:3;">
             </div>
+            <h1 class="mb-0 mt-2" style="font-size:1.6rem;font-weight:700;line-height:1.2;text-align:center;">
+                52th SENIOR STATE ELECTIO& NATIONAL SN JUDO CHAMPIONSHIP 2025-26, Mumbai
+            </h1>
+        </div>
+        <!-- END HEADER -->
+
+        <div class="d-flex justify-content-between align-items-start mb-4">
+<!--            <div class="flex-grow-1">-->
+<!--                <h1 class="mb-2">52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, Mumbai <span id="connectionStatus" class="badge bg-success ms-2"></span></h1>-->
+<!--                <div class="small-muted">Operational match controller · live scoring · log & export</div>-->
+<!--            </div>-->
 
             <div class="d-flex align-items-start gap-4 ms-4">
                 <!-- Match Duration -->
@@ -177,7 +190,7 @@
                     <div class="d-grid gap-1 mb-3">
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Hold (White)</button>
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Hold (Blue)</button>
-                        <button class="btn btn-xs btn-outline-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold</button>
+                        <button class="btn btn-xs btn-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold</button>
                         <button class="btn btn-xs btn-success" onclick="declareWinner('A')" id="whiteWinBtn">White win</button>
                         <button class="btn btn-xs btn-primary" onclick="declareWinner('B')" id="blueWinBtn">Blue win</button>
                     </div>
