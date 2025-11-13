@@ -742,7 +742,7 @@ function endMatch() {
   w.document.write('<html><head><title>Match Report</title>');
   w.document.write('<style>@media print { body, .card-pill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style>');
   w.document.write('</head><body style="font-family:Arial;color:#000;padding:18px">');
-  w.document.write(`<h2>JUDO BHARAT — Match Report</h2>`);
+  w.document.write(`<h2>52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, Mumbai — Match Report</h2>`);
   const escape = window.escapeHtml || (s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'));
   
   w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
