@@ -779,7 +779,7 @@ function endMatch() {
   w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
   w.document.write(`<li>B — Ippon: ${match.fighterB.ippon}, Waza-ari: ${match.fighterB.waza}, Yuko: ${match.fighterB.yuko}, Shido: ${match.fighterB.shido}</li>`);
   w.document.write('</ul>');
-  w.document.write(`<p><strong>Winner:</strong> ${match.winnerName || '—'}</p>`);
+  w.document.write(`<div style="margin:18px 0 8px 0;"><strong style="font-size:2.2rem;color:#0b2a8a;letter-spacing:1px;">Winner: ${match.winnerName || '—'}</strong></div>`);
   w.document.write('<h3>Events</h3>');
   w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
   match.log.forEach(it => {
