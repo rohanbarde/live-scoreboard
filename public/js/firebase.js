@@ -15,7 +15,7 @@ const firebaseConfig = {
 // Initialize Firebase
 try {
   firebase.initializeApp(firebaseConfig);
-  console.log('✅ Firebase initialized successfully');
+//  console.log('✅ Firebase initialized successfully');
   
   // Initialize Firebase services
   const database = firebase.database();
@@ -94,16 +94,20 @@ function buildMatchDataFromDOM() {
   let holdTimer = {
     active: false,
     player: null,
-    remainingSec: 20,
-    type: 'normal'
+    elapsedSec: 0,
+    duration: 20, // 20 for normal, 10 for waza-ari
+    type: 'normal',
+    timerId: null
   };
 
   if (typeof window.match !== 'undefined' && window.match.holdTimer) {
     holdTimer = {
       active: window.match.holdTimer.active || false,
       player: window.match.holdTimer.player || null,
-      remainingSec: window.match.holdTimer.remainingSec || 20,
-      type: window.match.holdTimer.type || 'normal'
+      elapsedSec: window.match.holdTimer.elapsedSec || 0,
+      duration: window.match.holdTimer.duration || (window.match.holdTimer.type === 'waza-ari' ? 10 : 20),
+      type: window.match.holdTimer.type || 'normal',
+      timerId: null // Don't sync the timer ID
     };
   }
 
@@ -121,12 +125,16 @@ function buildMatchDataFromDOM() {
 function updateFirebase() {
   try {
     const data = buildMatchDataFromDOM();
-    console.log('📤 updateFirebase - sending:', data);
+    // Add timer color info for vmix
+    const timerDisplay = document.getElementById('timerDisplay');
+    if (timerDisplay) {
+      data.timerColor = timerDisplay.style.color || '#fff';
+    }
     database.ref('current_match').set(data)
-      .then(() => console.log('✅ Firebase /current_match updated'))
+      .then(() => {/* ok */})
       .catch(err => console.error('❌ Firebase set error', err));
   } catch (e) {
-    console.error('❌ updateFirebase failed', e);
+    console.error('updateFirebase error', e);
   }
 }
 

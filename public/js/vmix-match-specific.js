@@ -31,14 +31,14 @@ function renderVmixCards(containerId, shidoCount) {
         // Show red card for 3 or more shidos
         const el = document.createElement('div');
         el.className = 'vmix-card-pill red';
-        el.textContent = 'R';
+        el.textContent = '';
         container.appendChild(el);
     } else {
         // Show yellow cards for 1-2 shidos
         for (let i = 0; i < shidoCount; i++) {
             const el = document.createElement('div');
             el.className = 'vmix-card-pill yellow';
-            el.textContent = 'Y';
+            el.textContent = '';
             container.appendChild(el);
         }
     }
@@ -59,7 +59,8 @@ function updateVmixHoldTimer(holdTimerData) {
     
     if (holdTimerData && holdTimerData.active) {
         display.style.display = 'block';
-        timeDisplay.textContent = holdTimerData.remainingSec || 0;
+        const elapsedSeconds = holdTimerData.elapsedSec || 0;
+        timeDisplay.textContent = elapsedSeconds;
         
         // Determine player info
         const playerColor = holdTimerData.player === 'A' ? 'White' : 'Blue';
@@ -72,20 +73,25 @@ function updateVmixHoldTimer(holdTimerData) {
             labelElement.textContent = holdTimerData.type === 'waza-ari' ? 'HOLD (W)' : 'HOLD';
         }
         
-        // Apply color states based on remaining time and type
-        const warningThreshold = holdTimerData.type === 'waza-ari' ? 3 : 5;
-        const cautionThreshold = holdTimerData.type === 'waza-ari' ? 5 : 10;
+        // Apply color states based on elapsed time and type
+        const warningThreshold = holdTimerData.type === 'waza-ari' ? 7 : 15; // 7s for waza-ari (10s total), 15s for normal (20s total)
+        const cautionThreshold = holdTimerData.type === 'waza-ari' ? 5 : 10;  // 5s for waza-ari, 10s for normal
         
-        // Remove existing state classes
+        // Remove existing state classes and reset styles
         display.classList.remove('warning', 'critical');
+        timeDisplay.style.color = ''; // Reset to default
         
-        if (holdTimerData.remainingSec <= warningThreshold) {
+        if (elapsedSeconds >= warningThreshold) {
             display.classList.add('critical');
-        } else if (holdTimerData.remainingSec <= cautionThreshold) {
+            timeDisplay.style.color = '#ff4444'; // Red for final seconds
+        } else if (elapsedSeconds >= cautionThreshold) {
             display.classList.add('warning');
+            timeDisplay.style.color = '#ffaa00'; // Orange for caution
+        } else {
+            timeDisplay.style.color = '#00ff00'; // Green for normal time
         }
         
-        console.log(`Hold timer updated: ${holdTimerData.remainingSec}s, ${playerColor}, ${holdTimerData.type}`);
+        console.log(`Hold timer updated: ${elapsedSeconds}s elapsed, ${playerColor}, ${holdTimerData.type}`);
     } else {
         display.style.display = 'none';
         console.log('Hold timer hidden');

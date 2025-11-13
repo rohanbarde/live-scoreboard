@@ -2,7 +2,7 @@
        - preserves all fields from your previous versions
        - timer-based logs (use match timer time)
        - big card overlays (pop-in), technique center overlay
-       - 3-shido hansoku-make, pointer animation, stage mode, PDF/export
+       - 3-shido hansoku-make, pointer animation, PDF/export
     */
 
     /* CONFIG */
@@ -89,38 +89,6 @@
         refreshUI();
       });
 
-      // stage toggle
-      const stageToggle = document.getElementById('stageToggle');
-      const matchLocation = document.getElementById('matchLocation');
-      const matchNumber = document.getElementById('matchNumber');
-      const matNumber = document.getElementById('matNumber');
-
-      if (stageToggle) {
-        stageToggle.addEventListener('click', toggleStageMode);
-      }
-
-      if (matchLocation) {
-        matchLocation.addEventListener('input', (e) => {
-          match.location = e.target.value;
-          saveMatch();
-        });
-      }
-
-      if (matchNumber) {
-        matchNumber.addEventListener('input', (e) => {
-          match.matchNumber = Math.max(1, Number(e.target.value) || 1);
-          saveMatch();
-        });
-      }
-
-      if (matNumber) {
-        matNumber.addEventListener('input', (e) => {
-          match.matNumber = Math.max(1, Number(e.target.value) || 1);
-          saveMatch();
-        });
-      }
-
-
       // initial render
       refreshUI();
     }
@@ -144,10 +112,6 @@
   document.getElementById('ipponB').textContent = match.fighterB.ippon;
   document.getElementById('yukoB').textContent = match.fighterB.yuko;
   document.getElementById('shidoB').textContent = match.fighterB.shido;
-
-  // Update status and club displays
-  document.getElementById('statusA').textContent = match.fighterA.club;
-  document.getElementById('statusB').textContent = match.fighterB.club;
 
   // Ensure input fields reflect the current state
   const nameA = document.getElementById('nameA');
@@ -318,21 +282,28 @@ function handleIppon(f, side) {
   pushLog(f.name, 'Ippon', `${f.name} awarded Ippon`);
   match.winnerName = f.name;
   showBigCard(side, 'yellow', 'IPPON');
+
+  stopMainTimer();
 }
 
+
 function handleWaza(f, side) {
-  if (f.waza >= 2) return;
+  if (f.ippon >= 1) return; // already has ippon
   f.waza += 1;
   pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
   showBigCard(side, 'white', 'WAZA-ARI');
 
-  if (f.waza === 2) {
+  if (f.waza >= 2) {
+    // Convert 2 Waza-ari → 1 Ippon
+    f.waza = 0;
     f.ippon = 1;
-    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari -> Ippon`);
     match.winnerName = f.name;
+    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari → Ippon`);
     showBigCard(side, 'yellow', 'IPPON');
+    stopMainTimer();
   }
 }
+
 
 function handleYuko(f, side) {
   f.yuko += 1;
@@ -351,20 +322,17 @@ function handleShido(f, opp, side) {
     // 3rd shido = Red card (Hansoku-make)
     cardColor = 'red';
     cardText = 'HANSOKU';
-    statusText = 'Red Card';
     pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})`);
     match.winnerName = opp.name;
   } else {
     // 1st and 2nd shido = Yellow card
     cardColor = 'yellow';
     cardText = 'SHIDO';
-    statusText = 'Yellow Card';
   }
   
   showBigCard(side, cardColor, cardText);
 
-  const statusId = side === 'A' ? 'statusA' : 'statusB';
-  document.getElementById(statusId).textContent = statusText;
+  refreshUI();
 }
 
     /* red card manual */
@@ -373,11 +341,6 @@ function handleShido(f, opp, side) {
       if (!isActionAllowed()) return;
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
-      if (side === 'A') {
-        document.getElementById('statusA').textContent = 'Red Card';
-      } else {
-        document.getElementById('statusB').textContent = 'Red Card';
-      }
       pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
       match.winnerName = opp.name;
       showTechniqueCenter('HANSOKU-MAKE', 'hansoku');
@@ -450,10 +413,20 @@ function undoAction(action, fighter, side) {
     /* timer controls */
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById('timerDisplay');
+  if (!timerDisplay) return;
+  // GS: golden color, running: white, stopped: red
   if (match.goldenScoreActive) {
     timerDisplay.innerHTML = formatTimeFromSec(match.remainingSec) + ' <span style="color: gold; font-size: 0.7em;">GS</span>';
+    timerDisplay.style.color = '#FFD700';
+//    timerDisplay.style.textShadow = '0 0 8px #FFD700, 0 0 2px #fff';
+  } else if (match.running) {
+    timerDisplay.textContent = formatTimeFromSec(match.remainingSec);
+    timerDisplay.style.color = '#fff';
+//    timerDisplay.style.textShadow = '0 0 8px #fff, 0 0 2px #222';
   } else {
     timerDisplay.textContent = formatTimeFromSec(match.remainingSec);
+    timerDisplay.style.color = '#ff3333';
+//    timerDisplay.style.textShadow = '0 0 8px #ff3333, 0 0 2px #fff';
   }
 }
 
@@ -481,15 +454,26 @@ function updateTimerDisplay() {
       if (match.goldenScoreActive) {
         // In golden score, count up
         match.remainingSec += 1;
+        updateTimerDisplay();
       } else {
         // Normal countdown
-        match.remainingSec = Math.max(0, match.remainingSec - 1);
-      }
-      updateTimerDisplay();
-
-      // Check for end of regular time
-      if (match.remainingSec <= 0 && !match.goldenScoreActive) {
-        startGoldenScore();
+        if (match.remainingSec > 0) {
+          match.remainingSec -= 1;
+          updateTimerDisplay();
+          
+          // Check if we just hit 0:00
+          if (match.remainingSec === 0) {
+            // Timer reached 0, stop the timer and prepare for golden score
+            clearInterval(match.timerId);
+            match.running = false;
+            match.goldenScoreActive = true; // Set GS flag
+            document.getElementById('startBtn').textContent = 'Start';
+            updateTimerDisplay();
+            pushLog('System', 'Time End', 'Match time ended');
+            showTechniqueCenter('GOLDEN SCORE', 'ippon');
+            return;
+          }
+        }
       }
     }, 1000);
   } else {
@@ -506,28 +490,59 @@ function updateTimerDisplay() {
 }
 
 function startGoldenScore() {
-  match.goldenScoreActive = true;
-  match.remainingSec = 0; // Reset to 0 and start counting up
-  pushLog('System', 'Golden Score', 'Golden Score period started');
-  showTechniqueCenter('GOLDEN SCORE', 'ippon');
+  // Only allow starting golden score if we're at 00:00 and not already in golden score
+  if (match.remainingSec === 0 || match.goldenScoreActive) {
+    if (!match.running) {
+      // Starting or resuming golden score
+      match.running = true;
+      match.goldenScoreActive = true;
+      document.getElementById('startBtn').textContent = 'Pause';
+      
+      if (match.remainingSec === 0) {
+        pushLog('System', 'Golden Score', 'Golden Score period started');
+        showTechniqueCenter('GOLDEN SCORE', 'ippon');
+      } else {
+        pushLog('System', 'Golden Score', 'Golden Score resumed');
+      }
+      
+      // Start the timer for golden score
+      match.timerId = setInterval(() => {
+        match.remainingSec += 1;
+        updateTimerDisplay();
+      }, 1000);
+    } else {
+      // Pause golden score
+      match.running = false;
+      clearInterval(match.timerId);
+      document.getElementById('startBtn').textContent = 'Start';
+      pushLog('System', 'Golden Score', 'Golden Score paused');
+    }
+  }
 }
 
    function resetTimer() {
+  // Clear any running timers
   if (match.running) {
     clearInterval(match.timerId);
-    match.running = false;
-    document.getElementById('startBtn').textContent = 'Start';
   }
+  
+  // Reset match state
+  match.running = false;
   match.goldenScoreActive = false;
+  
+  // Update duration from input field
+  match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
+  match.remainingSec = match.durationMin * 60;
+  
+  // Update UI
+  document.getElementById('startBtn').textContent = 'Start';
+  updateTimerDisplay();
   
   // Stop hold timer when main timer is reset
   stopHoldTimer();
   
-  // Update durationMin from the input field
-  match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
-  // Then set remaining seconds based on the updated duration
-  match.remainingSec = match.durationMin * 60;
-  updateTimerDisplay();
+  // Log the reset
+  pushLog('System', 'Timer Reset', `Match timer reset to ${match.durationMin} minutes`);
 }
 function endMatch() {
   const confirmEnd = confirm('End match now?');
@@ -757,7 +772,6 @@ function endMatch() {
   </div>
 `);
       w.document.write('</div>');
-      w.document.write('</div>');
       w.document.write('<h3>Summary</h3>');
       w.document.write('<ul>');
       w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
@@ -781,33 +795,6 @@ setTimeout(() => {
 }, 350);
     }
 
-    /* Stage mode toggle: hide operator-like controls for audience */
-    let stageMode = false;
-    function toggleStageMode() {
-      stageMode = !stageMode;
-//      const controls = document.querySelectorAll('.btn-score, .operator-panel, .card-surface .btn-outline-light, #stageToggle');
-      // We'll hide operator area by hiding the operator actions only (we kept layout fields)
-//      const operatorPanel = document.querySelector('.operator-panel');
-      // We used individual buttons - easier: hide action button groups (they are in fighter boxes)
-      const actionButtons = document.querySelectorAll('.fighter-box .btn-score, .fighter-box .btn-light, .fighter-box .btn-outline-danger, .fighter-box .btn-outline-warning');
-      if (stageMode) {
-        // hide buttons and log controls to keep pure scoreboard
-        actionButtons.forEach(b => b.style.display = 'none');
-        document.querySelectorAll('.card-surface > .d-flex .btn, .card-surface .export-btn').forEach(x => x.style.display = 'none');
-        document.getElementById('stageToggle').textContent = '🔧 Operator Mode';
-        // optionally go fullscreen
-document.documentElement.requestFullscreen()
-  .catch(e => console.warn('Fullscreen request failed:', e));
-      } else {
-        actionButtons.forEach(b => b.style.display = 'inline-block');
-        document.querySelectorAll('.card-surface > .d-flex .btn, .card-surface .export-btn').forEach(x => x.style.display = 'inline-block');
-        document.getElementById('stageToggle').textContent = '🎥 Stage Mode';
-if (document.fullscreenElement) {
-  document.exitFullscreen().catch(e => console.warn('Exit fullscreen failed:', e));
-}
-      }
-    }
-
     /* fullscreen helper */
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
@@ -823,29 +810,30 @@ if (document.fullscreenElement) {
       
       if (match.holdTimer.active) {
         display.style.display = 'block';
-        timeDisplay.textContent = match.holdTimer.remainingSec;
+        const elapsedSeconds = match.holdTimer.elapsedSec || 0;
+        timeDisplay.textContent = elapsedSeconds;
         const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
         const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
         const holdType = match.holdTimer.type === 'waza-ari' ? ' (after Waza-ari)' : '';
         playerDisplay.textContent = `${playerColor} (${playerName})${holdType}`;
         
-        // Change color based on time remaining and timer type
-        const warningThreshold = match.holdTimer.type === 'waza-ari' ? 3 : 5;
-        const cautionThreshold = match.holdTimer.type === 'waza-ari' ? 5 : 10;
+        // Change color based on time elapsed and timer type
+        const warningThreshold = match.holdTimer.type === 'waza-ari' ? 7 : 15; // 7s for waza-ari (10s total), 15s for normal (20s total)
+        const cautionThreshold = match.holdTimer.type === 'waza-ari' ? 5 : 10;  // 5s for waza-ari, 10s for normal
         
-        if (match.holdTimer.remainingSec <= warningThreshold) {
+        if (elapsedSeconds >= warningThreshold) {
           timeDisplay.style.color = '#ff4444'; // Red for final seconds
-        } else if (match.holdTimer.remainingSec <= cautionThreshold) {
+        } else if (elapsedSeconds >= cautionThreshold) {
           timeDisplay.style.color = '#ffaa00'; // Orange for caution
         } else {
-          timeDisplay.style.color = '#ffd700'; // Gold for normal time
+          timeDisplay.style.color = '#00ff00'; // Green for normal time
         }
       } else {
         display.style.display = 'none';
       }
     }
 
-    function startHoldTimer(player, duration = 20, type = 'normal') {
+    function startHoldTimer(player) {
       // Check if match is running
       if (!match.running) {
         alert('Please start the match timer before starting hold timer.');
@@ -857,73 +845,136 @@ if (document.fullscreenElement) {
         clearInterval(match.holdTimer.timerId);
       }
 
+      // Determine duration: 10s if player has previous waza-ari, else 20s
+      let duration = 20;
+      let type = 'normal';
+      if ((player === 'A' && match.fighterA.waza > 0) || (player === 'B' && match.fighterB.waza > 0)) {
+        duration = 10;
+        type = 'waza-ari';
+      }
+
       // Initialize hold timer
-      match.holdTimer.active = true;
-      match.holdTimer.player = player;
-      match.holdTimer.remainingSec = duration;
-      match.holdTimer.type = type;
-      
+      match.holdTimer = {
+        active: true,
+        player: player,
+        elapsedSec: 0,
+        duration: duration,
+        type: type,
+        timerId: null
+      };
+
       const playerName = player === 'A' ? match.fighterA.name : match.fighterB.name;
       const playerColor = player === 'A' ? 'White' : 'Blue';
       const holdTypeText = type === 'waza-ari' ? ' (after Waza-ari)' : '';
-      
-      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName} - ${duration}s`);
-      
+
+      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName}`);
+
       // Update display immediately
       updateHoldTimerDisplay();
-      
-      // Start countdown
+
+      // Start count-up timer
       match.holdTimer.timerId = setInterval(() => {
-        match.holdTimer.remainingSec--;
+        match.holdTimer.elapsedSec++;
         updateHoldTimerDisplay();
-        
+
         // Check if hold timer completed
-        if (match.holdTimer.remainingSec <= 0) {
+        if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
           completeHoldTimer();
         }
       }, 1000);
     }
 
-    function completeHoldTimer() {
-      const player = match.holdTimer.player;
-      const fighter = player === 'A' ? match.fighterA : match.fighterB;
-      const playerColor = player === 'A' ? 'White' : 'Blue';
-      const holdType = match.holdTimer.type;
-      const duration = holdType === 'waza-ari' ? '10-second' : '20-second';
-      const holdTypeText = holdType === 'waza-ari' ? ' after Waza-ari' : '';
-      
-      // Stop timer
-      clearInterval(match.holdTimer.timerId);
-      match.holdTimer.active = false;
-      
-      // Award Ippon
-      fighter.ippon = 1;
-      match.winnerName = fighter.name;
-      
-      pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
-      showBigCard(player, 'yellow', 'IPPON');
-      
-      // Update display
-      updateHoldTimerDisplay();
-      refreshUI();
-    }
+   function completeHoldTimer() {
+     const player = match.holdTimer.player;
+     const fighter = player === 'A' ? match.fighterA : match.fighterB;
+     const playerColor = player === 'A' ? 'White' : 'Blue';
+     const holdType = match.holdTimer.type;
+     const duration = holdType === 'waza-ari' ? '10-second' : '20-second';
+     const holdTypeText = holdType === 'waza-ari' ? ' after Waza-ari' : '';
 
-    function stopHoldTimer() {
-      if (match.holdTimer.active) {
-        clearInterval(match.holdTimer.timerId);
-        const playerName = match.holdTimer.player === 'A' ? match.fighterA.name : match.fighterB.name;
-        const playerColor = match.holdTimer.player === 'A' ? 'White' : 'Blue';
-        const holdTypeText = match.holdTimer.type === 'waza-ari' ? ' (after Waza-ari)' : '';
-        
-        pushLog('System', 'Hold Timer Stop', `${playerColor} hold timer${holdTypeText} stopped for ${playerName}`);
-        
-        match.holdTimer.active = false;
-        match.holdTimer.player = null;
-        match.holdTimer.remainingSec = 20;
-        match.holdTimer.type = 'normal';
-        updateHoldTimerDisplay();
+     clearInterval(match.holdTimer.timerId);
+     match.holdTimer.active = false;
+
+     fighter.ippon = 1;
+     match.winnerName = fighter.name;
+
+     pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
+     showBigCard(player, 'yellow', 'IPPON');
+
+     stopMainTimer();
+
+     updateHoldTimerDisplay();
+     refreshUI();
+   }
+
+function stopHoldTimer() {
+  if (!match.holdTimer.active) return;
+
+  clearInterval(match.holdTimer.timerId);
+
+  const elapsed = match.holdTimer.elapsedSec || 0;
+  const player = match.holdTimer.player;
+  const fighter = player === 'A' ? match.fighterA : match.fighterB;
+  const opp = player === 'A' ? match.fighterB : match.fighterA;
+  const playerName = fighter.name;
+  const playerColor = player === 'A' ? 'White' : 'Blue';
+
+  let awarded = 'No Score';
+
+  if (elapsed >= 20) {
+    // IPPON
+    fighter.ippon = 1;
+    match.winnerName = fighter.name;
+    showBigCard(player, 'yellow', 'IPPON');
+    awarded = 'Ippon';
+    stopMainTimer();
+  } else if (elapsed >= 10) {
+    // WAZA-ARI
+    fighter.waza += 1;
+   if (fighter.waza >= 2) {
+     fighter.waza = 0; // Reset Waza-ari count
+     fighter.ippon = 1;
+     match.winnerName = fighter.name;
+     showBigCard(player, 'yellow', 'IPPON');
+     awarded = 'Waza-ari Awasete Ippon';
+     stopMainTimer();
+   } else {
+     showBigCard(player, 'white', 'WAZA-ARI');
+     awarded = 'Waza-ari';
+   }
+
+  } else if (elapsed >= 5) {
+    // YUKO
+    fighter.yuko += 1;
+    showBigCard(player, 'white', 'YUKO');
+    awarded = 'Yuko';
+  }
+
+  pushLog(
+    'System',
+    'Hold Timer Stop',
+    `${playerColor} (${playerName}) hold stopped at ${elapsed}s → ${awarded}`
+  );
+
+  match.holdTimer.active = false;
+  match.holdTimer.player = null;
+  match.holdTimer.elapsedSec = 0;
+  match.holdTimer.type = 'normal';
+
+  updateHoldTimerDisplay();
+  refreshUI();
+}
+
+
+    function stopMainTimer() {
+      if (match.running && match.timerId) {
+        clearInterval(match.timerId);
+        match.running = false;
+        document.getElementById('startBtn').textContent = 'Start';
+        pushLog('System', 'Timer Stop', 'Main timer stopped (Ippon / match end)');
       }
     }
+
 
     function startHoldWhite() {
       startHoldTimer('A');
@@ -931,14 +982,6 @@ if (document.fullscreenElement) {
 
     function startHoldBlue() {
       startHoldTimer('B');
-    }
-
-    function startHoldWhiteAfterWazaAri() {
-      startHoldTimer('A', 10, 'waza-ari');
-    }
-
-    function startHoldBlueAfterWazaAri() {
-      startHoldTimer('B', 10, 'waza-ari');
     }
 
     // Make functions and match object available globally
@@ -953,7 +996,5 @@ if (document.fullscreenElement) {
     window.savePdf = savePdf;
     window.startHoldWhite = startHoldWhite;
     window.startHoldBlue = startHoldBlue;
-    window.startHoldWhiteAfterWazaAri = startHoldWhiteAfterWazaAri;
-    window.startHoldBlueAfterWazaAri = startHoldBlueAfterWazaAri;
     window.stopHoldTimer = stopHoldTimer;
     window.match = match; // Expose match object for Firebase sync
