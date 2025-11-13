@@ -255,17 +255,17 @@ function renderSmallCards() {
     /* Shido pointer animation removed - unused in current UI */
 
     /* scoring logic */
-function doTechnique(side, tech) {
+function doTechnique(side, tech, detail) {
   if (!isActionAllowed()) return;
 
   const f = side === 'A' ? match.fighterA : match.fighterB;
   const opp = side === 'A' ? match.fighterB : match.fighterA;
 
   const actions = {
-    Ippon: () => handleIppon(f, side),
-    Waza: () => handleWaza(f, side),
-    Yuko: () => handleYuko(f, side),
-    Shido: () => handleShido(f, opp, side)
+    Ippon: () => handleIppon(f, side, detail),
+    Waza: () => handleWaza(f, side, detail),
+    Yuko: () => handleYuko(f, side, detail),
+    Shido: () => handleShido(f, opp, side, detail)
   };
 
   const action = actions[tech];
@@ -276,10 +276,10 @@ function doTechnique(side, tech) {
 
 /* ---------- Helper functions ---------- */
 
-function handleIppon(f, side) {
+function handleIppon(f, side, detail) {
   if (f.ippon >= 1) return; // already has ippon
   f.ippon = 1;
-  pushLog(f.name, 'Ippon', `${f.name} awarded Ippon`);
+  pushLog(f.name, 'Ippon', `${f.name} awarded Ippon${detail ? ' by ' + detail : ''}`);
   match.winnerName = f.name;
   showBigCard(side, 'yellow', 'IPPON');
 
@@ -287,10 +287,10 @@ function handleIppon(f, side) {
 }
 
 
-function handleWaza(f, side) {
+function handleWaza(f, side, detail) {
   if (f.ippon >= 1) return; // already has ippon
   f.waza += 1;
-  pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})`);
+  pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'WAZA-ARI');
 
   if (f.waza >= 2) {
@@ -298,22 +298,22 @@ function handleWaza(f, side) {
     f.waza = 0;
     f.ippon = 1;
     match.winnerName = f.name;
-    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari → Ippon`);
+    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari → Ippon${detail ? ' by ' + detail : ''}`);
     showBigCard(side, 'yellow', 'IPPON');
     stopMainTimer();
   }
 }
 
 
-function handleYuko(f, side) {
+function handleYuko(f, side, detail) {
   f.yuko += 1;
-  pushLog(f.name, 'Yuko', `${f.name} awarded Yuko`);
+  pushLog(f.name, 'Yuko', `${f.name} awarded Yuko${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'YUKO');
 }
 
-function handleShido(f, opp, side) {
+function handleShido(f, opp, side, detail) {
   f.shido += 1;
-  pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido`);
+  pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido${detail ? ' (Reason: ' + detail + ')' : ''}`);
   
   // Determine card color based on shido count
   let cardColor, cardText, statusText;
@@ -322,7 +322,7 @@ function handleShido(f, opp, side) {
     // 3rd shido = Red card (Hansoku-make)
     cardColor = 'red';
     cardText = 'HANSOKU';
-    pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})`);
+    pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})${detail ? ' (Reason: ' + detail + ')' : ''}`);
     match.winnerName = opp.name;
   } else {
     // 1st and 2nd shido = Yellow card
@@ -781,7 +781,7 @@ function endMatch() {
       w.document.write('<h3>Events</h3>');
       w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
       match.log.forEach(it => {
-        w.document.write(`<tr><td>${it.t}</td><td>${escapeHtml(it.actor)}</td><td>${escapeHtml(it.action)}</td><td>${escapeHtml(it.info)}</td></tr>`);
+        w.document.write(`<tr><td>${it.t}</td><td>${escape(it.actor)}</td><td>${escape(it.action)}</td><td>${escape(it.info)}</td></tr>`);
       });
       w.document.write('</tbody></table>');
       w.document.write('</body></html>');
@@ -1045,7 +1045,7 @@ function stopHoldTimer() {
       const select = document.getElementById(`techniqueSelect${side}`);
       const value = select.value;
       if (!value) return alert("Select a technique first.");
-      doTechnique(side, "Waza"); // all listed moves → Waza-ari
+//      doTechnique(side, "Waza", value); // all listed moves → Waza-ari
       pushLog(
         match[`fighter${side}`].name,
         "Technique",
@@ -1058,7 +1058,7 @@ function stopHoldTimer() {
       const select = document.getElementById(`penaltySelect${side}`);
       const value = select.value;
       if (!value) return alert("Select a penalty reason.");
-      doTechnique(side, "Shido");
+//      doTechnique(side, "Shido", value);
       pushLog(
         match[`fighter${side}`].name,
         "Penalty",
