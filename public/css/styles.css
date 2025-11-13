@@ -263,32 +263,32 @@
         /* big card overlays per fighter (pop in place) */
         .big-card {
           position: absolute;
-          top: 40%;
-          left: 60%;
-          transform: translate(-50%, -50%) scale(.8);
-          z-index: 500;
+          bottom: 230px; /* ✅ move below score grid */
+          left: 50%;
+          transform: translateX(-50%) scale(.9);
+          z-index: 10; /* ✅ lower z-index to stay behind score labels */
           pointer-events: none;
-          border-radius: 12px;
-          padding: 22px 28px;
-          font-weight: 980;
-          font-size: 14px;
+          border-radius: 10px;
+          padding: 14px 22px;
+          font-weight: 900;
+          font-size: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
           opacity: 0;
-          box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
         }
 
         .big-card.show {
           opacity: 1;
-          transform: translate(-50%, -50%) scale(1);
-          transition: all .18s ease-out;
+          transform: translateX(-50%) scale(1);
+          transition: all 0.18s ease-out;
         }
 
         .big-card.hide {
           opacity: 0;
-          transform: translate(-50%, -50%) scale(.85);
-          transition: all .18s ease-in;
+          transform: translateX(-50%) scale(0.95);
+          transition: all 0.18s ease-in;
         }
 
         .big-card.yellow {
