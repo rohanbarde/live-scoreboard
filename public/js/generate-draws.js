@@ -104,7 +104,7 @@ class TournamentDraw {
         weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : null
       };
       
-      console.log(`Created match ${match.id}: ${playerA?.fullName || 'BYE'} vs ${playerB?.fullName || 'BYE'}`);
+//      console.log(`Created match ${match.id}: ${playerA?.fullName || 'BYE'} vs ${playerB?.fullName || 'BYE'}`);
       firstRoundMatches.push(match);
     }
     
