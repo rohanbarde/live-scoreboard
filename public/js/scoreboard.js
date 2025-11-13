@@ -745,7 +745,7 @@ function endMatch() {
   w.document.write('<img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;justify-self:start;">');
   w.document.write('<div style="display:flex;flex-direction:column;align-items:center;width:100%;">');
   w.document.write('<img src="/public/assets/punit%20p.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;margin-bottom:8px;">');
-  w.document.write('<h1 style="font-size:1.6rem;font-weight:700;line-height:1.2;text-align:center;margin:0;">52th JUNIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI</h1>');
+  w.document.write('<h1 style="font-size:1.6rem;font-weight:700;line-height:1.2;text-align:center;margin:0;">52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI</h1>');
   w.document.write('</div>');
   w.document.write('<img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;justify-self:end;">');
   w.document.write('</div>');
