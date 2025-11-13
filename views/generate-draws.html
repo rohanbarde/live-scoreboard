@@ -239,6 +239,56 @@
                 width: 100%;
             }
         }
+        .draw-player-card {
+            background: var(--light-gray);
+            border-radius: 6px;
+            padding: 8px 10px;
+            min-width: 120px;
+            max-width: 180px;
+            text-align: center;
+            margin: 4px auto;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .draw-player-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .draw-player-name {
+            font-weight: 600;
+            font-size: 13.5px;
+            color: var(--text-color);
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .draw-player-club {
+            font-size: 12px;
+            color: #6c757d;
+            opacity: 0.9;
+            line-height: 1.1;
+        }
+        .match-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 12px 0;
+        }
+
+        .vs-label {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary-color);
+            background: #f0f4ff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
     </style>
 </head>
 <body>
@@ -273,9 +323,14 @@
                 </select>
             </div>
             <div class="filter-group">
-                <button id="generateDrawBtn" class="btn btn-primary">
-                    <i class="fas fa-random"></i> Generate Draw
-                </button>
+                <div style="display:flex; gap:10px; align-items:flex-end;">
+                    <button id="generateDrawBtn" class="btn btn-primary">
+                        <i class="fas fa-random"></i> Generate Draw
+                    </button>
+                    <button id="shufflePlayersBtn" class="btn btn-outline">
+                        <i class="fas fa-shuffle"></i> Shuffle Players
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -314,5 +369,56 @@
     <!-- Firebase config and initialization -->
     <script src="../public/js/firebase.js"></script>
     <script src="../public/js/generate-draws.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const shuffleBtn = document.getElementById("shufflePlayersBtn");
+            const playersList = document.getElementById("playersList");
+
+            // Function to shuffle an array (Fisher-Yates)
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            shuffleBtn.addEventListener("click", () => {
+                const playerCards = Array.from(playersList.querySelectorAll(".player-card"));
+                if (playerCards.length <= 1) return; // nothing to shuffle
+
+                // Add shuffle animation class
+                playersList.style.transition = "transform 0.4s ease";
+                playersList.style.transform = "rotate(2deg) scale(0.98)";
+                shuffleBtn.disabled = true;
+                shuffleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Shuffling...';
+
+                setTimeout(() => {
+                    playersList.style.transform = "rotate(0deg) scale(1)";
+
+                    // Shuffle DOM elements
+                    const shuffled = shuffleArray(playerCards);
+                    playersList.innerHTML = "";
+                    shuffled.forEach(card => playersList.appendChild(card));
+
+                    // Add fade-in animation
+                    playersList.querySelectorAll(".player-card").forEach((card, index) => {
+                        card.style.opacity = 0;
+                        card.style.transform = "translateY(10px)";
+                        setTimeout(() => {
+                            card.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+                            card.style.opacity = 1;
+                            card.style.transform = "translateY(0)";
+                        }, 80 * index);
+                    });
+
+                    shuffleBtn.disabled = false;
+                    shuffleBtn.innerHTML = '<i class="fas fa-shuffle"></i> Shuffle Players';
+                }, 600);
+            });
+        });
+    </script>
+
 </body>
 </html>
