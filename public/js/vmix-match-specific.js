@@ -115,7 +115,7 @@ function setupEnhancedFirebaseListener() {
             return;
         }
         
-        console.log('Enhanced Firebase update received:', data);
+//        console.log('Enhanced Firebase update received:', data);
         
         // Update Fighter A SHIDO cards
         if (data.fighterA && data.fighterA.shido !== undefined) {
