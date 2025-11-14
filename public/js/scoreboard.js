@@ -986,19 +986,81 @@ function stopHoldTimer() {
     /* ---------------- Technique and Penalty Dropdowns ---------------- */
 
     // Data extracted from Excel (trimmed to key examples)
-    const judoTechniques = [
-      { name: "SEOI-NAGE", code: "SON" },
-      { name: "IPPON-SEOI-NAGE", code: "ISN" },
-      { name: "SEOI-OTOSHI", code: "SOO" },
-      { name: "TAI-OTOSHI", code: "TOS" },
-      { name: "KATA-GURUMA", code: "KGU" },
-      { name: "UCHI-MATA", code: "UMA" },
-      { name: "HARAI-GOSHI", code: "HGO" },
-      { name: "O-GOSHI", code: "OGO" },
-      { name: "SASAE-TSURIKOMI-ASHI", code: "STA" },
-      { name: "KO-SOTO-GARI", code: "KSG" },
-      // ... add more as needed
-    ];
+   const judoTechniques = [
+         "ASHI-GURUMA",
+         "ASHI-UCHI-MATA",
+         "AWASE-GAESHI",
+         "DE-ASHI-BARAI",
+         "DO-JIME",
+         "GOSHI-GURUMA",
+         "HARAI-GOSHI",
+         "HARAI-TSURI-KOMI-ASHI",
+         "HARAI-TSURIKOMI-ASHI",
+         "HANE-GOSHI",
+         "HANE-MAKIKOMI",
+         "HIKIKOMI-GAESHI",
+         "HIZA-GURUMA",
+         "KATA-GATAME",
+         "KATA-GURUMA",
+         "KATA-HAJIME",
+         "KATA-MAKIKOMI",
+         "KAWAZU-GAKE",
+         "KO-SHIHO-GATAME",
+         "KO-SOTO-GAKE",
+         "KO-SOTO-GARI",
+         "KO-SOTO-GURUMA",
+         "KO-SOTO-MAKIKOMI",
+         "KO-UCHI-GARI",
+         "KO-UCHI-GAESHI",
+         "KOSHI-GURUMA",
+         "KUZURE-KESA-GATAME",
+         "KUZURE-KAMI-SHIHO-GATAME",
+         "KUZURE-TATE-SHIHO-GATAME",
+         "MAKIKOMI",
+         "MAKURA-KESA-GATAME",
+         "MAKURA-KESA-GATAME",
+         "OBI-GOSHI",
+         "OKURI-ERI-JIME",
+         "OKURI-ASHI-BARAI",
+         "OSAE-KOMI",
+         "OSOTO-GARI",
+         "OSOTO-GURUMA",
+         "OSOTO-MAKIKOMI",
+         "OSOTO-OTOSHI",
+         "OUCHI-GARI",
+         "OUCHI-GAESHI",
+         "RENRAKU-WAZA",
+         "SANKAKU-GATAME",
+         "SANKAKU-JIME",
+         "SANKAKU-OTOSHI",
+         "SODE-GURUMA-JIME",
+         "SODE-TSURIKOMI-GOSHI",
+         "SOTO-MAKIKOMI",
+         "SUMI-GAESHI",
+         "SUMI-OTOSHI",
+         "TAI-OTOSHI",
+         "TANI-OTOSHI",
+         "TATE-SHIHO-GATAME",
+         "TOMOE-NAGE",
+         "TSURI-GOSHI",
+         "TSURIKOMI-GOSHI",
+         "UCHI-MAKIKOMI",
+         "UCHI-MATA",
+         "UCHI-MATA-GAESHI",
+         "UKI-GOSHI",
+         "UKI-OTSHI",
+         "URA-NAGE",
+         "USHIRO-GOSHI",
+         "UTSURI-GOSHI",
+         "YOKO-GAKE",
+         "YOKO-GURUMA",
+         "YOKO-SHIHO-GATAME",
+         "YOKO-SUMI-GAESHI",
+         "YOKO-TOMOE-NAGE",
+         "YOKO-WAKARE",
+         "YUDAN",
+         "ZEMPO-KAITEN-UKEMI"
+       ].sort();
 
     const judoPenalties = [
       "ACTION AGAINST SPIRIT OF JUDO",
@@ -1061,8 +1123,8 @@ function stopHoldTimer() {
         if (techSelect) {
           judoTechniques.forEach(t => {
             const opt = document.createElement("option");
-            opt.value = t.name;
-            opt.textContent = `${t.name} (${t.code})`;
+            opt.value = t;
+            opt.textContent = t;
             techSelect.appendChild(opt);
           });
         }
