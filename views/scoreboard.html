@@ -181,7 +181,6 @@
                     <!-- Utility Controls -->
                     <div class="d-grid gap-1">
                         <button class="btn btn-sm btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
-                        <button class="btn btn-sm btn-outline-light" onclick="resetMatch()">Reset Match</button>
                     </div>
                 </div>
             </div>
@@ -340,7 +339,7 @@
 // Function to get URL parameters
 function getUrlParams() {
     const params = new URLSearchParams(window.location.search);
-    console.log('URL Parameters:', Object.fromEntries(params.entries()));
+<!--    console.log('URL Parameters:', Object.fromEntries(params.entries()));-->
     return {
         fighterAName: params.get('fighterAName') || '',
         fighterBName: params.get('fighterBName') || '',
@@ -356,7 +355,7 @@ function getUrlParams() {
 function autoFillPlayerInfo() {
     try {
         const params = getUrlParams();
-        console.log('Auto-filling player info with:', params);
+<!--        console.log('Auto-filling player info with:', params);-->
         
         // Set player names
         const nameAInput = document.getElementById('nameA');

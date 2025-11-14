@@ -78,7 +78,7 @@ class TournamentDraw {
 
   // Create bracket based on number of players
   createBracket(players) {
-    console.log('Creating bracket with players:', players);
+//    console.log('Creating bracket with players:', players);
     const matches = [];
     const numPlayers = players.length;
     let round = 1;
@@ -186,54 +186,75 @@ class TournamentDraw {
 }
 
 // Initialize the application
+<script>
 document.addEventListener('DOMContentLoaded', () => {
-    try {
-        // Initialize Firebase
-        const firebaseConfig = window.firebaseConfig;
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        database = firebase.database();
-        
-        // Initialize TournamentDraw
-        tournamentDraw = new TournamentDraw();
-        
-        // Load players
-        loadPlayers();
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Set up generate draw button
-        if (generateDrawBtn) {
-          generateDrawBtn.addEventListener('click', async () => {
-            try {
+  const shuffleBtn = document.getElementById('shufflePlayersBtn');
+  const shuffleAnim = document.getElementById('shuffleAnimation');
+  const playersList = document.getElementById('playersList');
 
-              generateDrawBtn.disabled = true;
-              const originalText = generateDrawBtn.innerHTML;
-              generateDrawBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Drawing...';
+  if (!shuffleBtn || !playersList) {
+    console.warn('Shuffle button or player list not found.');
+    return;
+  }
 
-              // Run animated draw
-              await animateGenerateDraw();
+  shuffleBtn.addEventListener('click', () => {
+    // Try to detect players dynamically — supports async loading
+    let playerItems = Array.from(playersList.querySelectorAll('.player-card, .player-item'));
 
-              // optionally re-enable and restore text
-              generateDrawBtn.disabled = false;
-              generateDrawBtn.innerHTML = originalText;
-            } catch (error) {
-              console.error('Error during animated draw:', error);
-              if (generateDrawBtn) {
-                generateDrawBtn.disabled = false;
-                generateDrawBtn.innerHTML = originalText;
-              }
-            }
-          });
-        }
-
-    } catch (error) {
-        console.error('Error initializing application:', error);
-        showError('Failed to initialize the application. Please check your internet connection.');
+    // Try fallback: if players rendered inside another element
+    if (playerItems.length === 0) {
+      const allDivs = Array.from(document.querySelectorAll('#playersList div'));
+      playerItems = allDivs.filter(div =>
+        div.textContent.trim().length > 0 &&
+        !div.classList.contains('no-players')
+      );
     }
+
+    console.log('Detected players:', playerItems.length, playerItems);
+
+    if (playerItems.length === 0) {
+      alert('No players to shuffle.');
+      return;
+    }
+
+    // Show overlay spinner
+    shuffleAnim.style.display = 'flex';
+    const overlayText = shuffleAnim.querySelector('.mt-3');
+    overlayText.textContent = 'Shuffling Players...';
+
+    // Wait a moment for visual effect
+    setTimeout(() => {
+      // Fisher–Yates shuffle
+      for (let i = playerItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playerItems[i], playerItems[j]] = [playerItems[j], playerItems[i]];
+      }
+
+      // Clear and re-render shuffled list
+      playersList.innerHTML = '';
+      playerItems.forEach(card => {
+        card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        playersList.appendChild(card);
+      });
+
+      // Animate back in
+      playerItems.forEach((card, index) => {
+        setTimeout(() => {
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+
+      // Hide overlay after animation
+      setTimeout(() => {
+        shuffleAnim.style.display = 'none';
+      }, playerItems.length * 120 + 700);
+    }, 600);
+  });
 });
+</script>
 
 // Load players from Firebase
 function loadPlayers() {
@@ -260,7 +281,7 @@ function loadPlayers() {
             }
         });
         
-        console.log('Loaded players:', players);
+//        console.log('Loaded players:', players);
         console.log('Available weights:', Array.from(weights));
         
         // Update weight filter
