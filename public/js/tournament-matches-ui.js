@@ -327,14 +327,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            console.log('Found match:', match);
+//            console.log('Found match:', match);
             
             // Get player details with debug logging
             const playerA = tournamentDraw.players.find(p => p.id === match.playerA);
             const playerB = tournamentDraw.players.find(p => p.id === match.playerB);
             
-            console.log('Player A:', playerA);
-            console.log('Player B:', playerB);
+//            console.log('Player A:', playerA);
+//            console.log('Player B:', playerB);
             
             // Create URL parameters for the scoreboard
             const params = new URLSearchParams();
@@ -367,11 +367,11 @@ document.addEventListener('DOMContentLoaded', () => {
             params.append('matchNumber', `Match ${match.id.slice(0, 4)}`);
             params.append('round', getRoundName(match.round, 5));
             
-            console.log('URL Params:', params.toString());
+//            console.log('URL Params:', params.toString());
             
             // Open scoreboard in a new tab with match data
             const scoreboardUrl = `/views/scoreboard.html?${params.toString()}`;
-            console.log('Opening URL:', scoreboardUrl);
+//            console.log('Opening URL:', scoreboardUrl);
             window.open(scoreboardUrl, '_blank');
             
             // Mark match as started

@@ -734,58 +734,61 @@ function endMatch() {
     /* Save to PDF (open print) */
     function savePdf() {
   const w = window.open('', '_blank');
-//  const matchNumber = document.getElementById("matchNumber").value;
-<!--  const matchTime = document.getElementById("matchTime").value;-->
   const weightCategory = document.getElementById("weightCategory").value;
   const matNumber = document.getElementById("matNumber").value;  // Get mat number
 
   w.document.write('<html><head><title>Match Report</title>');
   w.document.write('<style>@media print { body, .card-pill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style>');
   w.document.write('</head><body style="font-family:Arial;color:#000;padding:18px">');
-  w.document.write(`<h2>JUDO BHARAT — Match Report</h2>`);
-  const escape = window.escapeHtml || (s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;'));
-  
+  // HEADER: match scoreboard style (exact match, flex)
+  w.document.write('<div style="background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 4px 14px rgba(0,0,0,0.2);margin-bottom:14px;">');
+  w.document.write('<div style="display:flex;align-items:center;justify-content:center;gap:44px;">');
+  w.document.write('<img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">');
+  w.document.write('<img src="/public/assets/punitBalan.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">');
+  w.document.write('<img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">');
+  w.document.write('</div>');
+  w.document.write('<h1 style="font-size:1.5rem;font-weight:700;line-height:1.3;text-align:center;color:#000;margin:16px 0 0 0;">');
+  w.document.write('52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI');
+  w.document.write('</h1>');
+  w.document.write('</div>');
   w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
-  if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${escape(weightCategory)}</p>`);
-  if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${escape(matNumber)}</p>`);
+  if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${weightCategory}</p>`);
+  if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${matNumber}</p>`);
 
-<!--      w.document.write('<h3>Players</h3>');-->
-<!--      w.document.write(`<p><strong>A:</strong> ${escapeHtml(match.fighterA.name)} — ${escapeHtml(match.fighterA.club)} — ${escapeHtml(match.fighterA.weight)}</p>`);-->
-<!--      w.document.write(`<p><strong>B:</strong> ${escapeHtml(match.fighterB.name)} — ${escapeHtml(match.fighterB.club)} — ${escapeHtml(match.fighterB.weight)}</p>`);-->
-      // In savePdf(), replace the Status Point Cards & Points section with:
-      w.document.write('<h3>Status Point Cards & Points</h3>');
-      w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
-      w.document.write(`
+  w.document.write('<h3>Status Point Cards & Points</h3>');
+  w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
+  w.document.write(`
   <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;">
 <!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterA.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${escape(match.fighterA.name)} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${escape(match.fighterA.club)})</span></div>
+<div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
 
     ${renderCardPills(match.fighterA.shido)}
     ${renderPointsGrid(match.fighterA)}
   </div>
   <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;">
 <!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterB.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${escape(match.fighterB.name)} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${escape(match.fighterB.club)})</span></div>
+<div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
 
     ${renderCardPills(match.fighterB.shido)}
     ${renderPointsGrid(match.fighterB)}
   </div>
 `);
-      w.document.write('</div>');
-      w.document.write('<h3>Summary</h3>');
-      w.document.write('<ul>');
-      w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
-      w.document.write(`<li>B — Ippon: ${match.fighterB.ippon}, Waza-ari: ${match.fighterB.waza}, Yuko: ${match.fighterB.yuko}, Shido: ${match.fighterB.shido}</li>`);
-      w.document.write('</ul>');
-      w.document.write(`<p><strong>Winner:</strong> ${escape(match.winnerName || '—')}</p>`);
-      w.document.write('<h3>Events</h3>');
-      w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
-      match.log.forEach(it => {
-        w.document.write(`<tr><td>${it.t}</td><td>${escape(it.actor)}</td><td>${escape(it.action)}</td><td>${escape(it.info)}</td></tr>`);
-      });
-      w.document.write('</tbody></table>');
-      w.document.write('</body></html>');
-      w.document.close();
+  w.document.write('</div>');
+  w.document.write('<h3>Summary</h3>');
+  w.document.write('<ul>');
+  w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
+  w.document.write(`<li>B — Ippon: ${match.fighterB.ippon}, Waza-ari: ${match.fighterB.waza}, Yuko: ${match.fighterB.yuko}, Shido: ${match.fighterB.shido}</li>`);
+  w.document.write('</ul>');
+  w.document.write(`<div style="margin:18px 0 8px 0;"><strong style="font-size:2.2rem;color:#0b2a8a;letter-spacing:1px;">Winner: ${match.winnerName || '—'}</strong></div>`);
+  w.document.write('<h3>Events</h3>');
+  w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
+  match.log.forEach(it => {
+    w.document.write(`<tr><td>${it.t}</td><td>${it.actor}</td><td>${it.action}</td><td>${it.info}</td></tr>`);
+  });
+  w.document.write('</tbody></table>');
+  w.document.write('<footer style="margin-top:36px;font-size:1.09rem;text-align:center;color:#222;opacity:0.82;letter-spacing:1px;padding:8px 0;">MAHAJUDO &copy; BLACKTROUNCE STUDIO</footer>');
+  w.document.write('</body></html>');
+  w.document.close();
 setTimeout(() => {
   try {
     w.print();
