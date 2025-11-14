@@ -46,10 +46,6 @@
 
     // Function to check if action is allowed (only when timer is running)
     function isActionAllowed() {
-      if (!match.running) {
-        alert('Please start the timer before performing any actions.');
-        return false;
-      }
       return true;
     }
 
@@ -256,8 +252,6 @@ function renderSmallCards() {
 
     /* scoring logic */
 function doTechnique(side, tech, detail) {
-  if (!isActionAllowed()) return;
-
   const f = side === 'A' ? match.fighterA : match.fighterB;
   const opp = side === 'A' ? match.fighterB : match.fighterA;
 
@@ -338,7 +332,6 @@ function handleShido(f, opp, side, detail) {
     /* red card manual */
     function giveRedCard(side) {
       // Check if timer is running
-      if (!isActionAllowed()) return;
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
       pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
@@ -350,8 +343,6 @@ function handleShido(f, opp, side, detail) {
 
     /* undo last action for a side */
 function undoLast(side) {
-  if (!isActionAllowed()) return;
-
   const fighter = side === 'A' ? match.fighterA : match.fighterB;
   const fighterName = fighter.name;
   const lastActionIndex = findLastActionIndex(fighterName);
@@ -839,12 +830,6 @@ setTimeout(() => {
     }
 
     function startHoldTimer(player) {
-      // Check if match is running
-      if (!match.running) {
-        alert('Please start the match timer before starting hold timer.');
-        return;
-      }
-
       // Stop any existing hold timer
       if (match.holdTimer.active) {
         clearInterval(match.holdTimer.timerId);
@@ -872,7 +857,11 @@ setTimeout(() => {
       const playerColor = player === 'A' ? 'White' : 'Blue';
       const holdTypeText = type === 'waza-ari' ? ' (after Waza-ari)' : '';
 
-      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName}`);
+      pushLog(
+        'System',
+        'Hold Timer Start',
+        `${playerColor} hold timer${holdTypeText} started for ${playerName}`
+      );
 
       // Update display immediately
       updateHoldTimerDisplay();
