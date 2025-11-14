@@ -736,6 +736,7 @@ function endMatch() {
   const w = window.open('', '_blank');
   const weightCategory = document.getElementById("weightCategory").value;
   const matNumber = document.getElementById("matNumber").value;  // Get mat number
+  const matchNumber = document.getElementById("matchNumber").value;  // Get match number
 
   w.document.write('<html><head><title>Match Report</title>');
   w.document.write('<style>@media print { body, .card-pill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style>');
@@ -754,6 +755,7 @@ function endMatch() {
   w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
   if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${weightCategory}</p>`);
   if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${matNumber}</p>`);
+  if (matchNumber) w.document.write(`<p><strong>Match Number:</strong> ${matchNumber}</p>`);
 
   w.document.write('<h3>Status Point Cards & Points</h3>');
   w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
