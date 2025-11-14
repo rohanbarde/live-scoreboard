@@ -403,6 +403,7 @@ function undoAction(action, fighter, side) {
       const winner = (side === 'A') ? match.fighterA.name : match.fighterB.name;
       match.winnerName = winner;
       pushLog('Referee', 'Declare Winner', `${winner} declared winner manually`);
+      showBigCard(side, 'winner', 'WINNER');
       refreshUI();
     }
 
@@ -756,19 +757,17 @@ function endMatch() {
   w.document.write('<h3>Status Point Cards & Points</h3>');
   w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
   w.document.write(`
-  <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;">
-<!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterA.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
-
+  <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;position:relative;">
+    <div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
     ${renderCardPills(match.fighterA.shido)}
     ${renderPointsGrid(match.fighterA)}
+    ${match.winnerName === match.fighterA.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
-  <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;">
-<!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterB.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
-
+  <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;position:relative;">
+    <div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
     ${renderCardPills(match.fighterB.shido)}
     ${renderPointsGrid(match.fighterB)}
+    ${match.winnerName === match.fighterB.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
 `);
   w.document.write('</div>');
@@ -777,7 +776,6 @@ function endMatch() {
   w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
   w.document.write(`<li>B — Ippon: ${match.fighterB.ippon}, Waza-ari: ${match.fighterB.waza}, Yuko: ${match.fighterB.yuko}, Shido: ${match.fighterB.shido}</li>`);
   w.document.write('</ul>');
-  w.document.write(`<div style="margin:18px 0 8px 0;"><strong style="font-size:2.2rem;color:#0b2a8a;letter-spacing:1px;">Winner: ${match.winnerName || '—'}</strong></div>`);
   w.document.write('<h3>Events</h3>');
   w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
   match.log.forEach(it => {
