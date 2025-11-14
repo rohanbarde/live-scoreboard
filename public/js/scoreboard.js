@@ -347,6 +347,7 @@ function undoLast(side) {
   const fighterName = fighter.name;
   const lastActionIndex = findLastActionIndex(fighterName);
 
+  // Only block if NO actions found (index === -1), not if index is 0
   if (lastActionIndex === -1) {
     alert('No recent action found for this fighter');
     return;
@@ -363,8 +364,12 @@ function undoLast(side) {
 /* ---------------- Helper functions ---------------- */
 
 function findLastActionIndex(fighterName) {
+  // Only consider actual score/penalty actions for undo
+  const undoableActions = [
+    'Ippon', 'Waza-ari', 'Yuko', 'Shido', 'Hansoku-make', 'Red Card (Hansoku-make)', 'Waza-ari Awasete Ippon'
+  ];
   for (let i = match.log.length - 1; i >= 0; i--) {
-    if (match.log[i].actor === fighterName) {
+    if (match.log[i].actor === fighterName && undoableActions.includes(match.log[i].action)) {
       return i;
     }
   }
@@ -860,7 +865,7 @@ setTimeout(() => {
       pushLog(
         'System',
         'Hold Timer Start',
-        `${playerColor} hold timer${holdTypeText} started for ${playerName}`
+        `${playerColor} (${playerName}) hold timer${holdTypeText} started`
       );
 
       // Update display immediately
