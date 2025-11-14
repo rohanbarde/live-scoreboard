@@ -6,7 +6,7 @@ function loginUser() {
     firebase.auth().signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
         // Login successful → GO TO ADMIN PAGE
-        window.location.href = "../public/views/index.html";
+        window.location.href = "/index.html";
     })
     .catch((error) => {
         document.getElementById("error-msg").innerText = "Invalid email or password.";
