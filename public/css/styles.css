@@ -263,7 +263,7 @@
         /* big card overlays per fighter (pop in place) */
         .big-card {
           position: absolute;
-          bottom: 255px; /* ✅ move below score grid */
+          bottom: 230px; /* ✅ move below score grid */
           left: 50%;
           transform: translateX(-50%) scale(.9);
           z-index: 10; /* ✅ lower z-index to stay behind score labels */

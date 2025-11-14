@@ -46,10 +46,6 @@
 
     // Function to check if action is allowed (only when timer is running)
     function isActionAllowed() {
-      if (!match.running) {
-        alert('Please start the timer before performing any actions.');
-        return false;
-      }
       return true;
     }
 
@@ -256,8 +252,6 @@ function renderSmallCards() {
 
     /* scoring logic */
 function doTechnique(side, tech, detail) {
-  if (!isActionAllowed()) return;
-
   const f = side === 'A' ? match.fighterA : match.fighterB;
   const opp = side === 'A' ? match.fighterB : match.fighterA;
 
@@ -338,7 +332,6 @@ function handleShido(f, opp, side, detail) {
     /* red card manual */
     function giveRedCard(side) {
       // Check if timer is running
-      if (!isActionAllowed()) return;
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
       pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
@@ -350,12 +343,11 @@ function handleShido(f, opp, side, detail) {
 
     /* undo last action for a side */
 function undoLast(side) {
-  if (!isActionAllowed()) return;
-
   const fighter = side === 'A' ? match.fighterA : match.fighterB;
   const fighterName = fighter.name;
   const lastActionIndex = findLastActionIndex(fighterName);
 
+  // Only block if NO actions found (index === -1), not if index is 0
   if (lastActionIndex === -1) {
     alert('No recent action found for this fighter');
     return;
@@ -372,8 +364,12 @@ function undoLast(side) {
 /* ---------------- Helper functions ---------------- */
 
 function findLastActionIndex(fighterName) {
+  // Only consider actual score/penalty actions for undo
+  const undoableActions = [
+    'Ippon', 'Waza-ari', 'Yuko', 'Shido', 'Hansoku-make', 'Red Card (Hansoku-make)', 'Waza-ari Awasete Ippon'
+  ];
   for (let i = match.log.length - 1; i >= 0; i--) {
-    if (match.log[i].actor === fighterName) {
+    if (match.log[i].actor === fighterName && undoableActions.includes(match.log[i].action)) {
       return i;
     }
   }
@@ -407,6 +403,7 @@ function undoAction(action, fighter, side) {
       const winner = (side === 'A') ? match.fighterA.name : match.fighterB.name;
       match.winnerName = winner;
       pushLog('Referee', 'Declare Winner', `${winner} declared winner manually`);
+      showBigCard(side, 'winner', 'WINNER');
       refreshUI();
     }
 
@@ -736,6 +733,7 @@ function endMatch() {
   const w = window.open('', '_blank');
   const weightCategory = document.getElementById("weightCategory").value;
   const matNumber = document.getElementById("matNumber").value;  // Get mat number
+  const matchNumber = document.getElementById("matchNumber").value;  // Get match number
 
   w.document.write('<html><head><title>Match Report</title>');
   w.document.write('<style>@media print { body, .card-pill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }</style>');
@@ -754,23 +752,22 @@ function endMatch() {
   w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
   if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${weightCategory}</p>`);
   if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${matNumber}</p>`);
+  if (matchNumber) w.document.write(`<p><strong>Match Number:</strong> ${matchNumber}</p>`);
 
   w.document.write('<h3>Status Point Cards & Points</h3>');
   w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
   w.document.write(`
-  <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;">
-<!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterA.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
-
+  <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;position:relative;">
+    <div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
     ${renderCardPills(match.fighterA.shido)}
     ${renderPointsGrid(match.fighterA)}
+    ${match.winnerName === match.fighterA.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
-  <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;">
-<!--    <div style="font-weight:700;font-size:1.1em;">${escapeHtml(match.fighterB.name)}</div>-->
-<div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
-
+  <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;position:relative;">
+    <div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
     ${renderCardPills(match.fighterB.shido)}
     ${renderPointsGrid(match.fighterB)}
+    ${match.winnerName === match.fighterB.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
 `);
   w.document.write('</div>');
@@ -779,7 +776,6 @@ function endMatch() {
   w.document.write(`<li>A — Ippon: ${match.fighterA.ippon}, Waza-ari: ${match.fighterA.waza}, Yuko: ${match.fighterA.yuko}, Shido: ${match.fighterA.shido}</li>`);
   w.document.write(`<li>B — Ippon: ${match.fighterB.ippon}, Waza-ari: ${match.fighterB.waza}, Yuko: ${match.fighterB.yuko}, Shido: ${match.fighterB.shido}</li>`);
   w.document.write('</ul>');
-  w.document.write(`<div style="margin:18px 0 8px 0;"><strong style="font-size:2.2rem;color:#0b2a8a;letter-spacing:1px;">Winner: ${match.winnerName || '—'}</strong></div>`);
   w.document.write('<h3>Events</h3>');
   w.document.write('<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Info</th></tr></thead><tbody>');
   match.log.forEach(it => {
@@ -837,12 +833,6 @@ setTimeout(() => {
     }
 
     function startHoldTimer(player) {
-      // Check if match is running
-      if (!match.running) {
-        alert('Please start the match timer before starting hold timer.');
-        return;
-      }
-
       // Stop any existing hold timer
       if (match.holdTimer.active) {
         clearInterval(match.holdTimer.timerId);
@@ -870,7 +860,11 @@ setTimeout(() => {
       const playerColor = player === 'A' ? 'White' : 'Blue';
       const holdTypeText = type === 'waza-ari' ? ' (after Waza-ari)' : '';
 
-      pushLog('System', 'Hold Timer Start', `${playerColor} hold timer${holdTypeText} started for ${playerName}`);
+      pushLog(
+        'System',
+        'Hold Timer Start',
+        `${playerColor} (${playerName}) hold timer${holdTypeText} started`
+      );
 
       // Update display immediately
       updateHoldTimerDisplay();
@@ -992,30 +986,134 @@ function stopHoldTimer() {
     /* ---------------- Technique and Penalty Dropdowns ---------------- */
 
     // Data extracted from Excel (trimmed to key examples)
-    const judoTechniques = [
-      { name: "SEOI-NAGE", code: "SON" },
-      { name: "IPPON-SEOI-NAGE", code: "ISN" },
-      { name: "SEOI-OTOSHI", code: "SOO" },
-      { name: "TAI-OTOSHI", code: "TOS" },
-      { name: "KATA-GURUMA", code: "KGU" },
-      { name: "UCHI-MATA", code: "UMA" },
-      { name: "HARAI-GOSHI", code: "HGO" },
-      { name: "O-GOSHI", code: "OGO" },
-      { name: "SASAE-TSURIKOMI-ASHI", code: "STA" },
-      { name: "KO-SOTO-GARI", code: "KSG" },
-      // ... add more as needed
-    ];
+   const judoTechniques = [
+         "ASHI-GURUMA",
+         "ASHI-UCHI-MATA",
+         "AWASE-GAESHI",
+         "DE-ASHI-BARAI",
+         "DO-JIME",
+         "GOSHI-GURUMA",
+         "HARAI-GOSHI",
+         "HARAI-TSURI-KOMI-ASHI",
+         "HARAI-TSURIKOMI-ASHI",
+         "HANE-GOSHI",
+         "HANE-MAKIKOMI",
+         "HIKIKOMI-GAESHI",
+         "HIZA-GURUMA",
+         "KATA-GATAME",
+         "KATA-GURUMA",
+         "KATA-HAJIME",
+         "KATA-MAKIKOMI",
+         "KAWAZU-GAKE",
+         "KO-SHIHO-GATAME",
+         "KO-SOTO-GAKE",
+         "KO-SOTO-GARI",
+         "KO-SOTO-GURUMA",
+         "KO-SOTO-MAKIKOMI",
+         "KO-UCHI-GARI",
+         "KO-UCHI-GAESHI",
+         "KOSHI-GURUMA",
+         "KUZURE-KESA-GATAME",
+         "KUZURE-KAMI-SHIHO-GATAME",
+         "KUZURE-TATE-SHIHO-GATAME",
+         "MAKIKOMI",
+         "MAKURA-KESA-GATAME",
+         "MAKURA-KESA-GATAME",
+         "OBI-GOSHI",
+         "OKURI-ERI-JIME",
+         "OKURI-ASHI-BARAI",
+         "OSAE-KOMI",
+         "OSOTO-GARI",
+         "OSOTO-GURUMA",
+         "OSOTO-MAKIKOMI",
+         "OSOTO-OTOSHI",
+         "OUCHI-GARI",
+         "OUCHI-GAESHI",
+         "RENRAKU-WAZA",
+         "SANKAKU-GATAME",
+         "SANKAKU-JIME",
+         "SANKAKU-OTOSHI",
+         "SODE-GURUMA-JIME",
+         "SODE-TSURIKOMI-GOSHI",
+         "SOTO-MAKIKOMI",
+         "SUMI-GAESHI",
+         "SUMI-OTOSHI",
+         "TAI-OTOSHI",
+         "TANI-OTOSHI",
+         "TATE-SHIHO-GATAME",
+         "TOMOE-NAGE",
+         "TSURI-GOSHI",
+         "TSURIKOMI-GOSHI",
+         "UCHI-MAKIKOMI",
+         "UCHI-MATA",
+         "UCHI-MATA-GAESHI",
+         "UKI-GOSHI",
+         "UKI-OTSHI",
+         "URA-NAGE",
+         "USHIRO-GOSHI",
+         "UTSURI-GOSHI",
+         "YOKO-GAKE",
+         "YOKO-GURUMA",
+         "YOKO-SHIHO-GATAME",
+         "YOKO-SUMI-GAESHI",
+         "YOKO-TOMOE-NAGE",
+         "YOKO-WAKARE",
+         "YUDAN",
+         "ZEMPO-KAITEN-UKEMI"
+       ].sort();
 
     const judoPenalties = [
-      { name: "NEGATIVE JUDO", code: "PS1" },
-      { name: "FALSE ATTACK", code: "PS2" },
-      { name: "PULL DOWN", code: "PS3" },
-      { name: "NON COMBATIVITY", code: "PS4" },
-      { name: "PUSH OUT", code: "PS5" },
-      { name: "GRABBING BELOW BELT", code: "PS6" },
-      { name: "AVOIDING GRIP", code: "PS7" },
-      { name: "STEPPING OUTSIDE AREA", code: "PS8" }
-    ];
+      "ACTION AGAINST SPIRIT OF JUDO",
+      "AVOIDING GRIP",
+      "BEAR HUG",
+      "BEND OPPONENT'S FINGERS",
+      "BLOCK OPPONENT'S HAND",
+      "BREAK GRIP WITH KNEE OR LEG",
+      "COVER FACE",
+      "DEFENSIVE KUMIKATA",
+      "DISREGARD INSTRUCTIONS",
+      "DO-JIME",
+      "DRIVE INTO THE MAT",
+      "DUCK UNDER ARM",
+      "ENCIRCLING BELT OR JACKET",
+      "FALSE ATTACK",
+      "FALL BACKWARDS",
+      "FALLING WHILE APPLYING ARMLOCK",
+      "FINGERS INTERLOCKED",
+      "FOOT IN JUDOGI OR BELT",
+      "GRAB BELOW BELT",
+      "GRAB OPPONENT'S LEG",
+      "GRIP AVOIDANCE",
+      "GRIP AVOIDANCE WITH A BLOW",
+      "GRIP BREAKING",
+      "HARD/METALLIC OBJECT",
+      "HEAD DEFENCE",
+      "HEAD DIVE",
+      "HIDE LAPEL",
+      "HOOKING OPPONENT'S LEG",
+      "ILLEGAL KANSETSU-WAZA",
+      "INSERT FINGER INTO JUDOGI",
+      "JUDOGI IN THE MOUTH",
+      "KANI-BASAMI",
+      "KAWAZU-GAKE",
+      "KANSETSU-WAZA OR SHIME-WAZA WITHOUT ENTANGLING THE LEG",
+      "KANSETSU-WAZA OR SHIME-WAZA WITHOUT REAP OPPONENT'S SUPPORTING LEG",
+      "KICKING",
+      "LEG GRABBING",
+      "NEGATIVE JUDO",
+      "NON COMBATIVITY",
+      "OVERSTRETCHING LEG IN SHIME-WAZA",
+      "PULL DOWN",
+      "PUSH OUT",
+      "REVERSE SEOI-NAGE",
+      "SHIME-WAZA USING THE LEGS TO ASSIST",
+      "SHIME-WAZA WITH JACKET/BELT",
+      "STEPPING OUTSIDE AREA",
+      "UNDERTIMED",
+      "UNNECESSARY REMARKS",
+      "UNTIDY HAIR",
+      "UNTIDY JUDOGI"
+    ].sort();
 
     // Populate dropdowns dynamically
     function populateDropdowns() {
@@ -1025,16 +1123,16 @@ function stopHoldTimer() {
         if (techSelect) {
           judoTechniques.forEach(t => {
             const opt = document.createElement("option");
-            opt.value = t.name;
-            opt.textContent = `${t.name} (${t.code})`;
+            opt.value = t;
+            opt.textContent = t;
             techSelect.appendChild(opt);
           });
         }
         if (penSelect) {
           judoPenalties.forEach(p => {
             const opt = document.createElement("option");
-            opt.value = p.name;
-            opt.textContent = `${p.name} (${p.code})`;
+            opt.value = p;
+            opt.textContent = p;
             penSelect.appendChild(opt);
           });
         }
