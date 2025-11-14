@@ -122,7 +122,7 @@
     </div>
 </div>
 
-    <!-- Load Firebase SDKs first -->
+<!-- Load Firebase SDKs first -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -139,7 +139,16 @@
         console.error('Unhandled promise rejection:', event.reason);
       });
     </script>
-    
+
+    <script>
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) {
+            // Not logged in → send back to login page
+            window.location.href = "../public/views/log-in.html";
+        }
+    });
+    </script>
+
     <!-- Firebase initialization -->
     <script src="/public/js/firebase.js"></script>
     

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Tournament</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../public/css/log-in.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="card login-card">
+
+        <h2 class="title">Admin Login</h2>
+        <p class="subtitle">Enter your credentials to continue</p>
+
+        <form id="loginForm">
+
+            <div class="input-with-icon">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="emailInput" placeholder="Admin Email" required>
+            </div>
+
+            <div class="input-with-icon">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="passwordInput" placeholder="Password" required>
+            </div>
+
+            <button type="button" class="btn-primary" onclick="loginUser()">
+                Log In
+            </button>
+
+            <p id="error-msg"></p>
+        </form>
+    </div>
+
+    <p class="footer">© 2025 Tournament Scoreboard. All rights reserved - Blacktrounce</p>
+</div>
+
+<!-- Login Logic -->
+<!-- Firebase App (Core) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
+<!-- Firebase Authentication -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDTANQqo4uFuur5WzpeSgTBz3qUwnpx9_c",
+        authDomain: "maha-judo-scorecard.firebaseapp.com",
+        databaseURL: "https://maha-judo-scorecard-default-rtdb.firebaseio.com",
+        projectId: "maha-judo-scorecard",
+        storageBucket: "maha-judo-scorecard.firebasestorage.app",
+        messagingSenderId: "802933098247",
+        appId: "1:802933098247:web:6a651753eb6743e01fe7a2",
+        measurementId: "G-KDLM8D3ZE1"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+</script>
+
+<script src="../public/js/log-in.js"></script>
+
+</body>
+</html>
