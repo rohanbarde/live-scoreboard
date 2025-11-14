@@ -1001,15 +1001,57 @@ function stopHoldTimer() {
     ];
 
     const judoPenalties = [
-      { name: "NEGATIVE JUDO", code: "PS1" },
-      { name: "FALSE ATTACK", code: "PS2" },
-      { name: "PULL DOWN", code: "PS3" },
-      { name: "NON COMBATIVITY", code: "PS4" },
-      { name: "PUSH OUT", code: "PS5" },
-      { name: "GRABBING BELOW BELT", code: "PS6" },
-      { name: "AVOIDING GRIP", code: "PS7" },
-      { name: "STEPPING OUTSIDE AREA", code: "PS8" }
-    ];
+      "ACTION AGAINST SPIRIT OF JUDO",
+      "AVOIDING GRIP",
+      "BEAR HUG",
+      "BEND OPPONENT'S FINGERS",
+      "BLOCK OPPONENT'S HAND",
+      "BREAK GRIP WITH KNEE OR LEG",
+      "COVER FACE",
+      "DEFENSIVE KUMIKATA",
+      "DISREGARD INSTRUCTIONS",
+      "DO-JIME",
+      "DRIVE INTO THE MAT",
+      "DUCK UNDER ARM",
+      "ENCIRCLING BELT OR JACKET",
+      "FALSE ATTACK",
+      "FALL BACKWARDS",
+      "FALLING WHILE APPLYING ARMLOCK",
+      "FINGERS INTERLOCKED",
+      "FOOT IN JUDOGI OR BELT",
+      "GRAB BELOW BELT",
+      "GRAB OPPONENT'S LEG",
+      "GRIP AVOIDANCE",
+      "GRIP AVOIDANCE WITH A BLOW",
+      "GRIP BREAKING",
+      "HARD/METALLIC OBJECT",
+      "HEAD DEFENCE",
+      "HEAD DIVE",
+      "HIDE LAPEL",
+      "HOOKING OPPONENT'S LEG",
+      "ILLEGAL KANSETSU-WAZA",
+      "INSERT FINGER INTO JUDOGI",
+      "JUDOGI IN THE MOUTH",
+      "KANI-BASAMI",
+      "KAWAZU-GAKE",
+      "KANSETSU-WAZA OR SHIME-WAZA WITHOUT ENTANGLING THE LEG",
+      "KANSETSU-WAZA OR SHIME-WAZA WITHOUT REAP OPPONENT'S SUPPORTING LEG",
+      "KICKING",
+      "LEG GRABBING",
+      "NEGATIVE JUDO",
+      "NON COMBATIVITY",
+      "OVERSTRETCHING LEG IN SHIME-WAZA",
+      "PULL DOWN",
+      "PUSH OUT",
+      "REVERSE SEOI-NAGE",
+      "SHIME-WAZA USING THE LEGS TO ASSIST",
+      "SHIME-WAZA WITH JACKET/BELT",
+      "STEPPING OUTSIDE AREA",
+      "UNDERTIMED",
+      "UNNECESSARY REMARKS",
+      "UNTIDY HAIR",
+      "UNTIDY JUDOGI"
+    ].sort();
 
     // Populate dropdowns dynamically
     function populateDropdowns() {
@@ -1027,8 +1069,8 @@ function stopHoldTimer() {
         if (penSelect) {
           judoPenalties.forEach(p => {
             const opt = document.createElement("option");
-            opt.value = p.name;
-            opt.textContent = `${p.name} (${p.code})`;
+            opt.value = p;
+            opt.textContent = p;
             penSelect.appendChild(opt);
           });
         }
