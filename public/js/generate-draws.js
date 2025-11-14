@@ -282,7 +282,7 @@ function loadPlayers() {
         });
         
 //        console.log('Loaded players:', players);
-        console.log('Available weights:', Array.from(weights));
+//        console.log('Available weights:', Array.from(weights));
         
         // Update weight filter
         updateWeightFilter();
