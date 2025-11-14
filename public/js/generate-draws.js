@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadPlayers() {
     showLoading(true);
     
-    const playersRef = database.ref('registrations');
+    const playersRef = window.database.ref('registrations');
     
     playersRef.on('value', (snapshot) => {
         players = [];
@@ -418,9 +418,15 @@ async function animateGenerateDraw() {
     slot.className = 'match-slot';
     slot.dataset.slotIndex = i;
     slot.innerHTML = `
-      <div class="slot-left"><div class="slot-name">Waiting...</div></div>
-      <div class="slot-right"><div class="slot-name">Waiting...</div></div>
+      <div class="slot-left">
+        <div class="slot-name"></div>
+      </div>
+      <div class="vs-label">V/S</div>
+      <div class="slot-right">
+        <div class="slot-name"></div>
+      </div>
     `;
+
     bracket.appendChild(slot);
     matchSlots.push(slot);
   }
@@ -521,7 +527,7 @@ function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
     clone.style.height = `${rectSrc.height}px`;
     clone.style.opacity = '1';
     clone.innerHTML = `
-      <div class="avatar" style="background:${getColorForString(pData.fullName || 'A')}">${getInitials(pData.fullName || '')}</div>
+      <div class="avatar" style="background:${getColorForString(pData.fullName || '')}">${getInitials(pData.fullName || '')}</div>
       <div style="font-weight:700">${pData.fullName || 'N/A'}</div>
     `;
     document.body.appendChild(clone);
@@ -542,7 +548,13 @@ function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
       setTimeout(() => {
         clone.remove();
         // set the target text (animated slot content)
-        targetNameEl.textContent = pData.fullName || 'N/A';
+        targetNameEl.innerHTML = `
+          <div class="draw-player-card">
+            <div class="draw-player-name">${pData.fullName || 'N/A'}</div>
+            <div class="draw-player-club">${pData.playerInfo?.team || ''}</div>
+          </div>
+        `;
+
         resolve();
       }, 180);
     };
@@ -683,3 +695,19 @@ function showError(message) {
     // You can implement a more user-friendly error display
     console.error('Error:', message);
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize TournamentDraw system
+    tournamentDraw = new TournamentDraw();
+
+    // Load player list
+    loadPlayers();
+
+    // Setup filters
+    setupEventListeners();
+
+    // Bind Generate Draw button
+    generateDrawBtn.addEventListener("click", animateGenerateDraw);
+});
+

@@ -239,80 +239,388 @@
                 width: 100%;
             }
         }
+        .draw-player-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-width: 200px;
+            max-width: 220px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .draw-player-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .draw-player-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-color);
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .draw-player-club {
+            font-size: 12.5px;
+            color: #6c757d;
+            opacity: 0.9;
+            line-height: 1.2;
+        }
+
+        .match-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 12px 0;
+        }
+
+        .vs-label {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--primary-color);
+            background: #f0f4ff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .match-container .placeholder-card,
+        .match-container .draw-slot,
+        .animation-container .draw-slot {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .animation-container .draw-player-card {
+            position: relative;
+            z-index: 1;
+        }
+        .match-container > div {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+        .match-container .draw-player-card {
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            padding: 12px 15px;
+            width: 200px;
+            max-width: 220px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        .match-container .placeholder,
+        .match-container .draw-slot,
+        .match-container .waiting-card,
+        .match-container .drop-target {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            display: contents !important;
+        }
+        .match-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        .animation-container .draw-player-card {
+            position: static !important;
+            margin: 10px auto !important;
+            z-index: 1 !important;
+        }
+
+        #drawsContent .match-container {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 20px !important;
+            margin: 20px 0 !important;
+            flex-wrap: wrap !important;
+        }
+
+        .animation-container .draw-slot,
+        .animation-container .placeholder-card,
+        .animation-container .waiting-card,
+        .animation-container .drop-target {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        #animatedBracket {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 6px;
+        }
+
+        .match-slot {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 18px !important;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 0;
+            opacity: 1;
+            transform: none !important;
+            position: relative !important;
+        }
+
+        .match-slot .slot-left,
+        .match-slot .slot-right {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 0;
+            width: calc(50% - 36px);
+            box-sizing: border-box;
+        }
+
+        .match-slot .slot-name {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100%;
+            height: auto !important;
+            padding: 6px 8px;
+            box-sizing: border-box;
+            background: transparent !important;
+            border: none !important;
+        }
+
+        #animatedBracket .draw-player-card {
+            position: static !important;     /* important: undo absolute/relative stacking */
+            margin: 0 auto !important;       /* center inside each side */
+            z-index: 1 !important;
+            width: 100% !important;
+            max-width: 320px;                /* prevent overly wide cards */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+
+        #animatedBracket .slot-left .slot-name,
+        #animatedBracket .slot-right .slot-name {
+            min-height: 48px;
+        }
+
+
+        .match-slot .vs-label {
+            flex: 0 0 auto;
+            margin: 0 6px;
+        }
+
+        .floating-clone {
+            position: fixed !important;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            transform: translate(0,0) scale(1);
+            transition: transform 0.6s cubic-bezier(.2,.9,.25,1), opacity 0.4s ease;
+            will-change: transform, opacity;
+            z-index: 9999 !important;
+        }
+
+        .floating-clone .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .match-slot {
+                flex-direction: column;
+                gap: 8px;
+                align-items: stretch;
+            }
+
+            .match-slot .slot-left,
+            .match-slot .slot-right {
+                width: 100%;
+            }
+
+            #animatedBracket .draw-player-card {
+                max-width: 100%;
+            }
+        }
+        #animatedBracket .slot-name {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        #animatedBracket .slot-left,
+        #animatedBracket .slot-right {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+
     </style>
 </head>
 <body>
-    <div class="draws-container">
-        <div class="draws-header">
-            <h1><i class="fas fa-trophy"></i> Generate Draws</h1>
-            <div class="actions">
-                <a href="tournament-matches.html" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                    <i class="fas fa-calendar-alt"></i> Scheduled Matches
-                </a>
-                <a href="player-list.html" class="btn btn-outline">
-                    <i class="fas fa-arrow-left"></i> Back to Players
-                </a>
-            </div>
+<div class="draws-container">
+    <div class="draws-header">
+        <h1><i class="fas fa-trophy"></i> Generate Draws</h1>
+        <div class="actions">
+            <a href="tournament-matches.html" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-calendar-alt"></i> Scheduled Matches
+            </a>
+            <a href="player-list.html" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back to Players
+            </a>
         </div>
+    </div>
 
-        <div class="filters-container">
-            <div class="filter-group">
-                <label for="drawGenderFilter">Gender</label>
-                <select id="drawGenderFilter" class="filter-select">
-                    <option value="">All Genders</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="drawWeightFilter">Weight Category</label>
-                <select id="drawWeightFilter" class="filter-select">
-                    <option value="">All Weights</option>
-                    <!-- Will be populated by JavaScript -->
-                </select>
-            </div>
-            <div class="filter-group">
+    <div class="filters-container">
+        <div class="filter-group">
+            <label for="drawGenderFilter">Gender</label>
+            <select id="drawGenderFilter" class="filter-select">
+                <option value="">All Genders</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="drawWeightFilter">Weight Category</label>
+            <select id="drawWeightFilter" class="filter-select">
+                <option value="">All Weights</option>
+                <!-- Will be populated by JavaScript -->
+            </select>
+        </div>
+        <div class="filter-group">
+            <div style="display:flex; gap:10px; align-items:flex-end;">
                 <button id="generateDrawBtn" class="btn btn-primary">
                     <i class="fas fa-random"></i> Generate Draw
                 </button>
+                <button id="shufflePlayersBtn" class="btn btn-outline">
+                    <i class="fas fa-shuffle"></i> Shuffle Players
+                </button>
             </div>
         </div>
+    </div>
 
-        <div class="draws-content">
-            <div class="draws-layout">
-                <!-- Left Column: Player List -->
-                <div class="players-column">
-                    <h3>Registered Players</h3>
-                    <div id="playersList" class="players-grid">
-                        <!-- Players will be populated here by JavaScript -->
-                        <div class="no-players">
-                            <i class="fas fa-users" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
-                            <p>Select filters to view players</p>
-                        </div>
+    <div class="draws-content">
+        <div class="draws-layout">
+            <!-- Left Column: Player List -->
+            <div class="players-column">
+                <h3>Registered Players</h3>
+                <div id="playersList" class="players-grid">
+                    <!-- Players will be populated here by JavaScript -->
+                    <div class="no-players">
+                        <i class="fas fa-users" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                        <p>Select filters to view players</p>
                     </div>
                 </div>
-                
-                <!-- Right Column: Draw Animation -->
-                <div class="animation-column">
-                    <h3>Draw Preview</h3>
-                    <div id="drawsContent" class="animation-container">
-                        <div class="no-draw">
-                            <i class="fas fa-random" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
-                            <p>Click "Generate Draw" to create tournament matches</p>
-                        </div>
+            </div>
+
+            <!-- Right Column: Draw Animation -->
+            <div class="animation-column">
+                <h3>Draw Preview</h3>
+                <div id="drawsContent" class="animation-container">
+                    <div class="no-draw">
+                        <i class="fas fa-random" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                        <p>Click "Generate Draw" to create tournament matches</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
-    <!-- Firebase config and initialization -->
-    <script src="../public/js/firebase.js"></script>
-    <script src="../public/js/generate-draws.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- Firebase config and initialization -->
+<script src="../public/js/firebase.js"></script>
+<script src="../public/js/generate-draws.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const shuffleBtn = document.getElementById("shufflePlayersBtn");
+        const playersList = document.getElementById("playersList");
+
+        // Function to shuffle an array (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        shuffleBtn.addEventListener("click", () => {
+            const playerCards = Array.from(playersList.querySelectorAll(".player-card"));
+            if (playerCards.length <= 1) return; // nothing to shuffle
+
+            // Add shuffle animation class
+            playersList.style.transition = "transform 0.4s ease";
+            playersList.style.transform = "rotate(2deg) scale(0.98)";
+            shuffleBtn.disabled = true;
+            shuffleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Shuffling...';
+
+            setTimeout(() => {
+                playersList.style.transform = "rotate(0deg) scale(1)";
+
+                // Shuffle DOM elements
+                const shuffled = shuffleArray(playerCards);
+                playersList.innerHTML = "";
+                shuffled.forEach(card => playersList.appendChild(card));
+
+                // Add fade-in animation
+                playersList.querySelectorAll(".player-card").forEach((card, index) => {
+                    card.style.opacity = 0;
+                    card.style.transform = "translateY(10px)";
+                    setTimeout(() => {
+                        card.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+                        card.style.opacity = 1;
+                        card.style.transform = "translateY(0)";
+                    }, 80 * index);
+                });
+
+                shuffleBtn.disabled = false;
+                shuffleBtn.innerHTML = '<i class="fas fa-shuffle"></i> Shuffle Players';
+            }, 600);
+        });
+    });
+</script>
+
 </body>
 </html>
