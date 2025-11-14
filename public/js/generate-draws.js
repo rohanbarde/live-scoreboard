@@ -186,7 +186,6 @@ class TournamentDraw {
 }
 
 // Initialize the application
-<script>
 document.addEventListener('DOMContentLoaded', () => {
   const shuffleBtn = document.getElementById('shufflePlayersBtn');
   const shuffleAnim = document.getElementById('shuffleAnimation');
@@ -254,13 +253,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
   });
 });
-</script>
 
 // Load players from Firebase
 function loadPlayers() {
     showLoading(true);
     
-    const playersRef = database.ref('registrations');
+    const playersRef = window.database.ref('registrations');
     
     playersRef.on('value', (snapshot) => {
         players = [];
@@ -527,7 +525,7 @@ function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
     clone.style.height = `${rectSrc.height}px`;
     clone.style.opacity = '1';
     clone.innerHTML = `
-      <div class="avatar" style="background:${getColorForString(pData.fullName || 'A')}">${getInitials(pData.fullName || '')}</div>
+      <div class="avatar" style="background:${getColorForString(pData.fullName || '')}">${getInitials(pData.fullName || '')}</div>
       <div style="font-weight:700">${pData.fullName || 'N/A'}</div>
     `;
     document.body.appendChild(clone);
@@ -695,3 +693,19 @@ function showError(message) {
     // You can implement a more user-friendly error display
     console.error('Error:', message);
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize TournamentDraw system
+    tournamentDraw = new TournamentDraw();
+
+    // Load player list
+    loadPlayers();
+
+    // Setup filters
+    setupEventListeners();
+
+    // Bind Generate Draw button
+    generateDrawBtn.addEventListener("click", animateGenerateDraw);
+});
+
