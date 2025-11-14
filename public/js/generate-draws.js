@@ -398,19 +398,14 @@ async function animateGenerateDraw() {
     slot.dataset.slotIndex = i;
     slot.innerHTML = `
       <div class="slot-left">
-        <div class="slot-name draw-player-card">
-          <div class="draw-player-name">Waiting...</div>
-          <div class="draw-player-club">—</div>
-        </div>
+        <div class="slot-name"></div>
       </div>
       <div class="vs-label">V/S</div>
       <div class="slot-right">
-        <div class="slot-name draw-player-card">
-          <div class="draw-player-name">Waiting...</div>
-          <div class="draw-player-club">—</div>
-        </div>
+        <div class="slot-name"></div>
       </div>
     `;
+
     bracket.appendChild(slot);
     matchSlots.push(slot);
   }
