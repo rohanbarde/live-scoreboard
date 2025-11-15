@@ -574,21 +574,57 @@ function endMatch() {
 
     /* reset match (keeps names/clubs) */
     function resetMatch() {
-      if (!confirm('Reset match (this will clear scores and log)?')) return;
-      match.fighterA.waza = match.fighterA.ippon = match.fighterA.yuko = match.fighterA.shido = 0;
-      match.fighterB.waza = match.fighterB.ippon = match.fighterB.yuko = match.fighterB.shido = 0;
-      match.log = [];
-      match.winnerName = null;
+      if (!confirm('Reset match (this will clear scores, timer, and log)?')) return;
+      
+      // Clear any running timers first
+      if (match.running) {
+        clearInterval(match.timerId);
+      }
+      
+      // Reset match state
+      match.running = false;
       match.goldenScoreActive = false;
-      match.location = document.getElementById('matchLocation').value || '';
-      match.matchNumber = Number(document.getElementById('matchNumber').value) || 1;
-      match.matNumber = Number(document.getElementById('matNumber').value) || 1;
+      match.winnerName = null;
+      
+      // Reset all scores to 0
+      match.fighterA.waza = 0;
+      match.fighterA.ippon = 0;
+      match.fighterA.yuko = 0;
+      match.fighterA.shido = 0;
+      match.fighterB.waza = 0;
+      match.fighterB.ippon = 0;
+      match.fighterB.yuko = 0;
+      match.fighterB.shido = 0;
+      
+      // Reset timer
+      match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
+      match.remainingSec = match.durationMin * 60;
+      
+      // Update match info from inputs
+      const matchLocationEl = document.getElementById('matchLocation');
+      const matchNumberEl = document.getElementById('matchNumber');
+      const matNumberEl = document.getElementById('matNumber');
+      
+      if (matchLocationEl) match.location = matchLocationEl.value || '';
+      if (matchNumberEl) match.matchNumber = Number(matchNumberEl.value) || 1;
+      if (matNumberEl) match.matNumber = Number(matNumberEl.value) || 1;
 
       // Reset hold timer
       stopHoldTimer();
-
-      resetTimer();
-      pushLog('System', 'Reset', 'Match reset');
+      
+      // Clear log and add reset entry
+      match.log = [];
+      pushLog('System', 'Reset', 'Match reset - all scores and timer cleared');
+      
+      // Update UI elements
+      document.getElementById('startBtn').textContent = 'Start';
+      document.getElementById('hansokuA').textContent = '';
+      document.getElementById('hansokuB').textContent = '';
+      
+      // Update timer display
+      updateTimerDisplay();
+      
+      // Refresh UI to update all displays
       refreshUI();
     }
 
