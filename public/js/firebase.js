@@ -26,7 +26,7 @@ try {
     if (snap.val() === true) {
       console.log('✅ Connected to Firebase Realtime Database');
     } else {
-      console.warn('⚠️ Not connected to Firebase Realtime Database');
+      console.log('⚠️ Not connected to Firebase Realtime Database');
     }
   });
   
