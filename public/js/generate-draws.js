@@ -186,7 +186,7 @@ class TournamentDraw {
 }
 
 // Initialize the application
-<script>
+
 document.addEventListener('DOMContentLoaded', () => {
   const shuffleBtn = document.getElementById('shufflePlayersBtn');
   const shuffleAnim = document.getElementById('shuffleAnimation');
@@ -217,10 +217,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Show overlay spinner
-    shuffleAnim.style.display = 'flex';
-    const overlayText = shuffleAnim.querySelector('.mt-3');
-    overlayText.textContent = 'Shuffling Players...';
+    // Show overlay spinner (if available)
+        if (shuffleAnim) {
+          shuffleAnim.style.display = 'flex';
+          const overlayText = shuffleAnim.querySelector('.mt-3');
+          if (overlayText) {
+            overlayText.textContent = 'Shuffling Players...';
+          }
+        }
 
     // Wait a moment for visual effect
     setTimeout(() => {
@@ -249,12 +253,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Hide overlay after animation
       setTimeout(() => {
-        shuffleAnim.style.display = 'none';
+        if (shuffleAnim) {
+                  shuffleAnim.style.display = 'none';
+                }
       }, playerItems.length * 120 + 700);
     }, 600);
   });
 });
-</script>
+
 
 // Load players from Firebase
 function loadPlayers() {

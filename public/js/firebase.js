@@ -124,13 +124,18 @@ function buildMatchDataFromDOM() {
 
 function updateFirebase() {
   try {
+  // Check if database is available
+      if (!window.database) {
+        console.warn('Database not initialized yet');
+        return;
+      }
     const data = buildMatchDataFromDOM();
     // Add timer color info for vmix
     const timerDisplay = document.getElementById('timerDisplay');
     if (timerDisplay) {
       data.timerColor = timerDisplay.style.color || '#fff';
     }
-    database.ref('current_match').set(data)
+    window.database.ref('current_match').set(data)
       .then(() => {/* ok */})
       .catch(err => console.error('❌ Firebase set error', err));
   } catch (e) {
