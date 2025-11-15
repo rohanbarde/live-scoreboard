@@ -5,8 +5,8 @@ function loginUser() {
 
     firebase.auth().signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
-        // Login successful → GO TO ADMIN PAGE
-        window.location.href = "/index.html";
+        // Login successful → GO TO PLAYER REGISTRATION PAGE
+        window.location.href = "/player-registration.html";
     })
     .catch((error) => {
         document.getElementById("error-msg").innerText = "Invalid email or password.";
