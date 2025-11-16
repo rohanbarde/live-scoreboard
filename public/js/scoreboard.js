@@ -304,6 +304,7 @@ function handleIppon(f, side, detail) {
   match.winnerName = f.name || displayName;
   showBigCard(side, 'yellow', 'IPPON');
 
+  // Stop timer - works for both normal time and golden score
   stopMainTimer();
 }
 
@@ -323,6 +324,11 @@ function handleWaza(f, side, detail) {
     pushLog(displayName, 'Waza-ari Awasete Ippon', `${displayName} 2 Waza-ari → Ippon${detail ? ' by ' + detail : ''}`);
     showBigCard(side, 'yellow', 'IPPON');
     stopMainTimer();
+  } else if (match.goldenScoreActive) {
+    // In golden score, any score (even 1 Waza-ari) ends the match
+    match.winnerName = f.name || displayName;
+    pushLog(displayName, 'Golden Score Winner', `${displayName} wins in Golden Score with Waza-ari`);
+    stopMainTimer();
   }
 }
 
@@ -332,6 +338,13 @@ function handleYuko(f, side, detail) {
   const displayName = getDisplayName(f, side);
   pushLog(displayName, 'Yuko', `${displayName} awarded Yuko${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'YUKO');
+  
+  // In golden score, any score (including Yuko) ends the match
+  if (match.goldenScoreActive) {
+    match.winnerName = f.name || displayName;
+    pushLog(displayName, 'Golden Score Winner', `${displayName} wins in Golden Score with Yuko`);
+    stopMainTimer();
+  }
 }
 
 function handleShido(f, opp, side, detail) {
@@ -350,6 +363,9 @@ function handleShido(f, opp, side, detail) {
     cardText = 'HANSOKU';
     pushLog(displayName, 'Hansoku-make', `${displayName} receives Hansoku-make (Shido ${f.shido})${detail ? ' (Reason: ' + detail + ')' : ''}`);
     match.winnerName = opp.name || oppDisplayName;
+    
+    // Stop the timer and end the match
+    stopMainTimer();
   } else {
     // 1st and 2nd shido = Yellow card
     cardColor = 'yellow';
@@ -377,6 +393,9 @@ function handleShido(f, opp, side, detail) {
       
       // Declare opponent as winner
       match.winnerName = opp.name || oppDisplayName;
+      
+      // Stop the timer and end the match
+      stopMainTimer();
       
       // Show visual feedback - big red card in fighter box
       showBigCard(side, 'red', 'HANSOKU');
