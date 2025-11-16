@@ -28,7 +28,7 @@
 
 /* Align hr above Actions for both fighters */
 .fighter-box hr.my-3 {
-  margin-top: 2.2rem !important;
+  margin-top: 3.4rem !important;
   margin-bottom: 1.2rem !important;
 }
 
@@ -37,4 +37,23 @@
     height: 100%;
     min-height: 410px;
   }
+}
+/* --- Traditional 6-11-20 Spacing System --- */
+
+/* 20px horizontal gap between rounds */
+.bracket-horizontal {
+    display: flex;
+    gap: 20px !important; /* Was 60px earlier */
+}
+
+/* 11px vertical gap between matches in the same round */
+.round {
+    display: flex;
+    flex-direction: column;
+    gap: 11px !important;
+}
+
+/* 6px spacing inside each match box */
+.match {
+    padding: 6px !important;
 }
