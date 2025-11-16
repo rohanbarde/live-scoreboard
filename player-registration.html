@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Register players for the tournament">
+    <title>&#x1F3C6; Player Registration | Tournament</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/css/player-registration.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <p class="subtitle">Register for the upcoming tournament</p>
+        </div>
+
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="userType">Register As:</label>
+                <select id="userType" class="form-control" required>
+                    <option value="">Select User Type</option>
+                    <option value="player">Player</option>
+                    <option value="organizer">Organizer</option>
+                    <option value="volunteer">Volunteer</option>
+                    <option value="tsr">TSR (Technical Score Recorder)</option>
+                    <option value="coach">Coach</option>
+                    <option value="referee">Referee</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="fullName" placeholder="Full Name" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="Email Address" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="phone" placeholder="Phone Number" required pattern="\d{10}" maxlength="10" minlength="10" title="Mobile number must be exactly 10 digits">
+                </div>
+            </div>
+
+            <!-- Player Specific Fields -->
+            <div id="playerFields">
+                <div class="form-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-weight"></i>
+                        <input type="number" id="weight" placeholder="Weight (kg)" min="20" max="200">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-users"></i>
+                        <input type="text" id="team" placeholder="Team / Club / Dojo">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">Player Photo</label>
+                    <input type="file" id="photo" accept="image/*" required />
+                    <img id="photoPreview" alt="Photo preview" style="display:none; width:100px; height:100px; border-radius:8px; margin-top:8px; object-fit:cover;">
+                </div>
+
+                <div class="form-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-venus-mars"></i>
+                        <select id="gender" class="form-control" required>
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coach/Referee Specific Fields -->
+            <div id="coachRefereeFields" style="display: none;">
+                <div class="form-group">
+                    <div class="input-with-icon">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" id="licenseNumber" placeholder="License/Certification Number">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Complete Registration
+            </button>
+        </form>
+
+        <div id="successMessage" class="alert success hidden">
+            <i class="fas fa-check-circle"></i>
+            <span>Registration submitted successfully!</span>
+        </div>
+        
+        <div id="errorMessage" class="alert error hidden">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Error during registration. Please try again.</span>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div class="footer-actions">
+            <a href="/views/player-list.html" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-users"></i> View Registered Players
+            </a>
+        </div>
+        <p> 2025 Tournament Scoreboard. All rights reserved - Blacktrounce</p>
+    </div>
+</div>
+
+<!-- Load Firebase SDKs first -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Firebase config and initialization -->
+    <script>
+      // Add a global error handler for uncaught errors
+      window.addEventListener('error', function(error) {
+        console.error('Global error:', error);
+        alert('An error occurred. Please check the console for details.');
+      });
+      
+      // Add a global promise rejection handler
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+      });
+    </script>
+
+    <!-- Firebase initialization -->
+    <script src="/public/js/firebase.js"></script>
+
+    <script>
+    // Check auth after Firebase is initialized
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) {
+            // Not logged in → send back to login page
+            window.location.href = "../public/views/log-in.html";
+        }
+    });
+    </script>
+    
+    <!-- Player registration logic -->
+    <script src="/public/js/player-registration.js"></script>
+    
+    <!-- Initialize app after everything is loaded -->
+    <script>
+      // Check if Firebase is properly initialized
+      document.addEventListener('DOMContentLoaded', function() {
+        if (!window.firebase || !window.firebase.apps || !window.firebase.apps.length) {
+          console.error('Firebase not properly initialized!');
+        } else {
+          console.log('Firebase is ready:', firebase.app().name);
+        }
+      });
+    </script>
+</body>
+</html>

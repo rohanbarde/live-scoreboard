@@ -332,3 +332,81 @@ body {
 .fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
+/* --- Round Sections & Matches (Two-column layout) --- */
+
+.round-section {
+  margin-top: 30px;
+}
+
+.round-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 1.2rem;
+}
+
+/* Two-column responsive grid */
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* Match card */
+.match-card {
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-left: 4px solid var(--primary-color);
+  transition: 0.2s;
+}
+
+.match-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.match-card h4 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.player-item {
+  background: var(--light-gray);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Start Button */
+.start-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.start-btn:hover {
+  opacity: 0.9;
+}
+
+/* Mobile: 1 column layout */
+@media (max-width: 600px) {
+  .matches-grid {
+    grid-template-columns: 1fr;
+  }
+}
