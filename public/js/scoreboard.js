@@ -21,8 +21,8 @@
       location: '',  // Add this line
       matchNumber: 1,  // Add this line
       matNumber: 1,  // Add this line
-      fighterA: { name: 'Fighter A', club: 'Club A', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
-      fighterB: { name: 'Fighter B', club: 'Club B', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
+      fighterA: { name: '', club: '', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
+      fighterB: { name: '', club: '', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
       log: [],
       winnerName: null,
       // Hold timer state
@@ -291,11 +291,17 @@ function doTechnique(side, tech, detail) {
 
 /* ---------- Helper functions ---------- */
 
+// Get display name with fallback to White/Blue if empty
+function getDisplayName(fighter, side) {
+  return fighter.name || (side === 'A' ? 'White' : 'Blue');
+}
+
 function handleIppon(f, side, detail) {
   if (f.ippon >= 1) return; // already has ippon
   f.ippon = 1;
-  pushLog(f.name, 'Ippon', `${f.name} awarded Ippon${detail ? ' by ' + detail : ''}`);
-  match.winnerName = f.name;
+  const displayName = getDisplayName(f, side);
+  pushLog(displayName, 'Ippon', `${displayName} awarded Ippon${detail ? ' by ' + detail : ''}`);
+  match.winnerName = f.name || displayName;
   showBigCard(side, 'yellow', 'IPPON');
 
   stopMainTimer();
@@ -305,15 +311,16 @@ function handleIppon(f, side, detail) {
 function handleWaza(f, side, detail) {
   if (f.ippon >= 1) return; // already has ippon
   f.waza += 1;
-  pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})${detail ? ' by ' + detail : ''}`);
+  const displayName = getDisplayName(f, side);
+  pushLog(displayName, 'Waza-ari', `${displayName} awarded Waza-ari (${f.waza})${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'WAZA-ARI');
 
   if (f.waza >= 2) {
     // Convert 2 Waza-ari → 1 Ippon
     f.waza = 0;
     f.ippon = 1;
-    match.winnerName = f.name;
-    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari → Ippon${detail ? ' by ' + detail : ''}`);
+    match.winnerName = f.name || displayName;
+    pushLog(displayName, 'Waza-ari Awasete Ippon', `${displayName} 2 Waza-ari → Ippon${detail ? ' by ' + detail : ''}`);
     showBigCard(side, 'yellow', 'IPPON');
     stopMainTimer();
   }
@@ -322,13 +329,17 @@ function handleWaza(f, side, detail) {
 
 function handleYuko(f, side, detail) {
   f.yuko += 1;
-  pushLog(f.name, 'Yuko', `${f.name} awarded Yuko${detail ? ' by ' + detail : ''}`);
+  const displayName = getDisplayName(f, side);
+  pushLog(displayName, 'Yuko', `${displayName} awarded Yuko${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'YUKO');
 }
 
 function handleShido(f, opp, side, detail) {
   f.shido += 1;
-  pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido${detail ? ' (Reason: ' + detail + ')' : ''}`);
+  const displayName = getDisplayName(f, side);
+  const oppSide = side === 'A' ? 'B' : 'A';
+  const oppDisplayName = getDisplayName(opp, oppSide);
+  pushLog(displayName, 'Shido', `${displayName} now has ${f.shido} Shido${detail ? ' (Reason: ' + detail + ')' : ''}`);
   
   // Determine card color based on shido count
   let cardColor, cardText, statusText;
@@ -337,8 +348,8 @@ function handleShido(f, opp, side, detail) {
     // 3rd shido = Red card (Hansoku-make)
     cardColor = 'red';
     cardText = 'HANSOKU';
-    pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})${detail ? ' (Reason: ' + detail + ')' : ''}`);
-    match.winnerName = opp.name;
+    pushLog(displayName, 'Hansoku-make', `${displayName} receives Hansoku-make (Shido ${f.shido})${detail ? ' (Reason: ' + detail + ')' : ''}`);
+    match.winnerName = opp.name || oppDisplayName;
   } else {
     // 1st and 2nd shido = Yellow card
     cardColor = 'yellow';
@@ -354,15 +365,18 @@ function handleShido(f, opp, side, detail) {
     function giveRedCard(side) {
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
+      const oppSide = side === 'A' ? 'B' : 'A';
       
       // Set red card flag
       f.redCard = true;
       
       // Log the red card
-      pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
+      const displayName = getDisplayName(f, side);
+      const oppDisplayName = getDisplayName(opp, oppSide);
+      pushLog(displayName, 'Red Card (Hansoku-make)', `${displayName} given Red Card → Hansoku-make`);
       
       // Declare opponent as winner
-      match.winnerName = opp.name;
+      match.winnerName = opp.name || oppDisplayName;
       
       // Show visual feedback - big red card in fighter box
       showBigCard(side, 'red', 'HANSOKU');
