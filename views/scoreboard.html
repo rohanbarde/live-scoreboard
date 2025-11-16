@@ -74,11 +74,10 @@
                          style="background:rgba(255,255,255,0.9);border-radius:8px;color:#000;">
                         <div style="flex:1;">
                             <div class="small-muted" style="color:#000;">Name</div>
-                            <input id="nameA" class="form-control form-control-sm mb-2" placeholder="Fighter A name"
-                                   value="Fighter A" style="color:#000;">
+                            <input id="nameA" class="form-control form-control-sm mb-2" placeholder="Enter name"
+                                   style="color:#000;">
                             <div class="small-muted" style="color:#000;">Club / Team</div>
-                            <input id="clubA" class="form-control form-control-sm" placeholder="Club / Team"
-                                   value="Club A"
+                            <input id="clubA" class="form-control form-control-sm" placeholder="Enter Club / Team"
                                    style="color:#000;">
                         </div>
                     </div>
@@ -126,6 +125,7 @@
                             <button class="btn btn-outline-danger btn-score" onclick="giveRedCard('A')">Red Card
                             </button>
                             <button class="btn btn-light btn-score" onclick="undoLast('A')">Undo</button>
+                            <button class="btn btn-success btn-score" onclick="declareWinner('A')">Declare Winner</button>
                         </div>
                     </div>
 
@@ -166,7 +166,6 @@
                     <div class="d-grid gap-2 mb-3">
                         <div class="btn-group" role="group">
                             <button class="btn btn-sm btn-outline-light" onclick="startPauseTimer()" id="startBtn">Start</button>
-                            <button class="btn btn-sm btn-outline-light" onclick="resetTimer()">Reset</button>
                             <button class="btn btn-sm btn-outline-light" onclick="endMatch()">End</button>
                         </div>
                     </div>
@@ -177,13 +176,12 @@
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Hold (White)</button>
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Hold (Blue)</button>
                         <button class="btn btn-xs btn-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold</button>
-                        <button class="btn btn-xs btn-success" onclick="declareWinner('A')" id="whiteWinBtn">White win</button>
-                        <button class="btn btn-xs btn-primary" onclick="declareWinner('B')" id="blueWinBtn">Blue win</button>
                     </div>
 
                     <!-- Utility Controls -->
                     <div class="d-grid gap-1">
                         <button class="btn btn-sm btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
+                        <button class="btn btn-sm btn-outline-light" onclick="resetMatch()">Reset</button>
                     </div>
                 </div>
             </div>
@@ -195,11 +193,10 @@
                          style="background:rgba(0,0,0,0.8);border-radius:8px;color:#fff;">
                         <div style="flex:1;">
                             <div class="small-muted" style="color:#bbb;">Name</div>
-                            <input id="nameB" class="form-control form-control-sm mb-2" placeholder="Fighter B name"
-                                   value="Fighter B" style="background:#1a1a1a;color:#fff;border-color:#444;">
+                            <input id="nameB" class="form-control form-control-sm mb-2" placeholder="Enter name"
+                                   style="background:#1a1a1a;color:#fff;border-color:#444;">
                             <div class="small-muted" style="color:#bbb;">Club / Team</div>
-                            <input id="clubB" class="form-control form-control-sm" placeholder="Club / Team"
-                                   value="Club B"
+                            <input id="clubB" class="form-control form-control-sm" placeholder="Enter Club / Team"
                                    style="background:#1a1a1a;color:#fff;border-color:#444;">
                         </div>
                     </div>
@@ -245,6 +242,7 @@
                             <button class="btn btn-outline-danger btn-score" onclick="giveRedCard('B')">Red Card
                             </button>
                             <button class="btn btn-light btn-score" onclick="undoLast('B')">Undo</button>
+                            <button class="btn btn-primary btn-score" onclick="declareWinner('B')">Declare Winner</button>
                         </div>
 
                         <div class="row g-2 mt-3">
@@ -267,6 +265,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Center technique overlay (for HANSOKU-MAKE, GOLDEN SCORE, etc.) -->
+<!--        <div id="techniqueOverlay" class="technique-overlay" aria-hidden="true"></div>-->
 
         <!-- log and exports -->
         <div class="row mt-4 g-3">

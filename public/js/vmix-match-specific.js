@@ -2,7 +2,7 @@
 // This file extends the main vMix functionality to handle SHIDO penalty cards
 
 // Function to render penalty cards in vMix
-function renderVmixCards(containerId, shidoCount) {
+function renderVmixCards(containerId, shidoCount, hasRedCard = false) {
     const container = document.getElementById(containerId);
     if (!container) {
         console.warn(`Container ${containerId} not found`);
@@ -12,7 +12,15 @@ function renderVmixCards(containerId, shidoCount) {
     // Clear existing cards
     container.innerHTML = '';
     
-    if (shidoCount === 0) {
+    // Check if fighter has a manual red card
+    if (hasRedCard) {
+        // Show red card for manual red card
+        const el = document.createElement('div');
+        el.className = 'vmix-card-pill red';
+        el.textContent = '';
+        container.appendChild(el);
+        console.log(`Rendered manual red card in ${containerId}`);
+    } else if (shidoCount === 0) {
         // Show "0" when no shidos
         const el = document.createElement('div');
         el.className = 'score-num';
@@ -27,12 +35,14 @@ function renderVmixCards(containerId, shidoCount) {
         el.style.justifyContent = 'center';
         el.style.color = 'inherit';
         container.appendChild(el);
+        console.log(`Rendered 0 shido in ${containerId}`);
     } else if (shidoCount >= 3) {
         // Show red card for 3 or more shidos
         const el = document.createElement('div');
         el.className = 'vmix-card-pill red';
         el.textContent = '';
         container.appendChild(el);
+        console.log(`Rendered red card (3+ shidos) in ${containerId}`);
     } else {
         // Show yellow cards for 1-2 shidos
         for (let i = 0; i < shidoCount; i++) {
@@ -41,9 +51,8 @@ function renderVmixCards(containerId, shidoCount) {
             el.textContent = '';
             container.appendChild(el);
         }
+        console.log(`Rendered ${shidoCount} yellow cards in ${containerId}`);
     }
-    
-    console.log(`Rendered ${shidoCount} shido cards in ${containerId}`);
 }
 
 // Function to update hold timer display in vMix
@@ -119,12 +128,14 @@ function setupEnhancedFirebaseListener() {
         
         // Update Fighter A SHIDO cards
         if (data.fighterA && data.fighterA.shido !== undefined) {
-            renderVmixCards('shidoCardsA', data.fighterA.shido || 0);
+            const hasRedCardA = data.fighterA.redCard || false;
+            renderVmixCards('shidoCardsA', data.fighterA.shido || 0, hasRedCardA);
         }
         
         // Update Fighter B SHIDO cards
         if (data.fighterB && data.fighterB.shido !== undefined) {
-            renderVmixCards('shidoCardsB', data.fighterB.shido || 0);
+            const hasRedCardB = data.fighterB.redCard || false;
+            renderVmixCards('shidoCardsB', data.fighterB.shido || 0, hasRedCardB);
         }
         
         // Update Hold Timer

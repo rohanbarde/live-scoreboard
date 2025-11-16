@@ -21,8 +21,8 @@
       location: '',  // Add this line
       matchNumber: 1,  // Add this line
       matNumber: 1,  // Add this line
-      fighterA: { name: 'Fighter A', club: 'Club A', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0 },
-      fighterB: { name: 'Fighter B', club: 'Club B', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0 },
+      fighterA: { name: '', club: '', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
+      fighterB: { name: '', club: '', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
       log: [],
       winnerName: null,
       // Hold timer state
@@ -127,8 +127,8 @@
   // Update other UI elements
   renderSmallCards();
   document.getElementById('winnerLabel').textContent = match.winnerName || '—';
-  document.getElementById('hansokuA').textContent = (match.fighterA.shido >= HANSOKU_THRESHOLD) ? 'HANSOKU-MAKE' : '';
-  document.getElementById('hansokuB').textContent = (match.fighterB.shido >= HANSOKU_THRESHOLD) ? 'HANSOKU-MAKE' : '';
+  document.getElementById('hansokuA').textContent = (match.fighterA.shido >= HANSOKU_THRESHOLD || match.fighterA.redCard) ? 'HANSOKU-MAKE' : '';
+  document.getElementById('hansokuB').textContent = (match.fighterB.shido >= HANSOKU_THRESHOLD || match.fighterB.redCard) ? 'HANSOKU-MAKE' : '';
 
   updateTimerDisplay();
   renderLog();
@@ -152,8 +152,15 @@ function renderSmallCards() {
   b.innerHTML = '';
 
   // Function to render cards for a fighter
-  function renderCards(container, shidoCount) {
-    if (shidoCount === 0) {
+  function renderCards(container, fighter) {
+    // Check if fighter has a manual red card
+    if (fighter.redCard) {
+      // Show red card for manual red card
+      const el = document.createElement('div');
+      el.className = 'card-pill red';
+      el.textContent = 'R';
+      container.appendChild(el);
+    } else if (fighter.shido === 0) {
       // Show "0" when no shidos
       const el = document.createElement('div');
       el.className = 'score-num';
@@ -161,7 +168,7 @@ function renderSmallCards() {
       el.style.fontSize = '36px';
       el.style.fontWeight = '800';
       container.appendChild(el);
-    } else if (shidoCount >= 3) {
+    } else if (fighter.shido >= 3) {
       // Show red card for 3 or more shidos
       const el = document.createElement('div');
       el.className = 'card-pill red';
@@ -169,7 +176,7 @@ function renderSmallCards() {
       container.appendChild(el);
     } else {
       // Show yellow cards for 1-2 shidos
-      for (let i = 0; i < shidoCount; i++) {
+      for (let i = 0; i < fighter.shido; i++) {
         const el = document.createElement('div');
         el.className = 'card-pill yellow';
         el.textContent = 'Y';
@@ -179,8 +186,8 @@ function renderSmallCards() {
   }
 
   // Render cards for both fighters
-  renderCards(a, match.fighterA.shido);
-  renderCards(b, match.fighterB.shido);
+  renderCards(a, match.fighterA);
+  renderCards(b, match.fighterB);
 
   // Update shido counts (hidden by CSS)
   document.getElementById('cardCountA').textContent = match.fighterA.shido;
@@ -226,7 +233,21 @@ function renderSmallCards() {
     let bigCardTimeoutB = null;
     let pointerTimeout = null;
 
-
+    /* Show center technique overlay (HANSOKU-MAKE, GOLDEN SCORE, etc.) */
+//    function showTechniqueCenter(text, colorClass) {
+//      const overlay = document.getElementById('techniqueOverlay');
+//      if (!overlay) return;
+//
+//      overlay.textContent = text || '';
+//      overlay.className = 'technique-overlay ' + colorClass + ' show';
+//      overlay.setAttribute('aria-hidden', 'false');
+//
+//      if (techTimeout) clearTimeout(techTimeout);
+//      techTimeout = setTimeout(() => {
+//        overlay.className = 'technique-overlay ' + colorClass + ' hide';
+//        overlay.setAttribute('aria-hidden', 'true');
+//      }, TECH_OVERLAY_MS);
+//    }
 
     function showBigCard(side, colorClass, text) {
       const el = (side === 'A') ? document.getElementById('bigCardA') : document.getElementById('bigCardB');
@@ -270,13 +291,20 @@ function doTechnique(side, tech, detail) {
 
 /* ---------- Helper functions ---------- */
 
+// Get display name with fallback to White/Blue if empty
+function getDisplayName(fighter, side) {
+  return fighter.name || (side === 'A' ? 'White' : 'Blue');
+}
+
 function handleIppon(f, side, detail) {
   if (f.ippon >= 1) return; // already has ippon
   f.ippon = 1;
-  pushLog(f.name, 'Ippon', `${f.name} awarded Ippon${detail ? ' by ' + detail : ''}`);
-  match.winnerName = f.name;
+  const displayName = getDisplayName(f, side);
+  pushLog(displayName, 'Ippon', `${displayName} awarded Ippon${detail ? ' by ' + detail : ''}`);
+  match.winnerName = f.name || displayName;
   showBigCard(side, 'yellow', 'IPPON');
 
+  // Stop timer - works for both normal time and golden score
   stopMainTimer();
 }
 
@@ -284,16 +312,22 @@ function handleIppon(f, side, detail) {
 function handleWaza(f, side, detail) {
   if (f.ippon >= 1) return; // already has ippon
   f.waza += 1;
-  pushLog(f.name, 'Waza-ari', `${f.name} awarded Waza-ari (${f.waza})${detail ? ' by ' + detail : ''}`);
+  const displayName = getDisplayName(f, side);
+  pushLog(displayName, 'Waza-ari', `${displayName} awarded Waza-ari (${f.waza})${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'WAZA-ARI');
 
   if (f.waza >= 2) {
     // Convert 2 Waza-ari → 1 Ippon
     f.waza = 0;
     f.ippon = 1;
-    match.winnerName = f.name;
-    pushLog(f.name, 'Waza-ari Awasete Ippon', `${f.name} 2 Waza-ari → Ippon${detail ? ' by ' + detail : ''}`);
+    match.winnerName = f.name || displayName;
+    pushLog(displayName, 'Waza-ari Awasete Ippon', `${displayName} 2 Waza-ari → Ippon${detail ? ' by ' + detail : ''}`);
     showBigCard(side, 'yellow', 'IPPON');
+    stopMainTimer();
+  } else if (match.goldenScoreActive) {
+    // In golden score, any score (even 1 Waza-ari) ends the match
+    match.winnerName = f.name || displayName;
+    pushLog(displayName, 'Golden Score Winner', `${displayName} wins in Golden Score with Waza-ari`);
     stopMainTimer();
   }
 }
@@ -301,13 +335,24 @@ function handleWaza(f, side, detail) {
 
 function handleYuko(f, side, detail) {
   f.yuko += 1;
-  pushLog(f.name, 'Yuko', `${f.name} awarded Yuko${detail ? ' by ' + detail : ''}`);
+  const displayName = getDisplayName(f, side);
+  pushLog(displayName, 'Yuko', `${displayName} awarded Yuko${detail ? ' by ' + detail : ''}`);
   showBigCard(side, 'white', 'YUKO');
+  
+  // In golden score, any score (including Yuko) ends the match
+  if (match.goldenScoreActive) {
+    match.winnerName = f.name || displayName;
+    pushLog(displayName, 'Golden Score Winner', `${displayName} wins in Golden Score with Yuko`);
+    stopMainTimer();
+  }
 }
 
 function handleShido(f, opp, side, detail) {
   f.shido += 1;
-  pushLog(f.name, 'Shido', `${f.name} now has ${f.shido} Shido${detail ? ' (Reason: ' + detail + ')' : ''}`);
+  const displayName = getDisplayName(f, side);
+  const oppSide = side === 'A' ? 'B' : 'A';
+  const oppDisplayName = getDisplayName(opp, oppSide);
+  pushLog(displayName, 'Shido', `${displayName} now has ${f.shido} Shido${detail ? ' (Reason: ' + detail + ')' : ''}`);
   
   // Determine card color based on shido count
   let cardColor, cardText, statusText;
@@ -316,8 +361,11 @@ function handleShido(f, opp, side, detail) {
     // 3rd shido = Red card (Hansoku-make)
     cardColor = 'red';
     cardText = 'HANSOKU';
-    pushLog(f.name, 'Hansoku-make', `${f.name} receives Hansoku-make (Shido ${f.shido})${detail ? ' (Reason: ' + detail + ')' : ''}`);
-    match.winnerName = opp.name;
+    pushLog(displayName, 'Hansoku-make', `${displayName} receives Hansoku-make (Shido ${f.shido})${detail ? ' (Reason: ' + detail + ')' : ''}`);
+    match.winnerName = opp.name || oppDisplayName;
+    
+    // Stop the timer and end the match
+    stopMainTimer();
   } else {
     // 1st and 2nd shido = Yellow card
     cardColor = 'yellow';
@@ -331,13 +379,28 @@ function handleShido(f, opp, side, detail) {
 
     /* red card manual */
     function giveRedCard(side) {
-      // Check if timer is running
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
-      pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
-      match.winnerName = opp.name;
-      showTechniqueCenter('HANSOKU-MAKE', 'hansoku');
+      const oppSide = side === 'A' ? 'B' : 'A';
+      
+      // Set red card flag
+      f.redCard = true;
+      
+      // Log the red card
+      const displayName = getDisplayName(f, side);
+      const oppDisplayName = getDisplayName(opp, oppSide);
+      pushLog(displayName, 'Red Card (Hansoku-make)', `${displayName} given Red Card → Hansoku-make`);
+      
+      // Declare opponent as winner
+      match.winnerName = opp.name || oppDisplayName;
+      
+      // Stop the timer and end the match
+      stopMainTimer();
+      
+      // Show visual feedback - big red card in fighter box
       showBigCard(side, 'red', 'HANSOKU');
+      
+      // Update UI and sync to Firebase
       refreshUI();
     }
 
@@ -388,7 +451,10 @@ function undoAction(action, fighter, side) {
     'Yuko': () => { fighter.yuko = Math.max(0, fighter.yuko - 1); },
     'Shido': () => { fighter.shido = Math.max(0, fighter.shido - 1); },
     'Hansoku-make': () => { match.winnerName = null; },
-    'Red Card (Hansoku-make)': () => { match.winnerName = null; }
+    'Red Card (Hansoku-make)': () => { 
+      fighter.redCard = false; 
+      match.winnerName = null; 
+    }
   };
 
   const handler = actionsMap[action];
@@ -403,7 +469,9 @@ function undoAction(action, fighter, side) {
       const winner = (side === 'A') ? match.fighterA.name : match.fighterB.name;
       match.winnerName = winner;
       pushLog('Referee', 'Declare Winner', `${winner} declared winner manually`);
-      showBigCard(side, 'winner', 'WINNER');
+      // Show blue animation for White (A), white animation for Blue (B)
+      const animationColor = (side === 'A') ? 'blue-winner' : 'white-winner';
+      showBigCard(side, animationColor, 'WINNER');
       refreshUI();
     }
 
@@ -460,14 +528,35 @@ function updateTimerDisplay() {
           
           // Check if we just hit 0:00
           if (match.remainingSec === 0) {
-            // Timer reached 0, stop the timer and prepare for golden score
+            // Timer reached 0, stop the timer
             clearInterval(match.timerId);
             match.running = false;
-            match.goldenScoreActive = true; // Set GS flag
             document.getElementById('startBtn').textContent = 'Start';
+            
+            // Check if scores are equal to determine if golden score is needed
+            const scoreA = match.fighterA.ippon * 100 + match.fighterA.waza * 10 + match.fighterA.yuko;
+            const scoreB = match.fighterB.ippon * 100 + match.fighterB.waza * 10 + match.fighterB.yuko;
+            
+            if (scoreA === scoreB) {
+              // Scores are equal, trigger golden score
+              match.goldenScoreActive = true;
+              pushLog('System', 'Time End', 'Match time ended - Scores equal, Golden Score required');
+              showTechniqueCenter('GOLDEN SCORE', 'ippon');
+            } else {
+              // Scores are not equal, match ends normally
+              pushLog('System', 'Time End', 'Match time ended');
+              // Determine winner based on scores
+              if (scoreA > scoreB) {
+                match.winnerName = match.fighterA.name || 'White';
+                pushLog('System', 'Winner', `${match.winnerName} wins by score`);
+              } else {
+                match.winnerName = match.fighterB.name || 'Blue';
+                pushLog('System', 'Winner', `${match.winnerName} wins by score`);
+              }
+              refreshUI();
+            }
+            
             updateTimerDisplay();
-            pushLog('System', 'Time End', 'Match time ended');
-            showTechniqueCenter('GOLDEN SCORE', 'ippon');
             return;
           }
         }
@@ -574,21 +663,59 @@ function endMatch() {
 
     /* reset match (keeps names/clubs) */
     function resetMatch() {
-      if (!confirm('Reset match (this will clear scores and log)?')) return;
-      match.fighterA.waza = match.fighterA.ippon = match.fighterA.yuko = match.fighterA.shido = 0;
-      match.fighterB.waza = match.fighterB.ippon = match.fighterB.yuko = match.fighterB.shido = 0;
-      match.log = [];
-      match.winnerName = null;
+      if (!confirm('Reset match (this will clear scores, timer, and log)?')) return;
+      
+      // Clear any running timers first
+      if (match.running) {
+        clearInterval(match.timerId);
+      }
+      
+      // Reset match state
+      match.running = false;
       match.goldenScoreActive = false;
-      match.location = document.getElementById('matchLocation').value || '';
-      match.matchNumber = Number(document.getElementById('matchNumber').value) || 1;
-      match.matNumber = Number(document.getElementById('matNumber').value) || 1;
+      match.winnerName = null;
+      
+      // Reset all scores to 0
+      match.fighterA.waza = 0;
+      match.fighterA.ippon = 0;
+      match.fighterA.yuko = 0;
+      match.fighterA.shido = 0;
+      match.fighterA.redCard = false;
+      match.fighterB.waza = 0;
+      match.fighterB.ippon = 0;
+      match.fighterB.yuko = 0;
+      match.fighterB.shido = 0;
+      match.fighterB.redCard = false;
+      
+      // Reset timer
+      match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
+      match.remainingSec = match.durationMin * 60;
+      
+      // Update match info from inputs
+      const matchLocationEl = document.getElementById('matchLocation');
+      const matchNumberEl = document.getElementById('matchNumber');
+      const matNumberEl = document.getElementById('matNumber');
+      
+      if (matchLocationEl) match.location = matchLocationEl.value || '';
+      if (matchNumberEl) match.matchNumber = Number(matchNumberEl.value) || 1;
+      if (matNumberEl) match.matNumber = Number(matNumberEl.value) || 1;
 
       // Reset hold timer
       stopHoldTimer();
-
-      resetTimer();
-      pushLog('System', 'Reset', 'Match reset');
+      
+      // Clear log and add reset entry
+      match.log = [];
+      pushLog('System', 'Reset', 'Match reset - all scores and timer cleared');
+      
+      // Update UI elements
+      document.getElementById('startBtn').textContent = 'Start';
+      document.getElementById('hansokuA').textContent = '';
+      document.getElementById('hansokuB').textContent = '';
+      
+      // Update timer display
+      updateTimerDisplay();
+      
+      // Refresh UI to update all displays
       refreshUI();
     }
 
@@ -626,6 +753,11 @@ function endMatch() {
       const payload = JSON.parse(raw);
       match.fighterA = payload.fighterA;
       match.fighterB = payload.fighterB;
+      
+      // Ensure redCard field exists (for backwards compatibility)
+      if (match.fighterA.redCard === undefined) match.fighterA.redCard = false;
+      if (match.fighterB.redCard === undefined) match.fighterB.redCard = false;
+      
       match.log = payload.log || [];
       match.winnerName = payload.winner || null;
       match.location = payload.location || '';

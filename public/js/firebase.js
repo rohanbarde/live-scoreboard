@@ -72,6 +72,7 @@ function buildMatchDataFromDOM() {
     waza: elNumber('wazaA'),
     yuko: elNumber('yukoA'),
     shido: elNumber('shidoA'),
+    redCard: (typeof window.match !== 'undefined' && window.match.fighterA) ? window.match.fighterA.redCard || false : false
   };
   fighterA.score = computeScoreFromParts(fighterA);
 
@@ -83,6 +84,7 @@ function buildMatchDataFromDOM() {
     waza: elNumber('wazaB'),
     yuko: elNumber('yukoB'),
     shido: elNumber('shidoB'),
+    redCard: (typeof window.match !== 'undefined' && window.match.fighterB) ? window.match.fighterB.redCard || false : false
   };
   fighterB.score = computeScoreFromParts(fighterB);
 
