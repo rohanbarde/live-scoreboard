@@ -21,8 +21,8 @@
       location: '',  // Add this line
       matchNumber: 1,  // Add this line
       matNumber: 1,  // Add this line
-      fighterA: { name: 'Fighter A', club: 'Club A', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0 },
-      fighterB: { name: 'Fighter B', club: 'Club B', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0 },
+      fighterA: { name: 'Fighter A', club: 'Club A', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
+      fighterB: { name: 'Fighter B', club: 'Club B', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
       log: [],
       winnerName: null,
       // Hold timer state
@@ -127,8 +127,8 @@
   // Update other UI elements
   renderSmallCards();
   document.getElementById('winnerLabel').textContent = match.winnerName || '—';
-  document.getElementById('hansokuA').textContent = (match.fighterA.shido >= HANSOKU_THRESHOLD) ? 'HANSOKU-MAKE' : '';
-  document.getElementById('hansokuB').textContent = (match.fighterB.shido >= HANSOKU_THRESHOLD) ? 'HANSOKU-MAKE' : '';
+  document.getElementById('hansokuA').textContent = (match.fighterA.shido >= HANSOKU_THRESHOLD || match.fighterA.redCard) ? 'HANSOKU-MAKE' : '';
+  document.getElementById('hansokuB').textContent = (match.fighterB.shido >= HANSOKU_THRESHOLD || match.fighterB.redCard) ? 'HANSOKU-MAKE' : '';
 
   updateTimerDisplay();
   renderLog();
@@ -152,8 +152,15 @@ function renderSmallCards() {
   b.innerHTML = '';
 
   // Function to render cards for a fighter
-  function renderCards(container, shidoCount) {
-    if (shidoCount === 0) {
+  function renderCards(container, fighter) {
+    // Check if fighter has a manual red card
+    if (fighter.redCard) {
+      // Show red card for manual red card
+      const el = document.createElement('div');
+      el.className = 'card-pill red';
+      el.textContent = 'R';
+      container.appendChild(el);
+    } else if (fighter.shido === 0) {
       // Show "0" when no shidos
       const el = document.createElement('div');
       el.className = 'score-num';
@@ -161,7 +168,7 @@ function renderSmallCards() {
       el.style.fontSize = '36px';
       el.style.fontWeight = '800';
       container.appendChild(el);
-    } else if (shidoCount >= 3) {
+    } else if (fighter.shido >= 3) {
       // Show red card for 3 or more shidos
       const el = document.createElement('div');
       el.className = 'card-pill red';
@@ -169,7 +176,7 @@ function renderSmallCards() {
       container.appendChild(el);
     } else {
       // Show yellow cards for 1-2 shidos
-      for (let i = 0; i < shidoCount; i++) {
+      for (let i = 0; i < fighter.shido; i++) {
         const el = document.createElement('div');
         el.className = 'card-pill yellow';
         el.textContent = 'Y';
@@ -179,8 +186,8 @@ function renderSmallCards() {
   }
 
   // Render cards for both fighters
-  renderCards(a, match.fighterA.shido);
-  renderCards(b, match.fighterB.shido);
+  renderCards(a, match.fighterA);
+  renderCards(b, match.fighterB);
 
   // Update shido counts (hidden by CSS)
   document.getElementById('cardCountA').textContent = match.fighterA.shido;
@@ -226,7 +233,21 @@ function renderSmallCards() {
     let bigCardTimeoutB = null;
     let pointerTimeout = null;
 
-
+    /* Show center technique overlay (HANSOKU-MAKE, GOLDEN SCORE, etc.) */
+//    function showTechniqueCenter(text, colorClass) {
+//      const overlay = document.getElementById('techniqueOverlay');
+//      if (!overlay) return;
+//
+//      overlay.textContent = text || '';
+//      overlay.className = 'technique-overlay ' + colorClass + ' show';
+//      overlay.setAttribute('aria-hidden', 'false');
+//
+//      if (techTimeout) clearTimeout(techTimeout);
+//      techTimeout = setTimeout(() => {
+//        overlay.className = 'technique-overlay ' + colorClass + ' hide';
+//        overlay.setAttribute('aria-hidden', 'true');
+//      }, TECH_OVERLAY_MS);
+//    }
 
     function showBigCard(side, colorClass, text) {
       const el = (side === 'A') ? document.getElementById('bigCardA') : document.getElementById('bigCardB');
@@ -331,13 +352,22 @@ function handleShido(f, opp, side, detail) {
 
     /* red card manual */
     function giveRedCard(side) {
-      // Check if timer is running
       const f = (side === 'A') ? match.fighterA : match.fighterB;
       const opp = (side === 'A') ? match.fighterB : match.fighterA;
+      
+      // Set red card flag
+      f.redCard = true;
+      
+      // Log the red card
       pushLog(f.name, 'Red Card (Hansoku-make)', `${f.name} given Red Card → Hansoku-make`);
+      
+      // Declare opponent as winner
       match.winnerName = opp.name;
-      showTechniqueCenter('HANSOKU-MAKE', 'hansoku');
+      
+      // Show visual feedback - big red card in fighter box
       showBigCard(side, 'red', 'HANSOKU');
+      
+      // Update UI and sync to Firebase
       refreshUI();
     }
 
@@ -388,7 +418,10 @@ function undoAction(action, fighter, side) {
     'Yuko': () => { fighter.yuko = Math.max(0, fighter.yuko - 1); },
     'Shido': () => { fighter.shido = Math.max(0, fighter.shido - 1); },
     'Hansoku-make': () => { match.winnerName = null; },
-    'Red Card (Hansoku-make)': () => { match.winnerName = null; }
+    'Red Card (Hansoku-make)': () => { 
+      fighter.redCard = false; 
+      match.winnerName = null; 
+    }
   };
 
   const handler = actionsMap[action];
@@ -591,10 +624,12 @@ function endMatch() {
       match.fighterA.ippon = 0;
       match.fighterA.yuko = 0;
       match.fighterA.shido = 0;
+      match.fighterA.redCard = false;
       match.fighterB.waza = 0;
       match.fighterB.ippon = 0;
       match.fighterB.yuko = 0;
       match.fighterB.shido = 0;
+      match.fighterB.redCard = false;
       
       // Reset timer
       match.durationMin = Math.max(1, Number(document.getElementById('matchDuration').value) || 4);
@@ -662,6 +697,11 @@ function endMatch() {
       const payload = JSON.parse(raw);
       match.fighterA = payload.fighterA;
       match.fighterB = payload.fighterB;
+      
+      // Ensure redCard field exists (for backwards compatibility)
+      if (match.fighterA.redCard === undefined) match.fighterA.redCard = false;
+      if (match.fighterB.redCard === undefined) match.fighterB.redCard = false;
+      
       match.log = payload.log || [];
       match.winnerName = payload.winner || null;
       match.location = payload.location || '';
