@@ -450,7 +450,9 @@ function undoAction(action, fighter, side) {
       const winner = (side === 'A') ? match.fighterA.name : match.fighterB.name;
       match.winnerName = winner;
       pushLog('Referee', 'Declare Winner', `${winner} declared winner manually`);
-      showBigCard(side, 'winner', 'WINNER');
+      // Show blue animation for White (A), white animation for Blue (B)
+      const animationColor = (side === 'A') ? 'blue-winner' : 'white-winner';
+      showBigCard(side, animationColor, 'WINNER');
       refreshUI();
     }
 
