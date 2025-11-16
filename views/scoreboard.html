@@ -125,6 +125,7 @@
                             <button class="btn btn-outline-danger btn-score" onclick="giveRedCard('A')">Red Card
                             </button>
                             <button class="btn btn-light btn-score" onclick="undoLast('A')">Undo</button>
+                            <button class="btn btn-success btn-score" onclick="declareWinner('A')">Declare Winner</button>
                         </div>
                     </div>
 
@@ -175,8 +176,6 @@
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Hold (White)</button>
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Hold (Blue)</button>
                         <button class="btn btn-xs btn-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold</button>
-                        <button class="btn btn-xs btn-success" onclick="declareWinner('A')" id="whiteWinBtn">White win</button>
-                        <button class="btn btn-xs btn-primary" onclick="declareWinner('B')" id="blueWinBtn">Blue win</button>
                     </div>
 
                     <!-- Utility Controls -->
@@ -243,6 +242,7 @@
                             <button class="btn btn-outline-danger btn-score" onclick="giveRedCard('B')">Red Card
                             </button>
                             <button class="btn btn-light btn-score" onclick="undoLast('B')">Undo</button>
+                            <button class="btn btn-primary btn-score" onclick="declareWinner('B')">Declare Winner</button>
                         </div>
 
                         <div class="row g-2 mt-3">
