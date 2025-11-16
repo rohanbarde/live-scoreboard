@@ -509,14 +509,35 @@ function updateTimerDisplay() {
           
           // Check if we just hit 0:00
           if (match.remainingSec === 0) {
-            // Timer reached 0, stop the timer and prepare for golden score
+            // Timer reached 0, stop the timer
             clearInterval(match.timerId);
             match.running = false;
-            match.goldenScoreActive = true; // Set GS flag
             document.getElementById('startBtn').textContent = 'Start';
+            
+            // Check if scores are equal to determine if golden score is needed
+            const scoreA = match.fighterA.ippon * 100 + match.fighterA.waza * 10 + match.fighterA.yuko;
+            const scoreB = match.fighterB.ippon * 100 + match.fighterB.waza * 10 + match.fighterB.yuko;
+            
+            if (scoreA === scoreB) {
+              // Scores are equal, trigger golden score
+              match.goldenScoreActive = true;
+              pushLog('System', 'Time End', 'Match time ended - Scores equal, Golden Score required');
+              showTechniqueCenter('GOLDEN SCORE', 'ippon');
+            } else {
+              // Scores are not equal, match ends normally
+              pushLog('System', 'Time End', 'Match time ended');
+              // Determine winner based on scores
+              if (scoreA > scoreB) {
+                match.winnerName = match.fighterA.name || 'White';
+                pushLog('System', 'Winner', `${match.winnerName} wins by score`);
+              } else {
+                match.winnerName = match.fighterB.name || 'Blue';
+                pushLog('System', 'Winner', `${match.winnerName} wins by score`);
+              }
+              refreshUI();
+            }
+            
             updateTimerDisplay();
-            pushLog('System', 'Time End', 'Match time ended');
-            showTechniqueCenter('GOLDEN SCORE', 'ippon');
             return;
           }
         }
