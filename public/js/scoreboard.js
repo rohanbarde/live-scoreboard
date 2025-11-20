@@ -498,10 +498,18 @@ function undoSpecificScore(side, scoreType) {
       }
       break;
     case 'RedCard':
+      // Check if fighter has a red card OR if they have 3+ shidos (which causes hansoku-make)
       if (fighter.redCard) {
         fighter.redCard = false;
         match.winnerName = null;
         pushLog('System', 'Undo', `Undo Red Card for ${displayName}`);
+      } else if (fighter.shido >= 3) {
+        // If they have 3 shidos, reduce to 2 to undo the hansoku-make
+        fighter.shido = 2;
+        match.winnerName = null;
+        pushLog('System', 'Undo', `Undo Hansoku-make (reduced Shido from 3 to 2) for ${displayName}`);
+      } else {
+        console.log(`No Red Card or Hansoku-make to undo for ${displayName}`);
       }
       break;
   }

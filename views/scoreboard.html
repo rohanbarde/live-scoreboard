@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const key = event.key.toUpperCase();
-        
+
         // White player (Fighter A) - Add points
         switch(key) {
             case 'Q': // Ippon to White
@@ -584,8 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('L pressed - Undo Shido for Blue');
                 undoSpecificScore('B', 'Shido');
                 break;
-            case "'": // Undo Red Card for Blue (apostrophe/quote key)
-            case '"': // Also handle shift+apostrophe
+            case ';': // Also handle shift+apostrophe
                 event.preventDefault();
                 console.log('Quote pressed - Undo Red Card for Blue');
                 undoSpecificScore('B', 'RedCard');
