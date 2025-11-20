@@ -28,13 +28,14 @@
 
         .container {
           max-width: 1600px;
-          margin: 18px auto 36px;
+          margin: 10px auto 10px;
+          padding: 0 10px;
         }
 
         .card-surface {
           background: linear-gradient(180deg, var(--panel), #01030a);
           border-radius: 12px;
-          padding: 14px;
+          padding: 10px;
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
         }
 
@@ -54,16 +55,16 @@
         .fighter-box {
           background: rgba(255, 255, 255, 0.02);
           border-radius: 12px;
-          padding: 12px;
+          padding: 10px;
           position: relative;
-          min-height: 210px;
+          min-height: 180px;
         }
 
         .fighter-left {
           background: linear-gradient(180deg, var(--white-panel-start), var(--white-panel-end));
           color: #000;
           border-radius: 10px;
-          padding: 14px;
+          padding: 10px;
         }
 
         /* Fighter B (right) – Blue panel */
@@ -71,11 +72,11 @@
           background: linear-gradient(180deg, var(--blue-ijf-start), var(--blue-ijf-end));
           color: #fff;
           border-radius: 10px;
-          padding: 14px;
+          padding: 10px;
         }
 
         .score-big {
-          font-size: 60px;
+          font-size: 48px;
           font-weight: 900;
           color: #fff;
           letter-spacing: 2px;
@@ -89,11 +90,11 @@
         /* display big triple: Ippon · Waza · Yuko */
         .score-grid {
           display: flex;
-          gap: 16px;
+          gap: 12px;
           align-items: flex-start;
-                    justify-content: center;
-                    margin-top: 8px;
-          padding: 10px 0;
+          justify-content: center;
+          margin-top: 4px;
+          padding: 6px 0;
         }
 
        .score-cell {

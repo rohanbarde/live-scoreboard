@@ -24,21 +24,21 @@
 <div class="container">
     <div class="card-surface" id="rootSurface">
         <!-- HEADER: Logos in one line, match name below -->
-        <div class="scoreboard-header mb-4" style="background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 4px 14px rgba(0,0,0,0.2);">
-            <div style="display:flex;align-items:center;justify-content:center;gap:44px;">
-                <img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">
-                <img src="/public/assets/punitBalan.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">
-                <img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">
+        <div class="scoreboard-header mb-2" style="background:#fff;border-radius:10px;padding:6px 10px;box-shadow:0 4px 14px rgba(0,0,0,0.2);">
+            <div style="display:flex;align-items:center;justify-content:center;gap:30px;">
+                <img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:40px;height:40px;border-radius:8px;box-shadow:0 2px 8px #0002;">
+                <img src="/public/assets/punitBalan.png" alt="Logo2" style="width:40px;height:40px;border-radius:8px;box-shadow:0 2px 8px #0002;">
+                <img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:40px;height:40px;border-radius:8px;box-shadow:0 2px 8px #0002;">
             </div>
 
-            <h1 class="mb-0 mt-2 text-center" style="font-size:1.5rem;font-weight:700;line-height:1.3;color:#000;">
+            <h1 class="mb-0 mt-1 text-center" style="font-size:1.2rem;font-weight:700;line-height:1.2;color:#000;">
                 52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI
             </h1>
         </div>
 
         <!-- END HEADER -->
 
-        <div class="d-flex justify-content-between align-items-center mb-4" style="gap:32px;">
+        <div class="d-flex justify-content-between align-items-center mb-2" style="gap:20px;">
             <!-- Duration -->
             <div class="flex-fill text-center">
                 <div class="small-muted mb-1">Duration</div>
@@ -60,7 +60,7 @@
             <div class="flex-fill text-center">
                 <div class="small-muted mb-1">Controls</div>
                 <div class="d-flex flex-column gap-2 align-items-center">
-                    <button id="vmixScorecard" class="btn btn-outline-primary btn-sm" onclick="openVmixScorecard()"> Scorecard</button>
+                    <button id="vmixScorecard" class="btn btn-outline-primary btn-sm" onclick="openVmixScorecard()">📺 Scorecard</button>
                 </div>
             </div>
         </div>
@@ -115,7 +115,7 @@
                         </div>
                     </div>
 
-                    <hr class="my-3"/>
+                    <hr class="my-2"/>
 
                     <div>
                         <div class="mb-2 small-muted">Actions</div>
@@ -240,7 +240,7 @@
                         </div>
                     </div>
 
-                    <hr class="my-3"/>
+                    <hr class="my-2"/>
 
                     <div>
                         <div class="mb-2 small-muted">Actions</div>
@@ -282,11 +282,11 @@
 <!--        <div id="techniqueOverlay" class="technique-overlay" aria-hidden="true"></div>-->
 
         <!-- Buttons only (visible on screen) -->
-        <div class="row mt-4 g-3 screen-only-buttons">
+        <div class="row mt-2 g-2 screen-only-buttons">
             <div class="col-12 text-center">
-                <button class="btn btn-outline-light btn-lg me-2" onclick="savePdf()">Save to PDF</button>
-                <button class="btn btn-success btn-lg me-2" onclick="saveMatch()">Save Match (localStorage)</button>
-                <button class="btn btn-outline-light btn-lg" onclick="loadLastMatch()">Load Last Match</button>
+                <button class="btn btn-outline-light me-2" onclick="savePdf()">Save to PDF</button>
+                <button class="btn btn-success me-2" onclick="saveMatch()">Save Match (localStorage)</button>
+                <button class="btn btn-outline-light" onclick="loadLastMatch()">Load Last Match</button>
             </div>
         </div>
 
@@ -348,7 +348,7 @@
             </div>
         </div>
 
-        <footer class="scoreboard-footer text-center mt-4" style="font-size:1.05rem;color:#fff;opacity:0.82;letter-spacing:1px;padding:8px 0;">
+        <footer class="scoreboard-footer text-center mt-2" style="font-size:0.9rem;color:#fff;opacity:0.82;letter-spacing:1px;padding:4px 0;">
             MAHAJUDO &copy; BLACKTROUNCE STUDIO
         </footer>
 
