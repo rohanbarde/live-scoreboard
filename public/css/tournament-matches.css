@@ -29,17 +29,13 @@ body {
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 20px;
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 20px;
 }
 
 /* Header */
 .header {
-  grid-column: 1 / -1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -109,7 +105,6 @@ body {
 
 /* Tabs */
 .tabs {
-  grid-column: 1 / 2;
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
@@ -137,7 +132,6 @@ body {
 
 .tab-content {
   display: none;
-  grid-column: 1 / 2;
 }
 
 .tab-content.active {
@@ -289,14 +283,15 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .container {
-    grid-template-columns: 1fr;
+@media (max-width: 1400px) {
+  .matches-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  .players-panel {
-    position: static;
-    margin-top: 20px;
+}
+
+@media (max-width: 1024px) {
+  .matches-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -346,10 +341,10 @@ body {
   font-size: 1.2rem;
 }
 
-/* Two-column responsive grid */
+/* Four-column responsive grid */
 .matches-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 
@@ -405,7 +400,7 @@ body {
 }
 
 /* Mobile: 1 column layout */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .matches-grid {
     grid-template-columns: 1fr;
   }
