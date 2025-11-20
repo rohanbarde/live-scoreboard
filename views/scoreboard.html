@@ -597,6 +597,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Quote pressed - Undo Red Card for Blue');
                 undoSpecificScore('B', 'RedCard');
                 break;
+                
+            // Declare Winners
+            case 'V': // Declare White as Winner
+                event.preventDefault();
+                console.log('V pressed - Declare White as Winner');
+                declareWinner('A');
+                break;
+            case 'N': // Declare Blue as Winner
+                event.preventDefault();
+                console.log('N pressed - Declare Blue as Winner');
+                declareWinner('B');
+                break;
         }
     });
 });
