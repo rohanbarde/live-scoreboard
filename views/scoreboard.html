@@ -70,8 +70,12 @@
             <!-- Fighter A -->
             <div class="col-md-5">
                 <div class="fighter-box fighter-left" id="cardA">
-                    <div class="d-flex justify-content-between align-items-start mb-3 p-2"
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2"
                          style="background:rgba(255,255,255,0.9);border-radius:8px;color:#000;">
+                        <!-- Player Photo -->
+                        <div id="photoContainerA" style="margin-right:18px; margin-left:14px;">
+                            <img id="photoA" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player A" style="width:80px;height:80px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#f0f0f0;padding:10px;">
+                        </div>
                         <div style="flex:1;">
                             <div class="small-muted" style="color:#000;">Name</div>
                             <input id="nameA" class="form-control form-control-sm mb-2" placeholder="Enter name"
@@ -189,8 +193,12 @@
             <!-- Fighter B -->
             <div class="col-md-5">
                 <div class="fighter-box fighter-right" id="cardB">
-                    <div class="d-flex justify-content-between align-items-start mb-3 p-2"
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2"
                          style="background:rgba(0,0,0,0.8);border-radius:8px;color:#fff;">
+                        <!-- Player Photo -->
+                        <div id="photoContainerB" style="margin-right:18px; margin-left:14px;">
+                            <img id="photoB" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player B" style="width:80px;height:80px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#f0f0f0;padding:10px;">
+                        </div>
                         <div style="flex:1;">
                             <div class="small-muted" style="color:#bbb;">Name</div>
                             <input id="nameB" class="form-control form-control-sm mb-2" placeholder="Enter name"
@@ -358,6 +366,44 @@ function getUrlParams() {
     };
 }
 
+// Function to load player photo from Firebase
+function loadPlayerPhoto(playerName, side) {
+    const img = document.getElementById(`photo${side}`);
+    const container = document.getElementById(`photoContainer${side}`);
+
+    if (!img || !container) return;
+
+    // Ensure container is visible
+    container.style.display = "block";
+
+    // Query using correct path + field
+    firebase.database()
+        .ref("registrations")
+        .orderByChild("fullName")
+        .equalTo(playerName)
+        .once("value")
+        .then(snapshot => {
+            if (!snapshot.exists()) {
+                console.warn("Player not found:", playerName);
+                return;
+            }
+
+            snapshot.forEach(child => {
+                const data = child.val();
+
+                // PHOTO is stored directly as: photoBase64
+                if (data.photoBase64 && data.photoBase64.length > 50) {
+                    img.src = `data:image/png;base64,${data.photoBase64}`;
+                    console.log("Photo loaded for:", playerName);
+                } else {
+                    console.warn("Player has no photoBase64:", playerName);
+                }
+            });
+        })
+        .catch(err => console.error("Photo loading error:", err));
+}
+
+
 // Function to auto-fill player information
 function autoFillPlayerInfo() {
     try {
@@ -375,11 +421,15 @@ function autoFillPlayerInfo() {
         if (nameAInput && params.fighterAName) {
             nameAInput.value = params.fighterAName;
             console.log('Set Fighter A name:', params.fighterAName);
+            // Load photo for Fighter A
+            loadPlayerPhoto(params.fighterAName, 'A');
         }
         
         if (nameBInput && params.fighterBName) {
             nameBInput.value = params.fighterBName;
             console.log('Set Fighter B name:', params.fighterBName);
+            // Load photo for Fighter B
+            loadPlayerPhoto(params.fighterBName, 'B');
         }
         
         // Set clubs/teams
