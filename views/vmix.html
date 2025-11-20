@@ -149,8 +149,18 @@
         
         .fighter-top-row {
             position: relative;
-            padding: 3.5vw 1vw 0.5vw 1vw;
-            margin-bottom: 0.5vw;
+            padding: 0.5vw 1vw;
+            margin-bottom: 0.3vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .photo-name-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3vw;
         }
         
         .flag-team-container {
@@ -167,16 +177,12 @@
         }
         
         .fighter-name {
-            font-size: 4.5vw !important;
-            font-weight: 900 !important;
-            margin: 0 !important;
-            padding: 0.3vw 0 !important;
-            position: absolute;
-            left: 50%;
-            top: 0.5vw;
-            transform: translateX(-50%);
+            font-size: 2.5vw !important;
+            font-weight: 700 !important;
+            margin: 0.3vw 0 0 0 !important;
+            padding: 0 !important;
+            text-align: center;
             white-space: nowrap;
-            z-index: 5;
         }
 
         /* Additional timer alignment fixes */
@@ -260,16 +266,17 @@
 <div class="container-fluid d-flex flex-column h-100 p-0">
     <!-- Player 1 (Top) -->
     <div class="fighter-box fighter-left flex-grow-1 d-flex flex-column justify-content-start">
-        <div class="fighter-top-row d-flex w-100 justify-content-between align-items-start">
-            <!-- Player Name (Top Center) -->
-            <div class="fighter-name text-center" id="fighterAName">Fighter A</div>
+        <div class="fighter-top-row">
             <!-- Flag and Team Name (Left) -->
             <div class="flag-team-container">
                 <img src="https://flagcdn.com/16x12/in.png" alt="Flag A" class="fighter-flag" id="flagA" />
                 <div class="fighter-club" id="fighterAClub">Team A</div>
             </div>
-            <!-- Player Photo (Right) -->
-            <img id="photoA" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player A" class="player-photo">
+            <!-- Player Photo and Name (Right) -->
+            <div class="photo-name-container">
+                <img id="photoA" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player A" class="player-photo">
+                <div class="fighter-name" id="fighterAName">Fighter A</div>
+            </div>
         </div>
         <div class="score-grid" style="margin-top: auto;">
             <div class="score-cell">
@@ -307,16 +314,17 @@
                 </div>
             </div>
         </div>
-        <div class="fighter-top-row d-flex w-100 justify-content-between align-items-start" style="margin-top: auto;">
-            <!-- Player Name (Bottom Center) -->
-            <div class="fighter-name text-center" id="fighterBName">Fighter B</div>
+        <div class="fighter-top-row" style="margin-top: auto;">
             <!-- Flag and Team Name (Left) -->
             <div class="flag-team-container">
                 <img src="https://flagcdn.com/16x12/jp.png" alt="Flag B" class="fighter-flag" id="flagB" />
                 <div class="fighter-club" id="fighterBClub">Team B</div>
             </div>
-            <!-- Player Photo (Right) -->
-            <img id="photoB" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player B" class="player-photo">
+            <!-- Player Photo and Name (Right) -->
+            <div class="photo-name-container">
+                <img id="photoB" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player B" class="player-photo">
+                <div class="fighter-name" id="fighterBName">Fighter B</div>
+            </div>
         </div>
     </div>
 
