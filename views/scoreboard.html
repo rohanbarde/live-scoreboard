@@ -480,6 +480,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const key = event.key.toUpperCase();
+        
+        // Spacebar - Start/Pause timer
+        if (event.code === 'Space' || event.key === ' ') {
+            event.preventDefault();
+<!--            console.log('Space pressed - Start/Pause timer');-->
+            startPauseTimer();
+            return;
+        }
 
         // White player (Fighter A) - Add points
         switch(key) {
