@@ -7,8 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const bracketView = document.getElementById('bracketView');
     const listView = document.getElementById('listView');
     const tabs = document.querySelectorAll('.tab');
-    const playerSearch = document.getElementById('playerSearch');
-    const playersList = document.getElementById('playersList');
     const matchesContainer = document.getElementById('matchesContainer');
     const bracketContainer = document.getElementById('bracketContainer');
 
@@ -194,40 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Load and display registered players
-    const loadPlayers = async () => {
-        try {
-            const players = await tournamentDraw.loadPlayers();
-            
-            if (players.length === 0) {
-                playersList.innerHTML = `
-                    <div class="no-players">
-                        <i class="fas fa-users-slash"></i>
-                        <p>No players registered yet.</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            playersList.innerHTML = players.map(player => `
-                <div class="player-item" data-id="${player.id}">
-                    <div class="player-info">
-                        <h4>${player.fullName}</h4>
-                        <p>${player.playerInfo?.team || 'No team'} • ${player.playerInfo?.weight ? player.playerInfo.weight + 'kg' : 'N/A'}</p>
-                    </div>
-                    <span class="player-actions">
-                        <button class="btn-icon" title="View details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </span>
-                </div>
-            `).join('');
-            
-        } catch (error) {
-            console.error('Error loading players:', error);
-            showNotification('Failed to load players', 'error');
-        }
-    };
 
     // Helper function to get round name
     const getRoundName = (roundNumber, totalRounds) => {
@@ -448,27 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (generateFirstDrawBtn) generateFirstDrawBtn.addEventListener('click', handleGenerateDraw);
     if (viewUpcomingBtn) viewUpcomingBtn.addEventListener('click', handleViewUpcoming);
     
-    // Player search
-    if (playerSearch) {
-        playerSearch.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const playerItems = document.querySelectorAll('.player-item');
-            
-            playerItems.forEach(item => {
-                const playerName = item.querySelector('h4').textContent.toLowerCase();
-                const teamName = item.querySelector('p').textContent.toLowerCase();
-                
-                if (playerName.includes(searchTerm) || teamName.includes(searchTerm)) {
-                    item.style.display = 'flex';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        });
-    }
 
     // Load initial data
     if (bracketContainer) loadDraw();
-    if (playersList) loadPlayers();
     if (matchesContainer) loadUpcomingMatches();
 });
