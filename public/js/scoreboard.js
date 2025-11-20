@@ -147,6 +147,11 @@ function renderSmallCards() {
   const a = document.getElementById('smallCardA');
   const b = document.getElementById('smallCardB');
 
+  // Safety check - if elements don't exist, exit early (optional feature)
+  if (!a || !b) {
+    return;
+  }
+
   // Clear existing cards
   a.innerHTML = '';
   b.innerHTML = '';
@@ -459,6 +464,57 @@ function undoAction(action, fighter, side) {
 
   const handler = actionsMap[action];
   if (handler) handler();
+}
+
+// Specific undo functions for keyboard shortcuts
+function undoSpecificScore(side, scoreType) {
+  const fighter = side === 'A' ? match.fighterA : match.fighterB;
+  const displayName = getDisplayName(fighter, side);
+  
+  switch(scoreType) {
+    case 'Ippon':
+      if (fighter.ippon > 0) {
+        fighter.ippon--;
+        match.winnerName = null;
+        pushLog('System', 'Undo', `Undo Ippon for ${displayName}`);
+      }
+      break;
+    case 'Waza':
+      if (fighter.waza > 0) {
+        fighter.waza--;
+        pushLog('System', 'Undo', `Undo Waza-ari for ${displayName}`);
+      }
+      break;
+    case 'Yuko':
+      if (fighter.yuko > 0) {
+        fighter.yuko--;
+        pushLog('System', 'Undo', `Undo Yuko for ${displayName}`);
+      }
+      break;
+    case 'Shido':
+      if (fighter.shido > 0) {
+        fighter.shido--;
+        pushLog('System', 'Undo', `Undo Shido for ${displayName}`);
+      }
+      break;
+    case 'RedCard':
+      // Check if fighter has a red card OR if they have 3+ shidos (which causes hansoku-make)
+      if (fighter.redCard) {
+        fighter.redCard = false;
+        match.winnerName = null;
+        pushLog('System', 'Undo', `Undo Red Card for ${displayName}`);
+      } else if (fighter.shido >= 3) {
+        // If they have 3 shidos, reduce to 2 to undo the hansoku-make
+        fighter.shido = 2;
+        match.winnerName = null;
+        pushLog('System', 'Undo', `Undo Hansoku-make (reduced Shido from 3 to 2) for ${displayName}`);
+      } else {
+        console.log(`No Red Card or Hansoku-make to undo for ${displayName}`);
+      }
+      break;
+  }
+  
+  refreshUI();
 }
 
     /* declare winner manually */
@@ -1314,4 +1370,5 @@ function stopHoldTimer() {
     window.startHoldWhite = startHoldWhite;
     window.startHoldBlue = startHoldBlue;
     window.stopHoldTimer = stopHoldTimer;
+    window.undoSpecificScore = undoSpecificScore;
     window.match = match; // Expose match object for Firebase sync
