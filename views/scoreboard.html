@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const key = event.key.toUpperCase();
         
-        // White player (Fighter A) shortcuts
+        // White player (Fighter A) - Add points
         switch(key) {
             case 'Q': // Ippon to White
                 event.preventDefault();
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 giveRedCard('A');
                 break;
                 
-            // Blue player (Fighter B) shortcuts
+            // Blue player (Fighter B) - Add points
             case 'Y': // Ippon to Blue
                 event.preventDefault();
                 console.log('Y pressed - Ippon to Blue');
@@ -534,6 +534,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.preventDefault();
                 console.log('P pressed - Red Card to Blue');
                 giveRedCard('B');
+                break;
+                
+            // White player (Fighter A) - Undo points
+            case 'A': // Undo Ippon for White
+                event.preventDefault();
+                console.log('A pressed - Undo Ippon for White');
+                undoSpecificScore('A', 'Ippon');
+                break;
+            case 'S': // Undo Waza-ari for White
+                event.preventDefault();
+                console.log('S pressed - Undo Waza-ari for White');
+                undoSpecificScore('A', 'Waza');
+                break;
+            case 'D': // Undo Yuko for White
+                event.preventDefault();
+                console.log('D pressed - Undo Yuko for White');
+                undoSpecificScore('A', 'Yuko');
+                break;
+            case 'F': // Undo Shido for White
+                event.preventDefault();
+                console.log('F pressed - Undo Shido for White');
+                undoSpecificScore('A', 'Shido');
+                break;
+            case 'G': // Undo Red Card for White
+                event.preventDefault();
+                console.log('G pressed - Undo Red Card for White');
+                undoSpecificScore('A', 'RedCard');
+                break;
+                
+            // Blue player (Fighter B) - Undo points
+            case 'H': // Undo Ippon for Blue
+                event.preventDefault();
+                console.log('H pressed - Undo Ippon for Blue');
+                undoSpecificScore('B', 'Ippon');
+                break;
+            case 'J': // Undo Waza-ari for Blue
+                event.preventDefault();
+                console.log('J pressed - Undo Waza-ari for Blue');
+                undoSpecificScore('B', 'Waza');
+                break;
+            case 'K': // Undo Yuko for Blue
+                event.preventDefault();
+                console.log('K pressed - Undo Yuko for Blue');
+                undoSpecificScore('B', 'Yuko');
+                break;
+            case 'L': // Undo Shido for Blue
+                event.preventDefault();
+                console.log('L pressed - Undo Shido for Blue');
+                undoSpecificScore('B', 'Shido');
+                break;
+            case "'": // Undo Red Card for Blue (apostrophe/quote key)
+            case '"': // Also handle shift+apostrophe
+                event.preventDefault();
+                console.log('Quote pressed - Undo Red Card for Blue');
+                undoSpecificScore('B', 'RedCard');
                 break;
         }
     });

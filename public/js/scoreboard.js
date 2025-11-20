@@ -466,6 +466,49 @@ function undoAction(action, fighter, side) {
   if (handler) handler();
 }
 
+// Specific undo functions for keyboard shortcuts
+function undoSpecificScore(side, scoreType) {
+  const fighter = side === 'A' ? match.fighterA : match.fighterB;
+  const displayName = getDisplayName(fighter, side);
+  
+  switch(scoreType) {
+    case 'Ippon':
+      if (fighter.ippon > 0) {
+        fighter.ippon--;
+        match.winnerName = null;
+        pushLog('System', 'Undo', `Undo Ippon for ${displayName}`);
+      }
+      break;
+    case 'Waza':
+      if (fighter.waza > 0) {
+        fighter.waza--;
+        pushLog('System', 'Undo', `Undo Waza-ari for ${displayName}`);
+      }
+      break;
+    case 'Yuko':
+      if (fighter.yuko > 0) {
+        fighter.yuko--;
+        pushLog('System', 'Undo', `Undo Yuko for ${displayName}`);
+      }
+      break;
+    case 'Shido':
+      if (fighter.shido > 0) {
+        fighter.shido--;
+        pushLog('System', 'Undo', `Undo Shido for ${displayName}`);
+      }
+      break;
+    case 'RedCard':
+      if (fighter.redCard) {
+        fighter.redCard = false;
+        match.winnerName = null;
+        pushLog('System', 'Undo', `Undo Red Card for ${displayName}`);
+      }
+      break;
+  }
+  
+  refreshUI();
+}
+
     /* declare winner manually */
     function declareWinner(side) {
       if (!side) { // no specified side: ask or skip
@@ -1319,4 +1362,5 @@ function stopHoldTimer() {
     window.startHoldWhite = startHoldWhite;
     window.startHoldBlue = startHoldBlue;
     window.stopHoldTimer = stopHoldTimer;
+    window.undoSpecificScore = undoSpecificScore;
     window.match = match; // Expose match object for Firebase sync
