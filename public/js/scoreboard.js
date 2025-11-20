@@ -147,6 +147,11 @@ function renderSmallCards() {
   const a = document.getElementById('smallCardA');
   const b = document.getElementById('smallCardB');
 
+  // Safety check - if elements don't exist, exit early (optional feature)
+  if (!a || !b) {
+    return;
+  }
+
   // Clear existing cards
   a.innerHTML = '';
   b.innerHTML = '';

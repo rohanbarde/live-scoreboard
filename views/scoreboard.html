@@ -468,6 +468,76 @@ function openVmixScorecard() {
     
     console.log('Opening vMix Scorecard:', vmixUrl);
 }
+
+// Keyboard shortcuts for scoring
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Keyboard shortcuts initialized');
+    
+    document.addEventListener('keydown', function(event) {
+        // Ignore if user is typing in an input field
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+            return;
+        }
+
+        const key = event.key.toUpperCase();
+        
+        // White player (Fighter A) shortcuts
+        switch(key) {
+            case 'Q': // Ippon to White
+                event.preventDefault();
+                console.log('Q pressed - Ippon to White');
+                doTechnique('A', 'Ippon', 'Keyboard shortcut');
+                break;
+            case 'W': // Waza-ari to White
+                event.preventDefault();
+                console.log('W pressed - Waza-ari to White');
+                doTechnique('A', 'Waza', 'Keyboard shortcut');
+                break;
+            case 'E': // Yuko to White
+                event.preventDefault();
+                console.log('E pressed - Yuko to White');
+                doTechnique('A', 'Yuko', 'Keyboard shortcut');
+                break;
+            case 'R': // Shido to White
+                event.preventDefault();
+                console.log('R pressed - Shido to White');
+                doTechnique('A', 'Shido', 'Keyboard shortcut');
+                break;
+            case 'T': // Hansoku-make (Red Card) to White
+                event.preventDefault();
+                console.log('T pressed - Red Card to White');
+                giveRedCard('A');
+                break;
+                
+            // Blue player (Fighter B) shortcuts
+            case 'Y': // Ippon to Blue
+                event.preventDefault();
+                console.log('Y pressed - Ippon to Blue');
+                doTechnique('B', 'Ippon', 'Keyboard shortcut');
+                break;
+            case 'U': // Waza-ari to Blue
+                event.preventDefault();
+                console.log('U pressed - Waza-ari to Blue');
+                doTechnique('B', 'Waza', 'Keyboard shortcut');
+                break;
+            case 'I': // Yuko to Blue
+                event.preventDefault();
+                console.log('I pressed - Yuko to Blue');
+                doTechnique('B', 'Yuko', 'Keyboard shortcut');
+                break;
+            case 'O': // Shido to Blue
+                event.preventDefault();
+                console.log('O pressed - Shido to Blue');
+                doTechnique('B', 'Shido', 'Keyboard shortcut');
+                break;
+            case 'P': // Hansoku-make (Red Card) to Blue
+                event.preventDefault();
+                console.log('P pressed - Red Card to Blue');
+                giveRedCard('B');
+                break;
+        }
+    });
+});
 </script>
 
 </body>
