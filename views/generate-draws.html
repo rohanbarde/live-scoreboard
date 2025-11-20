@@ -507,32 +507,32 @@
         </div>
     </div>
 
-    <div class="filters-container">
-        <div class="filter-group">
-            <label for="drawGenderFilter">Gender</label>
-            <select id="drawGenderFilter" class="filter-select">
+    <div class="filters-container" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;">
+        <div class="filter-group" style="flex: 0 0 auto; min-width: 150px;">
+            <label for="drawGenderFilter" style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500;">Gender</label>
+            <select id="drawGenderFilter" class="filter-select" style="width: 100%;">
                 <option value="">All Genders</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
             </select>
         </div>
-        <div class="filter-group">
-            <label for="drawWeightFilter">Weight Category</label>
-            <select id="drawWeightFilter" class="filter-select">
+        <div class="filter-group" style="flex: 0 0 auto; min-width: 180px;">
+            <label for="drawWeightFilter" style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500;">Weight Category</label>
+            <select id="drawWeightFilter" class="filter-select" style="width: 100%;">
                 <option value="">All Weights</option>
                 <!-- Will be populated by JavaScript -->
             </select>
         </div>
-        <div class="filter-group">
-            <div style="display:flex; gap:10px; align-items:flex-end;">
-                <button id="generateDrawBtn" class="btn btn-primary">
-                    <i class="fas fa-random"></i> Generate Draw
-                </button>
-                <button id="shufflePlayersBtn" class="btn btn-outline">
-                    <i class="fas fa-shuffle"></i> Shuffle Players
-                </button>
-            </div>
+        <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 10px;">
+            <button id="shufflePlayersBtn" class="btn btn-outline">
+                <i class="fas fa-shuffle"></i> Shuffle Players
+            </button>
+        </div>
+        <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 10px;">
+            <button id="generateDrawBtn" class="btn btn-primary">
+                <i class="fas fa-random"></i> Generate Draw
+            </button>
         </div>
     </div>
 
