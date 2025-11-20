@@ -60,7 +60,7 @@
             <div class="flex-fill text-center">
                 <div class="small-muted mb-1">Controls</div>
                 <div class="d-flex flex-column gap-2 align-items-center">
-                    <button id="vmixScorecard" class="btn btn-outline-primary btn-sm" onclick="openVmixScorecard()">📺 Scorecard</button>
+                    <button id="vmixScorecard" class="btn btn-outline-primary btn-sm" onclick="openVmixScorecard()"> Scorecard</button>
                 </div>
             </div>
         </div>
@@ -281,8 +281,17 @@
         <!-- Center technique overlay (for HANSOKU-MAKE, GOLDEN SCORE, etc.) -->
 <!--        <div id="techniqueOverlay" class="technique-overlay" aria-hidden="true"></div>-->
 
-        <!-- log and exports -->
-        <div class="row mt-4 g-3">
+        <!-- Buttons only (visible on screen) -->
+        <div class="row mt-4 g-3 screen-only-buttons">
+            <div class="col-12 text-center">
+                <button class="btn btn-outline-light btn-lg me-2" onclick="savePdf()">Save to PDF</button>
+                <button class="btn btn-success btn-lg me-2" onclick="saveMatch()">Save Match (localStorage)</button>
+                <button class="btn btn-outline-light btn-lg" onclick="loadLastMatch()">Load Last Match</button>
+            </div>
+        </div>
+
+        <!-- log and exports (hidden on screen, visible in PDF) -->
+        <div class="row mt-4 g-3 print-only-sections">
             <div class="col-md-6">
                 <div class="card-surface">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -338,7 +347,6 @@
                 </div>
             </div>
         </div>
-
 
         <footer class="scoreboard-footer text-center mt-4" style="font-size:1.05rem;color:#fff;opacity:0.82;letter-spacing:1px;padding:8px 0;">
             MAHAJUDO &copy; BLACKTROUNCE STUDIO

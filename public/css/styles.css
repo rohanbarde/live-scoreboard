@@ -515,3 +515,23 @@
             color: #ffffff !important;
             opacity: 1;
         }
+
+/* Hide Event Log and Match Summary on screen, show only buttons */
+.print-only-sections {
+    display: none !important;
+}
+
+.screen-only-buttons {
+    display: block !important;
+}
+
+/* Show sections in PDF, hide button row */
+@media print {
+    .print-only-sections {
+        display: flex !important;
+    }
+    
+    .screen-only-buttons {
+        display: none !important;
+    }
+}
