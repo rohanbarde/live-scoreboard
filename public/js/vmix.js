@@ -54,6 +54,39 @@ connectedRef.on("value", function(snap) {
     updateStatus(status);
 });
 
+// Function to load player photo from Firebase
+function loadPlayerPhoto(playerName, side) {
+    const photoImg = document.getElementById(`photo${side}`);
+    
+    if (!photoImg || !playerName) {
+        console.log(`No photo element or player name for side ${side}`);
+        return;
+    }
+    
+    console.log(`Loading photo for ${playerName} on side ${side}`);
+    
+    // Query Firebase for player data using correct path and field
+    database.ref('registrations').orderByChild('fullName').equalTo(playerName).once('value')
+        .then(snapshot => {
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnapshot => {
+                    const playerData = childSnapshot.val();
+                    if (playerData.photoBase64 && playerData.photoBase64.length > 50) {
+                        photoImg.src = `data:image/png;base64,${playerData.photoBase64}`;
+                        console.log(`✓ Photo loaded successfully for ${playerName}`);
+                    } else {
+                        console.warn(`Player ${playerName} has no photoBase64 data`);
+                    }
+                });
+            } else {
+                console.warn(`Player not found in database: ${playerName}`);
+            }
+        })
+        .catch(error => {
+            console.error(`Error loading photo for ${playerName}:`, error);
+        });
+}
+
 // Listen for updates from Firebase
 updateStatus('Setting up Firebase listener...');
 try {
@@ -76,6 +109,11 @@ try {
             document.getElementById('fighterAName').textContent = fighterA.name || 'Fighter A';
             document.getElementById('fighterAClub').textContent = fighterA.club || 'Team A';
             
+            // Load player photo
+            if (fighterA.name) {
+                loadPlayerPhoto(fighterA.name, 'A');
+            }
+            
             // Update score indicators
             if (fighterA.ippon !== undefined) document.getElementById('ipponA').textContent = fighterA.ippon || 0;
             if (fighterA.waza !== undefined) document.getElementById('wazaA').textContent = fighterA.waza || 0;
@@ -87,6 +125,11 @@ try {
             const fighterB = data.fighterB;
             document.getElementById('fighterBName').textContent = fighterB.name || 'Fighter B';
             document.getElementById('fighterBClub').textContent = fighterB.club || 'Team B';
+            
+            // Load player photo
+            if (fighterB.name) {
+                loadPlayerPhoto(fighterB.name, 'B');
+            }
             
             // Update score indicators
             if (fighterB.ippon !== undefined) document.getElementById('ipponB').textContent = fighterB.ippon || 0;

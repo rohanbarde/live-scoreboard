@@ -19,22 +19,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 5vw;
-            gap: 0.5vw;
-            height: 5vw; /* Fixed height to match score numbers */
+            min-height: 4vw;
+            gap: 0.3vw;
+            height: 4vw; /* Fixed height to match score numbers */
         }
 
         .vmix-card-pill {
             display: inline-flex;
-            width: 2vw;
-            height: 3vw;
+            width: 1.8vw;
+            height: 2.5vw;
             border-radius: 0.3vw;
-            margin: 0.1vw;
+            margin: 0.05vw;
             font-weight: 900;
-            font-size: 1.2vw;
+            font-size: 1vw;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0.2vw 0.5vw rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0.2vw 0.4vw rgba(0, 0, 0, 0.6);
             border: 0.1vw solid rgba(0, 0, 0, 0.9);
         }
 
@@ -58,23 +58,23 @@
             justify-content: center !important;
             align-items: center !important;
             gap: 4vw !important;
-            margin: 0.5vw 0 1vw !important;
+            margin: 0.5vw 0 !important;
             white-space: nowrap !important;
             width: 100% !important;
-            padding: 0 2vw !important;
+            padding: 0 0.5vw !important;
         }
 
         .score-cell {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            min-width: 6vw !important;
-            height: 5vw !important; /* Fixed height for all cells */
+            min-width: 4vw !important;
+            height: 9vw !important; /* Fixed height for all cells */
         }
 
         .score-num {
-            font-size: 5vw !important;
-            font-weight: 800 !important;
+            font-size: 8.5vw !important;
+            font-weight: 900 !important;
             line-height: 1 !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -86,24 +86,24 @@
         /* Hold Timer Styles for vMix */
         .hold-timer-display {
             background: rgba(255, 215, 0, 0.15);
-            border: 0.2vw solid #ffd700;
-            border-radius: 1vw;
-            padding: 0.8vw 1.2vw;
+            border: 0.15vw solid #ffd700;
+            border-radius: 0.8vw;
+            padding: 0.5vw 1vw;
             text-align: center;
-            min-width: 8vw;
-            margin-left: 2vw;
+            min-width: 6vw;
+            margin-left: 1.5vw;
         }
 
         .hold-timer-label {
-            font-size: 1.2vw;
+            font-size: 1vw;
             font-weight: 700;
             color: #ffd700;
-            margin-bottom: 0.2vw;
+            margin-bottom: 0.1vw;
             text-shadow: 0 0.1vw 0.3vw rgba(0, 0, 0, 0.8);
         }
 
         .hold-timer-time {
-            font-size: 3vw;
+            font-size: 2.5vw;
             font-weight: 900;
             color: #ffd700;
             line-height: 1;
@@ -111,10 +111,10 @@
         }
 
         .hold-timer-player {
-            font-size: 1vw;
+            font-size: 0.8vw;
             font-weight: 600;
             color: #fff;
-            margin-top: 0.2vw;
+            margin-top: 0.1vw;
             opacity: 0.9;
             text-shadow: 0 0.1vw 0.2vw rgba(0, 0, 0, 0.8);
         }
@@ -136,12 +136,83 @@
             to { opacity: 0.7; }
         }
 
+        /* Player Photo Styles */
+        .player-photo {
+            width: 5vw;
+            height: 5vw;
+            border-radius: 0.5vw;
+            object-fit: cover;
+            box-shadow: 0 0.2vw 0.6vw rgba(0, 0, 0, 0.5);
+            background: #f0f0f0;
+            padding: 0.2vw;
+        }
+        
+        .fighter-top-row {
+            position: relative;
+            padding: 0.3vw 0.8vw;
+            margin-bottom: 0.2vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .photo-name-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3vw;
+        }
+        
+        .flag-team-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.2vw;
+        }
+        
+        .fighter-club {
+            font-size: 1.1vw !important;
+            font-weight: 600 !important;
+            margin-top: 0.1vw !important;
+        }
+        
+        .fighter-name {
+            font-size: 2vw !important;
+            font-weight: 700 !important;
+            margin: 0.2vw 0 0 0 !important;
+            padding: 0 !important;
+            text-align: center;
+            white-space: nowrap;
+        }
+
         /* Additional timer alignment fixes */
         .bottom-bar {
             position: relative !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 8vw !important;
+            min-height: 6.5vw !important;
+            padding: 0.5vw 1.5vw !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        .match-info {
+            z-index: 5 !important;
+            flex: 0 0 15vw !important;
+        }
+        
+        .match-number {
+            font-size: 1.5vw !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.3vw !important;
+            color: #fff !important;
+        }
+        
+        .weight-category {
+            font-size: 1.8vw !important;
+            font-weight: 700 !important;
+            color: #ffd700 !important;
+            opacity: 1 !important;
         }
 
         .timer-container {
@@ -159,6 +230,7 @@
         .timer-display {
             margin: 0 !important;
             padding: 0 !important;
+            font-size: 3.5vw !important;
         }
 
         .right-side-container {
@@ -214,12 +286,19 @@
 <body class="vmix-scorecard">
 <div class="container-fluid d-flex flex-column h-100 p-0">
     <!-- Player 1 (Top) -->
-    <div class="fighter-box fighter-left flex-grow-1 d-flex flex-column justify-content-between">
-        <div class="fighter-top-row d-flex w-100 justify-content-between align-items-start">
-            <img src="https://flagcdn.com/16x12/in.png" alt="Flag A" class="fighter-flag" id="flagA" />
-            <div class="fighter-club" id="fighterAClub">Team A</div>
+    <div class="fighter-box fighter-left flex-grow-1 d-flex flex-column justify-content-center">
+        <div class="fighter-top-row">
+            <!-- Flag and Team Name (Left) -->
+            <div class="flag-team-container">
+                <img src="https://flagcdn.com/16x12/in.png" alt="Flag A" class="fighter-flag" id="flagA" />
+                <div class="fighter-club" id="fighterAClub">Team A</div>
+            </div>
+            <!-- Player Photo and Name (Right) -->
+            <div class="photo-name-container">
+                <img id="photoA" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player A" class="player-photo">
+                <div class="fighter-name" id="fighterAName">Fighter A</div>
+            </div>
         </div>
-        <div class="fighter-name text-center" id="fighterAName">Fighter A</div>
         <div class="score-grid">
             <div class="score-cell">
                 <div id="ipponA" class="score-num">0</div>
@@ -239,12 +318,7 @@
     </div>
 
     <!-- Player 2 (Bottom) -->
-    <div class="fighter-box fighter-right flex-grow-1 d-flex flex-column justify-content-between">
-        <div class="fighter-top-row d-flex w-100 justify-content-between align-items-start">
-            <img src="https://flagcdn.com/16x12/jp.png" alt="Flag B" class="fighter-flag" id="flagB" />
-            <div class="fighter-club" id="fighterBClub">Team B</div>
-        </div>
-        <div class="fighter-name text-center" id="fighterBName">Fighter B</div>
+    <div class="fighter-box fighter-right flex-grow-1 d-flex flex-column justify-content-center">
         <div class="score-grid">
             <div class="score-cell">
                 <div id="ipponB" class="score-num">0</div>
@@ -259,6 +333,18 @@
                 <div id="shidoB" class="shido-cards">
                     <div id="shidoCardsB"></div>
                 </div>
+            </div>
+        </div>
+        <div class="fighter-top-row">
+            <!-- Flag and Team Name (Left) -->
+            <div class="flag-team-container">
+                <img src="https://flagcdn.com/16x12/jp.png" alt="Flag B" class="fighter-flag" id="flagB" />
+                <div class="fighter-club" id="fighterBClub">Team B</div>
+            </div>
+            <!-- Player Photo and Name (Right) -->
+            <div class="photo-name-container">
+                <img id="photoB" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E" alt="Player B" class="player-photo">
+                <div class="fighter-name" id="fighterBName">Fighter B</div>
             </div>
         </div>
     </div>

@@ -22,17 +22,23 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        .container {
+        .container-fluid {
             max-width: 100%;
             margin: 0;
             padding: 0;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .fighter-box {
             border-radius: 12px;
-            padding: 20px;
+            padding: 1vw;
             text-align: center;
+            height: 47vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
        .fighter-left {
@@ -160,11 +166,13 @@
         .bottom-bar {
             position: relative;
             width: 100%;
-            padding: 0.8vw 2vw;
+            padding: 0.5vw 2vw;
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
             background: rgba(10, 10, 20, 0.9);
+            height: 6vh;
+            flex-shrink: 0;
         }
 
         .timer-container {
