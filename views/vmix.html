@@ -57,23 +57,23 @@
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            gap: 3vw !important;
-            margin: 0.3vw 0 0.5vw !important;
+            gap: 4vw !important;
+            margin: 0.5vw 0 !important;
             white-space: nowrap !important;
             width: 100% !important;
-            padding: 0 1vw !important;
+            padding: 0 0.5vw !important;
         }
 
         .score-cell {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            min-width: 5vw !important;
-            height: 4vw !important; /* Fixed height for all cells */
+            min-width: 4vw !important;
+            height: 9vw !important; /* Fixed height for all cells */
         }
 
         .score-num {
-            font-size: 7.5vw !important;
+            font-size: 8.5vw !important;
             font-weight: 900 !important;
             line-height: 1 !important;
             margin: 0 !important;
@@ -138,19 +138,19 @@
 
         /* Player Photo Styles */
         .player-photo {
-            width: 6vw;
-            height: 6vw;
-            border-radius: 0.6vw;
+            width: 5vw;
+            height: 5vw;
+            border-radius: 0.5vw;
             object-fit: cover;
-            box-shadow: 0 0.2vw 0.8vw rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0.2vw 0.6vw rgba(0, 0, 0, 0.5);
             background: #f0f0f0;
-            padding: 0.3vw;
+            padding: 0.2vw;
         }
         
         .fighter-top-row {
             position: relative;
-            padding: 0.5vw 1vw;
-            margin-bottom: 0.3vw;
+            padding: 0.3vw 0.8vw;
+            margin-bottom: 0.2vw;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
@@ -171,15 +171,15 @@
         }
         
         .fighter-club {
-            font-size: 1.3vw !important;
+            font-size: 1.1vw !important;
             font-weight: 600 !important;
-            margin-top: 0.2vw !important;
+            margin-top: 0.1vw !important;
         }
         
         .fighter-name {
-            font-size: 2.5vw !important;
+            font-size: 2vw !important;
             font-weight: 700 !important;
-            margin: 0.3vw 0 0 0 !important;
+            margin: 0.2vw 0 0 0 !important;
             padding: 0 !important;
             text-align: center;
             white-space: nowrap;
@@ -190,8 +190,29 @@
             position: relative !important;
             width: 100% !important;
             height: auto !important;
-            min-height: 6vw !important;
-            padding: 0.5vw 2vw !important;
+            min-height: 6.5vw !important;
+            padding: 0.5vw 1.5vw !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        .match-info {
+            z-index: 5 !important;
+            flex: 0 0 15vw !important;
+        }
+        
+        .match-number {
+            font-size: 1.2vw !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.2vw !important;
+            color: #fff !important;
+        }
+        
+        .weight-category {
+            font-size: 1vw !important;
+            font-weight: 600 !important;
+            color: #ffd700 !important;
+            opacity: 0.9 !important;
         }
 
         .timer-container {
@@ -209,7 +230,7 @@
         .timer-display {
             margin: 0 !important;
             padding: 0 !important;
-            font-size: 5vw !important;
+            font-size: 3.5vw !important;
         }
 
         .right-side-container {
@@ -265,7 +286,7 @@
 <body class="vmix-scorecard">
 <div class="container-fluid d-flex flex-column h-100 p-0">
     <!-- Player 1 (Top) -->
-    <div class="fighter-box fighter-left flex-grow-1 d-flex flex-column justify-content-start">
+    <div class="fighter-box fighter-left flex-grow-1 d-flex flex-column justify-content-center">
         <div class="fighter-top-row">
             <!-- Flag and Team Name (Left) -->
             <div class="flag-team-container">
@@ -278,7 +299,7 @@
                 <div class="fighter-name" id="fighterAName">Fighter A</div>
             </div>
         </div>
-        <div class="score-grid" style="margin-top: auto;">
+        <div class="score-grid">
             <div class="score-cell">
                 <div id="ipponA" class="score-num">0</div>
             </div>
@@ -297,8 +318,8 @@
     </div>
 
     <!-- Player 2 (Bottom) -->
-    <div class="fighter-box fighter-right flex-grow-1 d-flex flex-column justify-content-start">
-        <div class="score-grid" style="margin-bottom: auto;">
+    <div class="fighter-box fighter-right flex-grow-1 d-flex flex-column justify-content-center">
+        <div class="score-grid">
             <div class="score-cell">
                 <div id="ipponB" class="score-num">0</div>
             </div>
@@ -314,7 +335,7 @@
                 </div>
             </div>
         </div>
-        <div class="fighter-top-row" style="margin-top: auto;">
+        <div class="fighter-top-row">
             <!-- Flag and Team Name (Left) -->
             <div class="flag-team-container">
                 <img src="https://flagcdn.com/16x12/jp.png" alt="Flag B" class="fighter-flag" id="flagB" />
