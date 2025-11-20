@@ -488,6 +488,26 @@ document.addEventListener('DOMContentLoaded', function() {
             startPauseTimer();
             return;
         }
+        
+        // Arrow keys - Hold timer controls
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            console.log('Left Arrow pressed - Start Hold White');
+            startHoldWhite();
+            return;
+        }
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            console.log('Down Arrow pressed - Stop Hold Timer');
+            stopHoldTimer();
+            return;
+        }
+        if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            console.log('Right Arrow pressed - Start Hold Blue');
+            startHoldBlue();
+            return;
+        }
 
         // White player (Fighter A) - Add points
         switch(key) {
