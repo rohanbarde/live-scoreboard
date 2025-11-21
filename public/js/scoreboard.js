@@ -894,6 +894,21 @@ function endMatch() {
 
     // Helper to render points grid for PDF
     function renderPointsGrid(fighter) {
+      // Generate shido cards display
+      let shidoDisplay = '';
+      if (fighter.shido === 0) {
+        shidoDisplay = '<span style="color:#888;font-size:24px;">0</span>';
+      } else if (fighter.shido === 1) {
+        shidoDisplay = '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#fff7d8,#ffd24a);border-radius:8px;border:2px solid #fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Y</span>';
+      } else if (fighter.shido === 2) {
+        shidoDisplay = '<div style="display:flex;gap:4px;justify-content:center;">' +
+          '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#fff7d8,#ffd24a);border-radius:8px;border:2px solid #fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Y</span>' +
+          '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#fff7d8,#ffd24a);border-radius:8px;border:2px solid #fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Y</span>' +
+          '</div>';
+      } else {
+        shidoDisplay = '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#ff9b9b,#ff4b4b);border-radius:8px;border:2px solid #fff;color:#fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">R</span>';
+      }
+      
       return `
     <div style="display:flex;gap:14px;align-items:center;margin-top:6px;">
       <div style="text-align:center;min-width:82px;">
@@ -909,8 +924,8 @@ function endMatch() {
         <div style="font-size:36px;font-weight:800;margin-top:6px;">${fighter.yuko}</div>
       </div>
       <div style="text-align:center;min-width:82px;">
-        <div style="font-size:13px;color:#888;font-weight:700;">SHIDO</div>
-        <div style="font-size:36px;font-weight:800;margin-top:6px;">${fighter.shido}</div>
+        <div style="font-size:13px;color:#888;font-weight:700;margin-bottom:6px;">SHIDO</div>
+        <div style="margin-top:6px;min-height:48px;display:flex;align-items:center;justify-content:center;">${shidoDisplay}</div>
       </div>
     </div>
   `;
@@ -945,13 +960,13 @@ function endMatch() {
   w.document.write(`
   <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;position:relative;">
     <div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
-    ${renderCardPills(match.fighterA.shido)}
+
     ${renderPointsGrid(match.fighterA)}
     ${match.winnerName === match.fighterA.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
   <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;position:relative;">
     <div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
-    ${renderCardPills(match.fighterB.shido)}
+
     ${renderPointsGrid(match.fighterB)}
     ${match.winnerName === match.fighterB.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
