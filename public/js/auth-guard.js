@@ -12,7 +12,15 @@
         loginPage: '/views/log-in.html',
         checkInterval: 5000, // Check auth state every 5 seconds
         sessionTimeout: 3600000, // 1 hour in milliseconds
-        publicPages: ['/views/log-in.html', '/log-in.html', '/index.html']
+        publicPages: [
+            '/views/log-in.html', 
+            '/log-in.html', 
+            '/index.html',
+            '/views/scoreboard.html',
+            '/scoreboard.html',
+            '/views/vmix.html',
+            '/vmix.html'
+        ]
     };
 
     // Track authentication state
