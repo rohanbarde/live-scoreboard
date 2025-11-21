@@ -114,7 +114,15 @@ function setupEnhancedFirebaseListener() {
         return;
     }
     
-    const matchRef = database.ref('current_match');
+    // Get matchId from URL parameters (same as main vmix.js)
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('matchId');
+    
+    // Use match-specific path if matchId is available, otherwise fall back to current_match
+    const firebasePath = matchId ? `matches/${matchId}/scoreData` : 'current_match';
+    const matchRef = database.ref(firebasePath);
+    
+    console.log(`🎯 Enhanced vMix listening to: ${firebasePath}`);
     
     matchRef.on('value', (snapshot) => {
         const data = snapshot.val();
