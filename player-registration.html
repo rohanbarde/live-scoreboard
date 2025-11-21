@@ -146,15 +146,8 @@
     <!-- Firebase initialization -->
     <script src="/public/js/firebase.js"></script>
 
-    <script>
-    // Check auth after Firebase is initialized
-    firebase.auth().onAuthStateChanged(user => {
-        if (!user) {
-            // Not logged in → send back to login page
-            window.location.href = "../public/views/log-in.html";
-        }
-    });
-    </script>
+    <!-- Authentication Guard - MUST be loaded before other scripts -->
+    <script src="/public/js/auth-guard.js"></script>
     
     <!-- Player registration logic -->
     <script src="/public/js/player-registration.js"></script>
