@@ -937,10 +937,8 @@ function endMatch() {
   w.document.write('52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI');
   w.document.write('</h1>');
   w.document.write('</div>');
-  w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
-  if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${weightCategory}</p>`);
-  if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${matNumber}</p>`);
-  if (matchNumber) w.document.write(`<p><strong>Match Number:</strong> ${matchNumber}</p>`);
+  w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}${weightCategory ? `  | <strong>Weight Category:</strong> ${weightCategory}` : ''}</p>`);
+  w.document.write(`<p><strong>Match Number:</strong> ${matchNumber}${matNumber ? `  | <strong>Mat Number:</strong> ${matNumber}` : ''}</p>`);
 
   w.document.write('<h3>Status Point Cards & Points</h3>');
   w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
