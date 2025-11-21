@@ -58,43 +58,65 @@
      */
     async function createMatchesFromCurrentDraw() {
         try {
-            // Get the current draw data from Firebase
-            const matchesSnapshot = await firebase.database().ref('tournament/matches').once('value');
-            const drawMatches = matchesSnapshot.val();
+            console.log('🔄 Creating matches from draw...');
             
-            if (!drawMatches) {
-                console.log('No draw matches found');
+            // Get all registered players
+            const playersSnapshot = await firebase.database().ref('registrations').orderByChild('userType').equalTo('player').once('value');
+            
+            if (!playersSnapshot.exists()) {
+                console.log('❌ No players found');
+                showErrorNotification('No players registered. Please register players first.');
                 return;
             }
 
-            // Convert draw matches to Match Manager format
-            const categories = [];
+            // Collect all players
+            const allPlayers = [];
+            playersSnapshot.forEach(childSnapshot => {
+                const player = childSnapshot.val();
+                player.id = childSnapshot.key;
+                allPlayers.push(player);
+            });
+
+            console.log(`📊 Found ${allPlayers.length} registered players`);
+
+            // Group players by weight and gender
             const matchesByCategory = {};
 
-            // Group matches by weight and gender
-            Object.values(drawMatches).forEach(match => {
-                const key = `${match.weight}_${match.gender}`;
+            allPlayers.forEach(player => {
+                const weight = player.playerInfo?.weight || 'Unknown';
+                const gender = player.playerInfo?.gender || 'Unknown';
+                const key = `${weight}_${gender}`;
+
                 if (!matchesByCategory[key]) {
                     matchesByCategory[key] = {
-                        weight: match.weight,
-                        gender: match.gender,
+                        weight: weight,
+                        gender: gender,
                         players: []
                     };
                 }
-                
-                // Add players if not already added
-                if (match.fighterA && !matchesByCategory[key].players.find(p => p.id === match.fighterA.id)) {
-                    matchesByCategory[key].players.push(match.fighterA);
-                }
-                if (match.fighterB && !matchesByCategory[key].players.find(p => p.id === match.fighterB.id)) {
-                    matchesByCategory[key].players.push(match.fighterB);
-                }
+
+                // Add player with proper structure
+                matchesByCategory[key].players.push({
+                    id: player.id,
+                    fullName: player.fullName,
+                    name: player.fullName,
+                    team: player.playerInfo?.team || 'N/A',
+                    weight: player.playerInfo?.weight,
+                    gender: player.playerInfo?.gender,
+                    photoBase64: player.photoBase64
+                });
             });
 
             // Convert to categories array
-            Object.values(matchesByCategory).forEach(category => {
-                categories.push(category);
-            });
+            const categories = Object.values(matchesByCategory).filter(cat => cat.players.length >= 2);
+
+            if (categories.length === 0) {
+                console.log('❌ No valid categories with 2+ players');
+                showErrorNotification('Need at least 2 players in a weight/gender category to create matches.');
+                return;
+            }
+
+            console.log(`📋 Creating matches for ${categories.length} categories`);
 
             // Create matches using Match Manager
             const drawData = { categories };
@@ -104,7 +126,7 @@
             showSuccessNotification('✅ Matches created successfully! Go to Tournament Matches page to manage them.');
 
         } catch (error) {
-            console.error('Error creating matches from draw:', error);
+            console.error('❌ Error creating matches from draw:', error);
             showErrorNotification('❌ Error creating matches: ' + error.message);
         }
     }

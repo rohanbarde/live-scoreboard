@@ -352,11 +352,14 @@
          * Listen for all matches
          */
         onMatchesUpdate(callback) {
+            console.log('👂 Setting up matches listener on:', this.matchesRef.toString());
             return this.matchesRef.on('value', snapshot => {
+                console.log('🔥 Firebase snapshot received, exists:', snapshot.exists());
                 const matches = [];
                 snapshot.forEach(child => {
                     matches.push({ id: child.key, ...child.val() });
                 });
+                console.log('📦 Parsed matches from Firebase:', matches.length);
                 callback(matches);
             });
         }
