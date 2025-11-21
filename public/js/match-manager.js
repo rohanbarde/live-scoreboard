@@ -143,18 +143,30 @@
          */
         async lockMatch(matchId) {
             try {
+                console.log('🔒 Attempting to lock match:', matchId);
+                console.log('📍 Looking in path:', this.matchesRef.toString() + '/' + matchId);
+                
                 const lockRef = this.locksRef.child(matchId);
                 const matchRef = this.matchesRef.child(matchId);
 
                 // Check if match exists and is available
                 const matchSnapshot = await matchRef.once('value');
+                console.log('📦 Match snapshot exists:', matchSnapshot.exists());
+                
                 if (!matchSnapshot.exists()) {
+                    console.error('❌ Match not found at path:', matchRef.toString());
                     throw new Error('Match not found');
                 }
+                
+                console.log('✅ Match found:', matchSnapshot.val());
 
                 const matchData = matchSnapshot.val();
-                if (matchData.status !== 'pending') {
-                    throw new Error(`Match is ${matchData.status}`);
+                
+                // Handle both old draw format (no status field) and new format
+                const currentStatus = matchData.status || (matchData.completed ? 'completed' : 'pending');
+                
+                if (currentStatus !== 'pending') {
+                    throw new Error(`Match is ${currentStatus}`);
                 }
 
                 // Try to acquire lock using transaction
@@ -319,15 +331,23 @@
                 const match = snapshot.val();
                 if (!match) return;
 
+                // Handle both old and new match formats
+                const fighterAName = match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'Fighter A';
+                const fighterBName = match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'Fighter B';
+                const fighterAClub = match.fighterA?.team || match.playerAClub || 'N/A';
+                const fighterBClub = match.fighterB?.team || match.playerBClub || 'N/A';
+                const weightCategory = match.weight || match.weightCategory || 'N/A';
+                const matchNumber = match.matchNumber || match.round || '1';
+
                 // Build scoreboard URL with match data
                 const params = new URLSearchParams({
                     matchId: matchId,
-                    fighterAName: match.fighterA.fullName || match.fighterA.name,
-                    fighterBName: match.fighterB.fullName || match.fighterB.name,
-                    fighterAClub: match.fighterA.team || 'N/A',
-                    fighterBClub: match.fighterB.team || 'N/A',
-                    weightCategory: match.weight,
-                    matchNumber: match.matchNumber,
+                    fighterAName: fighterAName,
+                    fighterBName: fighterBName,
+                    fighterAClub: fighterAClub,
+                    fighterBClub: fighterBClub,
+                    weightCategory: weightCategory,
+                    matchNumber: matchNumber,
                     mat: match.mat || ''
                 });
 
@@ -357,9 +377,18 @@
                 console.log('🔥 Firebase snapshot received, exists:', snapshot.exists());
                 const matches = [];
                 snapshot.forEach(child => {
-                    matches.push({ id: child.key, ...child.val() });
+                    const matchData = child.val();
+                    // Use Firebase key as the ID, store original ID as originalId if it exists
+                    matches.push({ 
+                        ...matchData,
+                        id: child.key,  // Always use Firebase key as ID
+                        originalId: matchData.id  // Preserve original ID if it exists
+                    });
                 });
                 console.log('📦 Parsed matches from Firebase:', matches.length);
+                if (matches.length > 0) {
+                    console.log('📋 Sample match ID:', matches[0].id);
+                }
                 callback(matches);
             });
         }

@@ -421,14 +421,19 @@ function renderDevices(devices) {
  */
 async function lockAndStartMatch(matchId) {
     try {
+        console.log('🎯 lockAndStartMatch called with matchId:', matchId);
+        console.log('🎯 matchId type:', typeof matchId);
+        
         // Prompt for mat number
         const matNumber = prompt('Enter Mat Number:', '1');
         if (!matNumber) return;
         
         // Lock the match
+        console.log('🔒 Calling matchManager.lockMatch...');
         await matchManager.lockMatch(matchId);
         
         // Start the match
+        console.log('▶️ Calling matchManager.startMatch...');
         await matchManager.startMatch(matchId, matNumber);
         
         alert('Match started! Scoreboard opened in new window.');
