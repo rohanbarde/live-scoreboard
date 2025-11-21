@@ -25,7 +25,7 @@
       fighterB: { name: '', club: '', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
       log: [],
       winnerName: null,
-      // Hold timer state
+      // Osaekomi timer state
       holdTimer: {
         active: false,
         player: null, // 'A' or 'B'
@@ -557,18 +557,18 @@ function updateTimerDisplay() {
     match.running = true;
     btn.textContent = 'Pause';
     
-    // Resume hold timer if it was active
+    // Resume osaekomi timer if it was active
     if (match.holdTimer.active && !match.holdTimer.timerId) {
       match.holdTimer.timerId = setInterval(() => {
         match.holdTimer.remainingSec--;
         updateHoldTimerDisplay();
         
-        // Check if hold timer completed
+        // Check if osaekomi timer completed
         if (match.holdTimer.remainingSec <= 0) {
           completeHoldTimer();
         }
       }, 1000);
-      pushLog('System', 'Hold Timer Resumed', 'Hold timer resumed with match timer');
+      pushLog('System', 'Osaekomi Timer Resumed', 'Osaekomi timer resumed with match timer');
     }
     
     match.timerId = setInterval(() => {
@@ -623,10 +623,10 @@ function updateTimerDisplay() {
     btn.textContent = 'Start';
     clearInterval(match.timerId);
     
-    // Also pause hold timer when main timer is paused
+    // Also pause osaekomi timer when main timer is paused
     if (match.holdTimer.active) {
       clearInterval(match.holdTimer.timerId);
-      pushLog('System', 'Hold Timer Paused', 'Hold timer paused with match timer');
+      pushLog('System', 'Osaekomi Timer Paused', 'Osaekomi timer paused with match timer');
     }
   }
 }
@@ -680,7 +680,7 @@ function startGoldenScore() {
   document.getElementById('startBtn').textContent = 'Start';
   updateTimerDisplay();
   
-  // Stop hold timer when main timer is reset
+  // Stop osaekomi timer when main timer is reset
   stopHoldTimer();
   
   // Log the reset
@@ -756,7 +756,7 @@ function endMatch() {
       if (matchNumberEl) match.matchNumber = Number(matchNumberEl.value) || 1;
       if (matNumberEl) match.matNumber = Number(matNumberEl.value) || 1;
 
-      // Reset hold timer
+      // Reset osaekomi timer
       stopHoldTimer();
       
       // Clear log and add reset entry
@@ -987,7 +987,7 @@ setTimeout(() => {
       } else { document.exitFullscreen && document.exitFullscreen(); }
     }
 
-    /* Hold Timer Functions */
+    /* Osaekomi Timer Functions */
     function updateHoldTimerDisplay() {
       const display = document.getElementById('holdTimerDisplay');
       const timeDisplay = document.getElementById('holdTimerTime');
@@ -1019,7 +1019,7 @@ setTimeout(() => {
     }
 
     function startHoldTimer(player) {
-      // Stop any existing hold timer
+      // Stop any existing osaekomi timer
       if (match.holdTimer.active) {
         clearInterval(match.holdTimer.timerId);
       }
@@ -1048,8 +1048,8 @@ setTimeout(() => {
 
       pushLog(
         'System',
-        'Hold Timer Start',
-        `${playerColor} (${playerName}) hold timer${holdTypeText} started`
+        'Osaekomi Timer Start',
+        `${playerColor} (${playerName}) osaekomi timer${holdTypeText} started`
       );
 
       // Update display immediately
@@ -1060,7 +1060,7 @@ setTimeout(() => {
         match.holdTimer.elapsedSec++;
         updateHoldTimerDisplay();
 
-        // Check if hold timer completed
+        // Check if osaekomi timer completed
         if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
           completeHoldTimer();
         }
@@ -1081,7 +1081,7 @@ setTimeout(() => {
      fighter.ippon = 1;
      match.winnerName = fighter.name;
 
-     pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
+     pushLog(fighter.name, 'Ippon (Osaekomi)', `${fighter.name} awarded Ippon via ${duration} osaekomi${holdTypeText} (${playerColor})`);
      showBigCard(player, 'yellow', 'IPPON');
 
      stopMainTimer();
@@ -1135,8 +1135,8 @@ function stopHoldTimer() {
 
   pushLog(
     'System',
-    'Hold Timer Stop',
-    `${playerColor} (${playerName}) hold stopped at ${elapsed}s → ${awarded}`
+    'Osaekomi Timer Stop',
+    `${playerColor} (${playerName}) osaekomi stopped at ${elapsed}s → ${awarded}`
   );
 
   match.holdTimer.active = false;

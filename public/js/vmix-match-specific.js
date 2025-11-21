@@ -55,14 +55,14 @@ function renderVmixCards(containerId, shidoCount, hasRedCard = false) {
     }
 }
 
-// Function to update hold timer display in vMix
+// Function to update osaekomi timer display in vMix
 function updateVmixHoldTimer(holdTimerData) {
     const display = document.getElementById('holdTimerDisplay');
     const timeDisplay = document.getElementById('holdTimerTime');
     const playerDisplay = document.getElementById('holdTimerPlayer');
     
     if (!display || !timeDisplay || !playerDisplay) {
-        console.warn('Hold timer elements not found in vMix');
+        console.warn('Osaekomi timer elements not found in vMix');
         return;
     }
     
@@ -79,7 +79,7 @@ function updateVmixHoldTimer(holdTimerData) {
         // Update label based on type
         const labelElement = document.querySelector('.hold-timer-label');
         if (labelElement) {
-            labelElement.textContent = holdTimerData.type === 'waza-ari' ? 'HOLD (W)' : 'HOLD';
+            labelElement.textContent = holdTimerData.type === 'waza-ari' ? 'OSAEKOMI (W)' : 'OSAEKOMI';
         }
         
         // Apply color states based on elapsed time and type
