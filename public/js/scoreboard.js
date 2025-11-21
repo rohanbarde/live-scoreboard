@@ -25,7 +25,7 @@
       fighterB: { name: '', club: '', weight: '', waza: 0, ippon: 0, yuko: 0, shido: 0, redCard: false },
       log: [],
       winnerName: null,
-      // Hold timer state
+      // Osaekomi timer state
       holdTimer: {
         active: false,
         player: null, // 'A' or 'B'
@@ -557,18 +557,18 @@ function updateTimerDisplay() {
     match.running = true;
     btn.textContent = 'Pause';
     
-    // Resume hold timer if it was active
+    // Resume osaekomi timer if it was active
     if (match.holdTimer.active && !match.holdTimer.timerId) {
       match.holdTimer.timerId = setInterval(() => {
         match.holdTimer.remainingSec--;
         updateHoldTimerDisplay();
         
-        // Check if hold timer completed
+        // Check if osaekomi timer completed
         if (match.holdTimer.remainingSec <= 0) {
           completeHoldTimer();
         }
       }, 1000);
-      pushLog('System', 'Hold Timer Resumed', 'Hold timer resumed with match timer');
+      pushLog('System', 'Osaekomi Timer Resumed', 'Osaekomi timer resumed with match timer');
     }
     
     match.timerId = setInterval(() => {
@@ -623,10 +623,10 @@ function updateTimerDisplay() {
     btn.textContent = 'Start';
     clearInterval(match.timerId);
     
-    // Also pause hold timer when main timer is paused
+    // Also pause osaekomi timer when main timer is paused
     if (match.holdTimer.active) {
       clearInterval(match.holdTimer.timerId);
-      pushLog('System', 'Hold Timer Paused', 'Hold timer paused with match timer');
+      pushLog('System', 'Osaekomi Timer Paused', 'Osaekomi timer paused with match timer');
     }
   }
 }
@@ -680,7 +680,7 @@ function startGoldenScore() {
   document.getElementById('startBtn').textContent = 'Start';
   updateTimerDisplay();
   
-  // Stop hold timer when main timer is reset
+  // Stop osaekomi timer when main timer is reset
   stopHoldTimer();
   
   // Log the reset
@@ -756,7 +756,7 @@ function endMatch() {
       if (matchNumberEl) match.matchNumber = Number(matchNumberEl.value) || 1;
       if (matNumberEl) match.matNumber = Number(matNumberEl.value) || 1;
 
-      // Reset hold timer
+      // Reset osaekomi timer
       stopHoldTimer();
       
       // Clear log and add reset entry
@@ -894,6 +894,21 @@ function endMatch() {
 
     // Helper to render points grid for PDF
     function renderPointsGrid(fighter) {
+      // Generate shido cards display
+      let shidoDisplay = '';
+      if (fighter.shido === 0) {
+        shidoDisplay = '<span style="color:#888;font-size:24px;">0</span>';
+      } else if (fighter.shido === 1) {
+        shidoDisplay = '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#fff7d8,#ffd24a);border-radius:8px;border:2px solid #fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Y</span>';
+      } else if (fighter.shido === 2) {
+        shidoDisplay = '<div style="display:flex;gap:4px;justify-content:center;">' +
+          '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#fff7d8,#ffd24a);border-radius:8px;border:2px solid #fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Y</span>' +
+          '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#fff7d8,#ffd24a);border-radius:8px;border:2px solid #fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">Y</span>' +
+          '</div>';
+      } else {
+        shidoDisplay = '<span style="display:inline-block;width:28px;height:48px;background:linear-gradient(180deg,#ff9b9b,#ff4b4b);border-radius:8px;border:2px solid #fff;color:#fff;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">R</span>';
+      }
+      
       return `
     <div style="display:flex;gap:14px;align-items:center;margin-top:6px;">
       <div style="text-align:center;min-width:82px;">
@@ -909,8 +924,8 @@ function endMatch() {
         <div style="font-size:36px;font-weight:800;margin-top:6px;">${fighter.yuko}</div>
       </div>
       <div style="text-align:center;min-width:82px;">
-        <div style="font-size:13px;color:#888;font-weight:700;">SHIDO</div>
-        <div style="font-size:36px;font-weight:800;margin-top:6px;">${fighter.shido}</div>
+        <div style="font-size:13px;color:#888;font-weight:700;margin-bottom:6px;">SHIDO</div>
+        <div style="margin-top:6px;min-height:48px;display:flex;align-items:center;justify-content:center;">${shidoDisplay}</div>
       </div>
     </div>
   `;
@@ -937,23 +952,21 @@ function endMatch() {
   w.document.write('52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI');
   w.document.write('</h1>');
   w.document.write('</div>');
-  w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>`);
-  if (weightCategory) w.document.write(`<p><strong>Weight Category:</strong> ${weightCategory}</p>`);
-  if (matNumber) w.document.write(`<p><strong>Mat Number:</strong> ${matNumber}</p>`);
-  if (matchNumber) w.document.write(`<p><strong>Match Number:</strong> ${matchNumber}</p>`);
+  w.document.write(`<p><strong>Generated:</strong> ${new Date().toLocaleString()}${weightCategory ? `  | <strong>Weight Category:</strong> ${weightCategory}` : ''}</p>`);
+  w.document.write(`<p><strong>Match Number:</strong> ${matchNumber}${matNumber ? `  | <strong>Mat Number:</strong> ${matNumber}` : ''}</p>`);
 
   w.document.write('<h3>Status Point Cards & Points</h3>');
   w.document.write('<div style="display:flex;gap:32px;margin-bottom:18px;">');
   w.document.write(`
   <div style="flex:1;border:3px solid #0b2a8a;border-radius:12px;padding:12px;position:relative;">
     <div style="font-weight:700;font-size:1.1em;">${match.fighterA.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterA.club})</span></div>
-    ${renderCardPills(match.fighterA.shido)}
+
     ${renderPointsGrid(match.fighterA)}
     ${match.winnerName === match.fighterA.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
   <div style="flex:1;border:3px solid #000;border-radius:12px;padding:12px;position:relative;">
     <div style="font-weight:700;font-size:1.1em;">${match.fighterB.name} <span style="font-weight:normal;opacity:0.7;font-size:0.9em">(${match.fighterB.club})</span></div>
-    ${renderCardPills(match.fighterB.shido)}
+
     ${renderPointsGrid(match.fighterB)}
     ${match.winnerName === match.fighterB.name ? '<div style="position:absolute;top:12px;right:12px;background:#1bc47d;color:#fff;font-weight:900;font-size:1.2em;padding:6px 16px;border-radius:8px;box-shadow:0 2px 8px #0002;">WINNER</div>' : ''}
   </div>
@@ -989,7 +1002,7 @@ setTimeout(() => {
       } else { document.exitFullscreen && document.exitFullscreen(); }
     }
 
-    /* Hold Timer Functions */
+    /* Osaekomi Timer Functions */
     function updateHoldTimerDisplay() {
       const display = document.getElementById('holdTimerDisplay');
       const timeDisplay = document.getElementById('holdTimerTime');
@@ -1021,7 +1034,7 @@ setTimeout(() => {
     }
 
     function startHoldTimer(player) {
-      // Stop any existing hold timer
+      // Stop any existing osaekomi timer
       if (match.holdTimer.active) {
         clearInterval(match.holdTimer.timerId);
       }
@@ -1050,8 +1063,8 @@ setTimeout(() => {
 
       pushLog(
         'System',
-        'Hold Timer Start',
-        `${playerColor} (${playerName}) hold timer${holdTypeText} started`
+        'Osaekomi Timer Start',
+        `${playerColor} (${playerName}) osaekomi timer${holdTypeText} started`
       );
 
       // Update display immediately
@@ -1062,7 +1075,7 @@ setTimeout(() => {
         match.holdTimer.elapsedSec++;
         updateHoldTimerDisplay();
 
-        // Check if hold timer completed
+        // Check if osaekomi timer completed
         if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
           completeHoldTimer();
         }
@@ -1083,7 +1096,7 @@ setTimeout(() => {
      fighter.ippon = 1;
      match.winnerName = fighter.name;
 
-     pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
+     pushLog(fighter.name, 'Ippon (Osaekomi)', `${fighter.name} awarded Ippon via ${duration} osaekomi${holdTypeText} (${playerColor})`);
      showBigCard(player, 'yellow', 'IPPON');
 
      stopMainTimer();
@@ -1137,8 +1150,8 @@ function stopHoldTimer() {
 
   pushLog(
     'System',
-    'Hold Timer Stop',
-    `${playerColor} (${playerName}) hold stopped at ${elapsed}s → ${awarded}`
+    'Osaekomi Timer Stop',
+    `${playerColor} (${playerName}) osaekomi stopped at ${elapsed}s → ${awarded}`
   );
 
   match.holdTimer.active = false;

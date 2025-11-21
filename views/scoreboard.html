@@ -159,9 +159,9 @@
                 <div class="card-surface" style="padding:5px;">
                     <div id="timerDisplay" class="score-big">04:00</div>
 
-                    <!-- Hold Timer Display -->
+                    <!-- Osaekomi Timer Display -->
                     <div id="holdTimerDisplay" style="display:none; margin-top:10px; padding:8px; background:rgba(255,255,255,0.1); border-radius:6px;">
-                        <div class="small-muted text-center">HOLD TIMER</div>
+                        <div class="small-muted text-center">OSAEKOMI TIMER</div>
                         <div id="holdTimerTime" class="text-center" style="font-size:24px; font-weight:800; color:#ffd700;">20</div>
                         <div id="holdTimerPlayer" class="text-center small-muted"></div>
                     </div>
@@ -174,11 +174,11 @@
                         </div>
                     </div>
 
-                    <!-- Hold Timer Controls -->
-                    <div class="small-muted mb-2">Hold Timer Controls</div>
+                    <!-- Osaekomi Timer Controls -->
+                    <div class="small-muted mb-2">Osaekomi Timer Controls</div>
                     <div class="d-grid gap-1 mb-3">
-                        <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Hold (White)</button>
-                        <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Hold (Blue)</button>
+                        <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Osaekomi (White)</button>
+                        <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Osaekomi (Blue)</button>
                         <button class="btn btn-xs btn-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Toketa</button>
                     </div>
 
@@ -551,22 +551,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Arrow keys - Hold timer controls
+        // Arrow keys - Osaekomi timer controls
         if (event.key === 'ArrowLeft') {
             event.preventDefault();
-            console.log('Left Arrow pressed - Start Hold White');
+            console.log('Left Arrow pressed - Start Osaekomi White');
             startHoldWhite();
             return;
         }
         if (event.key === 'ArrowDown') {
             event.preventDefault();
-            console.log('Down Arrow pressed - Stop Hold Timer');
+            console.log('Down Arrow pressed - Stop Osaekomi Timer');
             stopHoldTimer();
             return;
         }
         if (event.key === 'ArrowRight') {
             event.preventDefault();
-            console.log('Right Arrow pressed - Start Hold Blue');
+            console.log('Right Arrow pressed - Start Osaekomi Blue');
             startHoldBlue();
             return;
         }

@@ -406,7 +406,7 @@ async function animateGenerateDraw() {
   // add a shuffle overlay
   const shuffle = document.createElement('div');
   shuffle.className = 'shuffle-overlay';
-  shuffle.textContent = 'Shuffling players...';
+//  shuffle.textContent = 'Shuffling players...';
   drawsContent.prepend(shuffle);
 
   // show shuffle for a moment
