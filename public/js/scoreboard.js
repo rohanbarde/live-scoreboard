@@ -1020,13 +1020,15 @@ setTimeout(() => {
       }
     }
 
+    // ----------------- Replace startHoldTimer / completeHoldTimer / stopHoldTimer -----------------
+
     function startHoldTimer(player) {
-      // Stop any existing hold timer
-      if (match.holdTimer.active) {
+      // Stop any existing hold timer first (clean)
+      if (match.holdTimer && match.holdTimer.active) {
         clearInterval(match.holdTimer.timerId);
       }
 
-      // Determine duration: 10s if player has previous waza-ari, else 20s
+      // Determine duration: 10s if player has previous waza (we'll still treat thresholds 6/11/20)
       let duration = 20;
       let type = 'normal';
       if ((player === 'A' && match.fighterA.waza > 0) || (player === 'B' && match.fighterB.waza > 0)) {
@@ -1034,14 +1036,17 @@ setTimeout(() => {
         type = 'waza-ari';
       }
 
-      // Initialize hold timer
+      // Initialize hold timer state with awarded flags to prevent double awarding
       match.holdTimer = {
         active: true,
         player: player,
         elapsedSec: 0,
         duration: duration,
         type: type,
-        timerId: null
+        timerId: null,
+        awardedYuko: false,
+        awardedWaza: false,
+        awardedIppon: false
       };
 
       const playerName = player === 'A' ? match.fighterA.name : match.fighterB.name;
@@ -1057,99 +1062,212 @@ setTimeout(() => {
       // Update display immediately
       updateHoldTimerDisplay();
 
-      // Start count-up timer
+      // Start count-up timer and check thresholds automatically
       match.holdTimer.timerId = setInterval(() => {
         match.holdTimer.elapsedSec++;
         updateHoldTimerDisplay();
 
-        // Check if hold timer completed
-        if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
-          completeHoldTimer();
+        const elapsed = match.holdTimer.elapsedSec;
+        const fighter = player === 'A' ? match.fighterA : match.fighterB;
+
+        // 6s -> Yuko
+        if (!match.holdTimer.awardedYuko && elapsed >= 6 && match.holdTimer.duration >= 6) {
+          // Award Yuko automatically
+          fighter.yuko = (fighter.yuko || 0) + 1;
+          match.holdTimer.awardedYuko = true;
+          pushLog(fighter.name, 'Yuko (Osaekomi)', `${fighter.name} awarded Yuko at ${elapsed}s`);
+          showBigCard(player, 'white', 'YUKO');
+          refreshUI();
+        }
+
+        // 11s -> Waza-ari (upgrade from Yuko or award fresh)
+        if (!match.holdTimer.awardedWaza && elapsed >= 11 && match.holdTimer.duration >= 11) {
+          // Convert existing Yuko (if this hold already gave a Yuko) into Waza-ari,
+          // otherwise just give a Waza-ari.
+          if (match.holdTimer.awardedYuko) {
+            // Remove 1 Yuko given during this hold and add 1 Waza-ari
+            fighter.yuko = Math.max(0, fighter.yuko - 1);
+          }
+          fighter.waza = (fighter.waza || 0) + 1;
+          match.holdTimer.awardedWaza = true;
+          pushLog(fighter.name, 'Waza-ari (Osaekomi)', `${fighter.name} upgraded to Waza-ari at ${elapsed}s`);
+          // If waza-ari reached 2 via conversion, handle awasete ippon
+          if (fighter.waza >= 2) {
+            // Convert to ippon
+            fighter.waza = 0;
+            fighter.ippon = 1;
+            match.winnerName = fighter.name;
+            pushLog(fighter.name, 'Waza-ari Awasete Ippon (Osaekomi)', `${fighter.name} 2 Waza-ari → Ippon`);
+            showBigCard(player, 'yellow', 'IPPON');
+            match.holdTimer.awardedIppon = true;
+            // End match immediately
+            stopMainTimer();
+            clearInterval(match.holdTimer.timerId);
+            match.holdTimer.active = false;
+            refreshUI();
+            return;
+          } else {
+            showBigCard(player, 'white', 'WAZA-ARI');
+          }
+          refreshUI();
+        }
+
+        // 20s -> Ippon (end match)
+        if (!match.holdTimer.awardedIppon && elapsed >= (match.holdTimer.type === 'waza-ari' ? 10 : 20)) {
+          // If duration was shortened to 10s for waza-ari type, awarding at 10s should behave as AWARD IPPON only if duration is 10.
+          // This check above ensures correct threshold.
+          // Award ippon and end match
+          fighter.ippon = 1;
+          match.winnerName = fighter.name;
+          match.holdTimer.awardedIppon = true;
+          pushLog(fighter.name, 'Ippon (Osaekomi)', `${fighter.name} awarded Ippon at ${elapsed}s`);
+          showBigCard(player, 'yellow', 'IPPON');
+          // Stop main timer and the hold timer interval
+          stopMainTimer();
+          clearInterval(match.holdTimer.timerId);
+          match.holdTimer.active = false;
+          refreshUI();
+          return;
+        }
+
+        // Extra safety: stop when elapsed reaches configured duration (for type 'waza-ari' could be 10)
+        if (match.holdTimer.duration && elapsed >= match.holdTimer.duration && match.holdTimer.active) {
+          // If reached configured duration but not converted to ippon (e.g. duration 10 -> award Waza already),
+          // we let the hold remain active until operator stops or ippon fired; no additional action here.
+          // (This branch is mostly defensive.)
         }
       }, 1000);
     }
 
-   function completeHoldTimer() {
-     const player = match.holdTimer.player;
-     const fighter = player === 'A' ? match.fighterA : match.fighterB;
-     const playerColor = player === 'A' ? 'White' : 'Blue';
-     const holdType = match.holdTimer.type;
-     const duration = holdType === 'waza-ari' ? '10-second' : '20-second';
-     const holdTypeText = holdType === 'waza-ari' ? ' after Waza-ari' : '';
+    function completeHoldTimer() {
+      // Called when the hold timer completes automatically (e.g., we reached the threshold that gives ippon)
+      // or can be used by other parts of code to force-complete the hold.
+      if (!match.holdTimer || !match.holdTimer.active) return;
 
-     clearInterval(match.holdTimer.timerId);
-     match.holdTimer.active = false;
+      const player = match.holdTimer.player;
+      const fighter = player === 'A' ? match.fighterA : match.fighterB;
+      const playerColor = player === 'A' ? 'White' : 'Blue';
 
-     fighter.ippon = 1;
-     match.winnerName = fighter.name;
+      // Ensure any remaining awarded state is cleaned / ippon set
+      fighter.ippon = 1;
+      match.winnerName = fighter.name;
 
-     pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via ${duration} hold${holdTypeText} (${playerColor})`);
-     showBigCard(player, 'yellow', 'IPPON');
+      // Clear interval safely
+      if (match.holdTimer.timerId) {
+        clearInterval(match.holdTimer.timerId);
+        match.holdTimer.timerId = null;
+      }
 
-     stopMainTimer();
+      match.holdTimer.active = false;
 
-     updateHoldTimerDisplay();
-     refreshUI();
-   }
+      pushLog(fighter.name, 'Ippon (Hold)', `${fighter.name} awarded Ippon via hold (${playerColor})`);
+      showBigCard(player, 'yellow', 'IPPON');
 
-function stopHoldTimer() {
-  if (!match.holdTimer.active) return;
+      stopMainTimer();
 
-  clearInterval(match.holdTimer.timerId);
+      updateHoldTimerDisplay();
+      refreshUI();
+    }
 
-  const elapsed = match.holdTimer.elapsedSec || 0;
-  const player = match.holdTimer.player;
-  const fighter = player === 'A' ? match.fighterA : match.fighterB;
-  const opp = player === 'A' ? match.fighterB : match.fighterA;
-  const playerName = fighter.name;
-  const playerColor = player === 'A' ? 'White' : 'Blue';
+    function stopHoldTimer() {
+      // Operator manually stops the hold timer.
+      if (!match.holdTimer || !match.holdTimer.active) return;
 
-  let awarded = 'No Score';
+      // Clear running interval
+      if (match.holdTimer.timerId) {
+        clearInterval(match.holdTimer.timerId);
+        match.holdTimer.timerId = null;
+      }
 
-  if (elapsed >= 20) {
-    // IPPON
-    fighter.ippon = 1;
-    match.winnerName = fighter.name;
-    showBigCard(player, 'yellow', 'IPPON');
-    awarded = 'Ippon';
-    stopMainTimer();
-  } else if (elapsed >= 10) {
-    // WAZA-ARI
-    fighter.waza += 1;
-   if (fighter.waza >= 2) {
-     fighter.waza = 0; // Reset Waza-ari count
-     fighter.ippon = 1;
-     match.winnerName = fighter.name;
-     showBigCard(player, 'yellow', 'IPPON');
-     awarded = 'Waza-ari Awasete Ippon';
-     stopMainTimer();
-   } else {
-     showBigCard(player, 'white', 'WAZA-ARI');
-     awarded = 'Waza-ari';
-   }
+      const elapsed = match.holdTimer.elapsedSec || 0;
+      const player = match.holdTimer.player;
+      const fighter = player === 'A' ? match.fighterA : match.fighterB;
+      const opp = player === 'A' ? match.fighterB : match.fighterA;
+      const playerName = fighter.name;
+      const playerColor = player === 'A' ? 'White' : 'Blue';
 
-  } else if (elapsed >= 5) {
-    // YUKO
-    fighter.yuko += 1;
-    showBigCard(player, 'white', 'YUKO');
-    awarded = 'Yuko';
-  }
+      // If ippon already awarded by automation, just close
+      if (match.holdTimer.awardedIppon || fighter.ippon >= 1) {
+        pushLog('System', 'Hold Timer Stop', `${playerColor} (${playerName}) hold stopped at ${elapsed}s → Ippon already awarded`);
+        match.holdTimer.active = false;
+        match.holdTimer.player = null;
+        match.holdTimer.elapsedSec = 0;
+        match.holdTimer.type = 'normal';
+        updateHoldTimerDisplay();
+        refreshUI();
+        return;
+      }
 
-  pushLog(
-    'System',
-    'Hold Timer Stop',
-    `${playerColor} (${playerName}) hold stopped at ${elapsed}s → ${awarded}`
-  );
+      // If Waza-ari already awarded by automation, ensure no duplicate
+      if (match.holdTimer.awardedWaza) {
+        pushLog('System', 'Hold Timer Stop', `${playerColor} (${playerName}) hold stopped at ${elapsed}s → Waza-ari already awarded`);
+        match.holdTimer.active = false;
+        match.holdTimer.player = null;
+        match.holdTimer.elapsedSec = 0;
+        match.holdTimer.type = 'normal';
+        updateHoldTimerDisplay();
+        refreshUI();
+        return;
+      }
 
-  match.holdTimer.active = false;
-  match.holdTimer.player = null;
-  match.holdTimer.elapsedSec = 0;
-  match.holdTimer.type = 'normal';
+      // If Yuko already awarded by automation but not upgraded yet
+      if (match.holdTimer.awardedYuko && !match.holdTimer.awardedWaza) {
+        // Yuko already counted at 6s; stopping before 11 means Yuko remains
+        pushLog('System', 'Hold Timer Stop', `${playerColor} (${playerName}) hold stopped at ${elapsed}s → Yuko retained`);
+        match.holdTimer.active = false;
+        match.holdTimer.player = null;
+        match.holdTimer.elapsedSec = 0;
+        match.holdTimer.type = 'normal';
+        updateHoldTimerDisplay();
+        refreshUI();
+        return;
+      }
 
-  updateHoldTimerDisplay();
-  refreshUI();
-}
+      // Otherwise award based on elapsed seconds (if automation didn't already award)
+      let awarded = 'No Score';
+      if (elapsed >= 20) {
+        // IPPON
+        fighter.ippon = 1;
+        match.winnerName = fighter.name;
+        showBigCard(player, 'yellow', 'IPPON');
+        awarded = 'Ippon';
+        stopMainTimer();
+      } else if (elapsed >= 11) {
+        // WAZA-ARI
+        fighter.waza = (fighter.waza || 0) + 1;
+        // handle awasete ippon automatically if reaches 2
+        if (fighter.waza >= 2) {
+          fighter.waza = 0;
+          fighter.ippon = 1;
+          match.winnerName = fighter.name;
+          showBigCard(player, 'yellow', 'IPPON');
+          awarded = 'Waza-ari Awasete Ippon';
+          stopMainTimer();
+        } else {
+          showBigCard(player, 'white', 'WAZA-ARI');
+          awarded = 'Waza-ari';
+        }
+      } else if (elapsed >= 6) {
+        // YUKO
+        fighter.yuko = (fighter.yuko || 0) + 1;
+        showBigCard(player, 'white', 'YUKO');
+        awarded = 'Yuko';
+      }
 
+      pushLog('System', 'Hold Timer Stop', `${playerColor} (${playerName}) hold stopped at ${elapsed}s → ${awarded}`);
+
+      // Reset hold timer state
+      match.holdTimer.active = false;
+      match.holdTimer.player = null;
+      match.holdTimer.elapsedSec = 0;
+      match.holdTimer.type = 'normal';
+      match.holdTimer.awardedYuko = false;
+      match.holdTimer.awardedWaza = false;
+      match.holdTimer.awardedIppon = false;
+
+      updateHoldTimerDisplay();
+      refreshUI();
+    }
 
     function stopMainTimer() {
       if (match.running && match.timerId) {
