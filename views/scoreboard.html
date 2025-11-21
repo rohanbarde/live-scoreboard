@@ -24,21 +24,21 @@
 <div class="container">
     <div class="card-surface" id="rootSurface">
         <!-- HEADER: Logos in one line, match name below -->
-        <div class="scoreboard-header mb-4" style="background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 4px 14px rgba(0,0,0,0.2);">
-            <div style="display:flex;align-items:center;justify-content:center;gap:44px;">
-                <img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">
-                <img src="/public/assets/punitBalan.png" alt="Logo2" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">
-                <img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:54px;height:54px;border-radius:12px;box-shadow:0 2px 8px #0002;">
+        <div class="scoreboard-header mb-2" style="background:#fff;border-radius:10px;padding:6px 10px;box-shadow:0 4px 14px rgba(0,0,0,0.2);">
+            <div style="display:flex;align-items:center;justify-content:center;gap:30px;">
+                <img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1" style="width:40px;height:40px;border-radius:8px;box-shadow:0 2px 8px #0002;">
+                <img src="/public/assets/punitBalan.png" alt="Logo2" style="width:40px;height:40px;border-radius:8px;box-shadow:0 2px 8px #0002;">
+                <img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3" style="width:40px;height:40px;border-radius:8px;box-shadow:0 2px 8px #0002;">
             </div>
 
-            <h1 class="mb-0 mt-2 text-center" style="font-size:1.5rem;font-weight:700;line-height:1.3;color:#000;">
+            <h1 class="mb-0 mt-1 text-center" style="font-size:1.2rem;font-weight:700;line-height:1.2;color:#000;">
                 52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI
             </h1>
         </div>
 
         <!-- END HEADER -->
 
-        <div class="d-flex justify-content-between align-items-center mb-4" style="gap:32px;">
+        <div class="d-flex justify-content-between align-items-center mb-2" style="gap:20px;">
             <!-- Duration -->
             <div class="flex-fill text-center">
                 <div class="small-muted mb-1">Duration</div>
@@ -115,7 +115,7 @@
                         </div>
                     </div>
 
-                    <hr class="my-3"/>
+                    <hr class="my-2"/>
 
                     <div>
                         <div class="mb-2 small-muted">Actions</div>
@@ -179,7 +179,7 @@
                     <div class="d-grid gap-1 mb-3">
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldWhite()" id="startHoldWhite">Hold (White)</button>
                         <button class="btn btn-xs btn-outline-light" onclick="startHoldBlue()" id="startHoldBlue">Hold (Blue)</button>
-                        <button class="btn btn-xs btn-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Stop Hold</button>
+                        <button class="btn btn-xs btn-danger" onclick="stopHoldTimer()" id="stopHoldTimer">Toketa</button>
                     </div>
 
                     <!-- Utility Controls -->
@@ -210,33 +210,37 @@
                     </div>
 
                     <!-- Score Grid -->
-                    <div class="score-grid mt-3">
-                        <div class="score-cell">
-                            <div class="score-label">IPPON</div>
-                            <div id="ipponB" class="score-num">0</div>
-                        </div>
-                        <div class="score-cell">
-                            <div class="score-label">WAZA-ARI</div>
-                            <div id="wazaB" class="score-num">0</div>
-                        </div>
-                        <div class="score-cell">
-                            <div class="score-label">YUKO</div>
-                            <div id="yukoB" class="score-num">0</div>
-                        </div>
-                        <div class="score-cell">
-                            <div class="score-label">SHIDO</div>
-                            <div id="shidoB" class="score-num-cards">
-                                <div id="smallCardB" style="display:flex;align-items:center;justify-content:center;gap:4px;min-height:50px;"></div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="score-grid mt-1">
+                                <div class="score-cell">
+                                    <div class="score-label">IPPON</div>
+                                    <div id="ipponB" class="score-num">0</div>
+                                </div>
+                                <div class="score-cell">
+                                    <div class="score-label">WAZA-ARI</div>
+                                    <div id="wazaB" class="score-num">0</div>
+                                </div>
+                                <div class="score-cell">
+                                    <div class="score-label">YUKO</div>
+                                    <div id="yukoB" class="score-num">0</div>
+                                </div>
+                                <div class="score-cell">
+                                    <div class="score-label">SHIDO</div>
+                                    <div id="shidoB" class="score-num-cards">
+                                        <div id="smallCardB" style="display:flex;align-items:center;justify-content:center;gap:4px;min-height:50px;"></div>
+                                    </div>
+                                    <div class="card-count" id="cardCountB" style="display:none;">0</div>
+                                </div>
                             </div>
-                            <div class="card-count" id="cardCountB" style="display:none;">0</div>
+                        </div>
+
+                        <div class="text-end" style="min-width:170px;">
+                            <div id="hansokuB" class="tech-note" style="color:var(--red); font-weight:900;"></div>
                         </div>
                     </div>
 
-                    <div class="mt-3 text-center">
-                        <div id="hansokuB" class="tech-note" style="color:var(--red); font-weight:900; min-height:20px;"></div>
-                    </div>
-
-                    <hr class="my-3"/>
+                    <hr class="my-2"/>
 
                     <div>
                         <div class="mb-2 small-muted">Actions</div>
@@ -277,8 +281,17 @@
         <!-- Center technique overlay (for HANSOKU-MAKE, GOLDEN SCORE, etc.) -->
 <!--        <div id="techniqueOverlay" class="technique-overlay" aria-hidden="true"></div>-->
 
-        <!-- log and exports -->
-        <div class="row mt-4 g-3">
+        <!-- Buttons only (visible on screen) -->
+        <div class="row mt-2 g-2 screen-only-buttons">
+            <div class="col-12 text-center">
+                <button class="btn btn-outline-light me-2" onclick="savePdf()">Save to PDF</button>
+                <button class="btn btn-success me-2" onclick="saveMatch()">Save Match (localStorage)</button>
+                <button class="btn btn-outline-light" onclick="loadLastMatch()">Load Last Match</button>
+            </div>
+        </div>
+
+        <!-- log and exports (hidden on screen, visible in PDF) -->
+        <div class="row mt-4 g-3 print-only-sections">
             <div class="col-md-6">
                 <div class="card-surface">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -335,8 +348,7 @@
             </div>
         </div>
 
-
-        <footer class="scoreboard-footer text-center mt-4" style="font-size:1.05rem;color:#fff;opacity:0.82;letter-spacing:1px;padding:8px 0;">
+        <footer class="scoreboard-footer text-center mt-2" style="font-size:0.9rem;color:#fff;opacity:0.82;letter-spacing:1px;padding:4px 0;">
             MAHAJUDO &copy; BLACKTROUNCE STUDIO
         </footer>
 

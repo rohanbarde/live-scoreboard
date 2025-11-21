@@ -100,6 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load and display the tournament draw
     const loadDraw = async () => {
         try {
+            // Load players first to ensure we have player data
+            await tournamentDraw.loadPlayers();
+            
             const matches = await tournamentDraw.getAllMatches();
             
             if (matches.length === 0) {
@@ -162,6 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load and display upcoming matches
     const loadUpcomingMatches = async () => {
         try {
+            // Load players first to ensure we have player data
+            await tournamentDraw.loadPlayers();
+            
             const matches = await tournamentDraw.getAllMatches();
             const upcomingMatches = matches
                 .filter(match => !match.completed)
