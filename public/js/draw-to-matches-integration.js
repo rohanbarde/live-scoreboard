@@ -123,7 +123,7 @@
             await window.matchManagerInstance.createMatchesFromDraw(drawData);
 
             // Show success message
-            showSuccessNotification('✅ Matches created successfully! Go to Tournament Matches page to manage them.');
+            showSuccessNotification('✅ Matches created successfully!');
 
         } catch (error) {
             console.error('❌ Error creating matches from draw:', error);
@@ -141,18 +141,13 @@
         notification.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            <div class="mt-2">
-                <a href="/views/tournament-matches.html" class="btn btn-sm btn-primary">
-                    Go to Tournament Matches
-                </a>
-            </div>
         `;
         document.body.appendChild(notification);
 
-        // Auto remove after 10 seconds
+        // Auto remove after 5 seconds
         setTimeout(() => {
             notification.remove();
-        }, 10000);
+        }, 5000);
     }
 
     /**
