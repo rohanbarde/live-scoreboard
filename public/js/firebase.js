@@ -137,7 +137,15 @@ function updateFirebase() {
     if (timerDisplay) {
       data.timerColor = timerDisplay.style.color || '#fff';
     }
-    window.database.ref('current_match').set(data)
+    
+    // Get matchId from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('matchId');
+    
+    // Use match-specific path if matchId is available, otherwise fall back to current_match
+    const firebasePath = matchId ? `matches/${matchId}/scoreData` : 'current_match';
+    
+    window.database.ref(firebasePath).set(data)
       .then(() => {/* ok */})
       .catch(err => console.error('❌ Firebase set error', err));
   } catch (e) {

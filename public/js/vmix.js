@@ -87,10 +87,24 @@ function loadPlayerPhoto(playerName, side) {
         });
 }
 
+// Get matchId from URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const matchId = urlParams.get('matchId');
+
+if (!matchId) {
+    updateStatus('⚠️ No matchId in URL - vMix will not display match data', true);
+    console.warn('vMix opened without matchId parameter. URL should include ?matchId=...');
+}
+
 // Listen for updates from Firebase
 updateStatus('Setting up Firebase listener...');
 try {
-    const matchRef = database.ref('current_match');
+    // Use match-specific path if matchId is available, otherwise fall back to current_match
+    const firebasePath = matchId ? `matches/${matchId}/scoreData` : 'current_match';
+    const matchRef = database.ref(firebasePath);
+    
+    updateStatus(`Listening to: ${firebasePath}`);
+    console.log(`🎯 vMix listening to Firebase path: ${firebasePath}`);
 
     matchRef.on('value', (snapshot) => {
         updateStatus('Received update from Firebase');

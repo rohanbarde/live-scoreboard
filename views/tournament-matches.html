@@ -6,9 +6,9 @@
     <title>Tournament Draw | Judo Competition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../public/css/tournament-matches.css">
     <link rel="icon" href="../public/assets/judoicon.png" type="image/png">
-
 
 </head>
 <body>
@@ -50,13 +50,32 @@
         </div>
 
         <div id="listView" class="tab-content active">
-            <div class="matches-list">
-                <h2><i class="fas fa-list-ol"></i> Upcoming Matches</h2>
-                <div id="matchesContainer">
-                    <!-- Matches will be listed here -->
-                    <div class="no-matches">
-                        <i class="fas fa-calendar-times"></i>
-                        <p>No upcoming matches found.</p>
+            <!-- Device Info -->
+            <div id="deviceInfo"></div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="matches-list">
+                        <h2><i class="fas fa-list-ol"></i> Tournament Matches</h2>
+                        <div id="matchesContainer">
+                            <!-- Matches will be listed here -->
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading matches...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="devicesContainer">
+                                <!-- Devices will be listed here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -75,7 +94,8 @@
     <!-- Authentication Guard - MUST be loaded before other scripts -->
     <script src="../public/js/auth-guard.js"></script>
     
-    <script src="../public/js/tournament-matches.js"></script>
-    <script src="../public/js/tournament-matches-ui.js"></script>
+    <!-- Match Manager - Multi-Device System -->
+    <script src="../public/js/match-manager.js"></script>
+    <script src="../public/js/tournament-matches-multi-device.js"></script>
 </body>
 </html>
