@@ -44,7 +44,7 @@ function showDeviceSetupModal() {
                 <div class="modal-body">
                     <p>Please give this device a name (e.g., "Mat 1", "Mat 2", "Admin Desk")</p>
                     <input type="text" id="deviceNameInput" class="form-control" placeholder="Enter device name" autofocus>
-                    <small class="text-muted mt-2 d-block">Device ID: ${DEVICE_ID}</small>
+                    <small class="text-muted mt-2 d-block">Device ID: ${window.DEVICE_ID}</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" onclick="saveDeviceName()">Save & Continue</button>
@@ -139,7 +139,7 @@ function displayDeviceInfo() {
  * Change device name
  */
 function changeDeviceName() {
-    const newName = prompt('Enter new device name:', DEVICE_NAME);
+    const newName = prompt('Enter new device name:', window.DEVICE_NAME);
     if (newName && newName.trim()) {
         matchManager.setDeviceName(newName.trim()).then(() => {
             displayDeviceInfo();
@@ -269,7 +269,7 @@ function renderMatches(matches) {
  * Render match card
  */
 function renderMatchCard(match) {
-    const isOwnedByThisDevice = match.deviceId === DEVICE_ID;
+    const isOwnedByThisDevice = match.deviceId === window.DEVICE_ID;
     const isLocked = match.status === 'locked' || match.status === 'in_progress';
     
     // Handle both old draw format and new match manager format
@@ -375,7 +375,7 @@ function renderDevices(devices) {
     let html = `<h5>📱 Online Devices (${onlineDevices.length})</h5><div class="list-group mb-3">`;
     
     onlineDevices.forEach(device => {
-        const isThisDevice = device.deviceId === DEVICE_ID;
+        const isThisDevice = device.deviceId === window.DEVICE_ID;
         const lastSeen = device.lastSeen ? new Date(device.lastSeen).toLocaleTimeString() : 'Unknown';
         
         html += `

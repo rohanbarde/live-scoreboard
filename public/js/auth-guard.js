@@ -19,7 +19,11 @@
             '/views/scoreboard.html',
             '/scoreboard.html',
             '/views/vmix.html',
-            '/vmix.html'
+            '/vmix.html',
+            '/views/test-matches-no-auth.html',
+            '/test-matches-no-auth.html',
+            '/views/clear-auth.html',
+            '/clear-auth.html'
         ]
     };
 
@@ -120,8 +124,26 @@
             return;
         }
 
+        // Set a timeout to prevent infinite waiting
+        let authTimeout = setTimeout(() => {
+            if (!authCheckComplete) {
+                console.error('⚠️ Authentication check timeout - forcing completion');
+                authCheckComplete = true;
+                // Try to clear any stuck auth state
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                } catch (e) {
+                    console.error('Error clearing storage:', e);
+                }
+                redirectToLogin();
+            }
+        }, 10000); // 10 second timeout
+
         // Check authentication state
         firebase.auth().onAuthStateChanged(function(user) {
+            clearTimeout(authTimeout);
+            
             if (user) {
                 // User is authenticated
                 console.log('✅ User authenticated:', user.email);
@@ -134,7 +156,10 @@
                 // Verify user session is still valid
                 user.getIdToken(true).catch(error => {
                     console.error('❌ Token verification failed:', error);
-                    redirectToLogin();
+                    // Clear potentially corrupted auth state
+                    firebase.auth().signOut().then(() => {
+                        redirectToLogin();
+                    });
                 });
 
                 // Listen for auth state changes (e.g., logout in another tab)
@@ -155,8 +180,15 @@
                 redirectToLogin();
             }
         }, function(error) {
+            clearTimeout(authTimeout);
             console.error('❌ Authentication check error:', error);
             authCheckComplete = true;
+            // Clear potentially corrupted auth state
+            try {
+                firebase.auth().signOut();
+            } catch (e) {
+                console.error('Error signing out:', e);
+            }
             redirectToLogin();
         });
     }
