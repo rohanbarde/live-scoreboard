@@ -139,15 +139,60 @@
         }
 
         /**
+         * Find match index in the array
+         */
+        async findMatchIndex(matchId) {
+            const snapshot = await this.matchesRef.once('value');
+            const data = snapshot.val();
+            
+            if (!data) return -1;
+            
+            let matches = [];
+            if (data.main && Array.isArray(data.main)) {
+                matches = data.main;
+            } else if (Array.isArray(data)) {
+                matches = data;
+            } else {
+                // Old object structure - match exists as child
+                return null; // Use old method
+            }
+            
+            return matches.findIndex(m => m.id === matchId);
+        }
+        
+        /**
+         * Get match reference (handles both array and object structures)
+         */
+        async getMatchRef(matchId) {
+            const index = await this.findMatchIndex(matchId);
+            
+            if (index === null) {
+                // Old object structure
+                return this.matchesRef.child(matchId);
+            } else if (index >= 0) {
+                // Array structure
+                return this.matchesRef.child(`main/${index}`);
+            }
+            
+            return null;
+        }
+        
+        /**
          * Try to lock a match
          */
         async lockMatch(matchId) {
             try {
                 console.log('🔒 Attempting to lock match:', matchId);
-                console.log('📍 Looking in path:', this.matchesRef.toString() + '/' + matchId);
                 
                 const lockRef = this.locksRef.child(matchId);
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    console.error('❌ Match not found:', matchId);
+                    throw new Error('Match not found');
+                }
+                
+                console.log('📍 Match path:', matchRef.toString());
 
                 // Check if match exists and is available
                 const matchSnapshot = await matchRef.once('value');
@@ -218,7 +263,11 @@
         async unlockMatch(matchId) {
             try {
                 const lockRef = this.locksRef.child(matchId);
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    throw new Error('Match not found');
+                }
 
                 // Verify we own the lock
                 const lockSnapshot = await lockRef.once('value');
@@ -266,7 +315,11 @@
                     throw new Error('You must lock the match before starting it');
                 }
 
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    throw new Error('Match not found');
+                }
                 
                 // Update match status
                 await matchRef.update({
@@ -293,7 +346,11 @@
          */
         async completeMatch(matchId, winner, scoreData) {
             try {
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    throw new Error('Match not found');
+                }
                 
                 // Update match status
                 await matchRef.update({
@@ -324,8 +381,13 @@
         /**
          * Open scoreboard for match
          */
-        openScoreboard(matchId) {
-            const matchRef = this.matchesRef.child(matchId);
+        async openScoreboard(matchId) {
+            const matchRef = await this.getMatchRef(matchId);
+            
+            if (!matchRef) {
+                console.error('Match not found:', matchId);
+                return;
+            }
             
             matchRef.once('value', snapshot => {
                 const match = snapshot.val();
@@ -362,8 +424,15 @@
         /**
          * Listen for match updates
          */
-        onMatchUpdate(matchId, callback) {
-            return this.matchesRef.child(matchId).on('value', snapshot => {
+        async onMatchUpdate(matchId, callback) {
+            const matchRef = await this.getMatchRef(matchId);
+            
+            if (!matchRef) {
+                console.error('Match not found:', matchId);
+                return null;
+            }
+            
+            return matchRef.on('value', snapshot => {
                 callback(snapshot.val());
             });
         }
@@ -375,22 +444,58 @@
             console.log('👂 Setting up matches listener on:', this.matchesRef.toString());
             return this.matchesRef.on('value', snapshot => {
                 console.log('🔥 Firebase snapshot received, exists:', snapshot.exists());
-                const matches = [];
-                snapshot.forEach(child => {
-                    const matchData = child.val();
-                    // Use Firebase key as the ID, store original ID as originalId if it exists
-                    matches.push({ 
-                        ...matchData,
-                        id: child.key,  // Always use Firebase key as ID
-                        originalId: matchData.id  // Preserve original ID if it exists
+                let matches = [];
+                
+                const data = snapshot.val();
+                
+                if (!data) {
+                    console.log('⚠️ No match data found');
+                    callback(matches);
+                    return;
+                }
+                
+                // Handle new structure: { main: [...], repechage: {...} }
+                if (data.main && Array.isArray(data.main)) {
+                    console.log('📊 Loading matches from new structure (main array)');
+                    matches = data.main.map(match => ({
+                        ...match,
+                        id: match.id || this.generateMatchId()
+                    }));
+                }
+                // Handle direct array structure (legacy)
+                else if (Array.isArray(data)) {
+                    console.log('📊 Loading matches from array structure');
+                    matches = data.map(match => ({
+                        ...match,
+                        id: match.id || this.generateMatchId()
+                    }));
+                }
+                // Handle object structure (very old format)
+                else {
+                    console.log('📊 Loading matches from object structure');
+                    snapshot.forEach(child => {
+                        const matchData = child.val();
+                        matches.push({ 
+                            ...matchData,
+                            id: child.key,
+                            originalId: matchData.id
+                        });
                     });
-                });
+                }
+                
                 console.log('📦 Parsed matches from Firebase:', matches.length);
                 if (matches.length > 0) {
-                    console.log('📋 Sample match ID:', matches[0].id);
+                    console.log('📋 Sample match:', matches[0]);
                 }
                 callback(matches);
             });
+        }
+        
+        /**
+         * Generate a unique match ID
+         */
+        generateMatchId() {
+            return 'match_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
         /**

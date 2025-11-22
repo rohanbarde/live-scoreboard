@@ -796,8 +796,8 @@ async function animateGenerateDraw() {
     // Create bracket with IJF seeding
     const bracketData = tournamentDraw.createBracket(shuffled, seeds);
     
-    // Save main bracket matches
-    await tournamentDraw.matchesRef.set(bracketData.main);
+    // Save complete bracket structure (main + repechage)
+    await tournamentDraw.matchesRef.set(bracketData);
     
     console.log('IJF-compliant matches saved to Firebase with', seeds.length, 'seeds');
   } catch (err) {
