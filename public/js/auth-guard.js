@@ -19,11 +19,7 @@
             '/views/scoreboard.html',
             '/scoreboard.html',
             '/views/vmix.html',
-            '/vmix.html',
-            '/views/test-matches-no-auth.html',
-            '/test-matches-no-auth.html',
-            '/views/clear-auth.html',
-            '/clear-auth.html'
+            '/vmix.html'
         ]
     };
 
