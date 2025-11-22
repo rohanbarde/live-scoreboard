@@ -669,6 +669,10 @@
             const playerCards = Array.from(playersList.querySelectorAll(".player-card"));
             if (playerCards.length <= 1) return; // nothing to shuffle
 
+            // Note: This shuffle only affects visual display order
+            // Seed assignments are preserved in player data
+            console.log('ℹ️ Shuffling visual display only - seed assignments preserved');
+
             // Add shuffle animation class
             playersList.style.transition = "transform 0.4s ease";
             playersList.style.transform = "rotate(2deg) scale(0.98)";

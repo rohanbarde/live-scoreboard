@@ -73,7 +73,9 @@ class TournamentDraw {
     // Place seeded players
     seededPlayers.forEach((player, index) => {
       if (index < seedPositions.length) {
-        bracket[seedPositions[index]] = player;
+        const position = seedPositions[index];
+        bracket[position] = player;
+        console.log(`✅ Seed ${index + 1} (${player.fullName}) placed at position ${position}`);
       }
     });
     
@@ -85,22 +87,32 @@ class TournamentDraw {
       }
     }
     
+    // Debug: Log complete bracket structure
+    console.log('\n🔍 COMPLETE BRACKET POSITIONS:');
+    bracket.forEach((player, idx) => {
+      const name = player?.fullName || 'BYE';
+      const seed = player?.seed ? `[Seed ${player.seed}]` : '';
+      console.log(`Position ${idx}: ${name} ${seed}`);
+    });
+    console.log('');
+    
     return bracket;
   }
   
   // Get IJF seed positions for bracket size
   getIJFSeedPositions(size) {
     // IJF standard seeding positions
+    // Format: [Seed1_pos, Seed2_pos, Seed3_pos, Seed4_pos, Seed5_pos, ...]
     const positions = {
-      4: [0, 3, 1, 2],
-      8: [0, 7, 3, 4, 1, 6, 2, 5],
-      16: [0, 15, 7, 8, 3, 12, 4, 11, 1, 14, 6, 9, 2, 13, 5, 10],
-      32: [0, 31, 15, 16, 7, 24, 8, 23, 3, 28, 12, 19, 4, 27, 11, 20, 
-           1, 30, 14, 17, 6, 25, 9, 22, 2, 29, 13, 18, 5, 26, 10, 21],
-      64: [0, 63, 31, 32, 15, 48, 16, 47, 7, 56, 24, 39, 8, 55, 23, 40,
-           3, 60, 28, 35, 12, 51, 19, 44, 4, 59, 27, 36, 11, 52, 20, 43,
-           1, 62, 30, 33, 14, 49, 17, 46, 6, 57, 25, 38, 9, 54, 22, 41,
-           2, 61, 29, 34, 13, 50, 18, 45, 5, 58, 26, 37, 10, 53, 21, 42]
+      4: [0, 3, 2, 1],  // Seed1=top, Seed2=bottom, Seed3=pos2, Seed4=pos1
+      8: [0, 7, 4, 3, 2, 5, 1, 6],  // Seed1=0, Seed2=7, Seed3=4, Seed4=3
+      16: [0, 15, 8, 7, 4, 11, 3, 12, 2, 13, 5, 10, 6, 9, 1, 14],
+      32: [0, 31, 16, 15, 8, 23, 7, 24, 4, 27, 11, 20, 3, 28, 12, 19,
+           2, 29, 13, 18, 5, 26, 10, 21, 6, 25, 9, 22, 1, 30, 14, 17],
+      64: [0, 63, 32, 31, 16, 47, 15, 48, 8, 55, 23, 40, 7, 56, 24, 39,
+           4, 59, 27, 36, 11, 52, 20, 43, 3, 60, 28, 35, 12, 51, 19, 44,
+           2, 61, 29, 34, 13, 50, 18, 45, 5, 58, 26, 37, 10, 53, 21, 42,
+           6, 57, 25, 38, 9, 54, 22, 41, 1, 62, 30, 33, 14, 49, 17, 46]
     };
     
     return positions[size] || positions[8]; // Default to 8 if size not found
@@ -129,9 +141,25 @@ class TournamentDraw {
 
       console.log(`Generating draw for ${this.players.length} players`);
       
-      // Generate the bracket
-      const seededPlayers = this.seedPlayers();
-      const matches = this.createBracket(seededPlayers);
+      // Extract seed information from players
+      const seedIds = [];
+      this.players.forEach(player => {
+        if (player.seed) {
+          // Store player ID at index (seed - 1) to maintain seed order
+          seedIds[player.seed - 1] = player.id;
+        }
+      });
+      
+      // Remove undefined/null entries and get clean seed array
+      const cleanSeedIds = seedIds.filter(id => id);
+      
+      console.log('Extracted seeds:', cleanSeedIds.map((id, idx) => {
+        const player = this.players.find(p => p.id === id);
+        return `Seed ${idx + 1}: ${player?.fullName}`;
+      }));
+      
+      // Generate the bracket with seeds
+      const matches = this.createBracket(this.players, cleanSeedIds);
       
       // Save to Firebase
       console.log('Saving matches to Firebase...');
@@ -170,6 +198,31 @@ class TournamentDraw {
     };
     
     console.log('Created complete bracket structure');
+    
+    // Log bracket structure for verification
+    console.log('\n📊 IJF BRACKET STRUCTURE (First Round):');
+    console.log('═══════════════════════════════════════');
+    const firstRound = mainBracket.filter(m => m.round === 1);
+    firstRound.forEach((match, idx) => {
+      const seedA = match.playerASeed ? `[Seed ${match.playerASeed}]` : '';
+      const seedB = match.playerBSeed ? `[Seed ${match.playerBSeed}]` : '';
+      console.log(`Match ${idx + 1}: ${match.playerAName} ${seedA} vs ${match.playerBName} ${seedB}`);
+    });
+    console.log('═══════════════════════════════════════');
+    
+    // Check for seed conflicts
+    const seedConflicts = firstRound.filter(m => 
+      m.playerASeed && m.playerBSeed && 
+      (m.playerASeed <= 2 && m.playerBSeed <= 2)
+    );
+    if (seedConflicts.length > 0) {
+      console.error('❌ SEEDING ERROR: Top 2 seeds meeting in first round!');
+      seedConflicts.forEach(m => {
+        console.error(`   ${m.playerAName} [Seed ${m.playerASeed}] vs ${m.playerBName} [Seed ${m.playerBSeed}]`);
+      });
+    }
+    console.log('');
+    
     return allMatches;
   }
   
