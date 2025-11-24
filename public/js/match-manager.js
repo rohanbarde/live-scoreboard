@@ -139,15 +139,80 @@
         }
 
         /**
+         * Find match index in the array (searches both main and repechage)
+         */
+        async findMatchIndex(matchId) {
+            const snapshot = await this.matchesRef.once('value');
+            const data = snapshot.val();
+            
+            if (!data) return { index: -1, isRepechage: false };
+            
+            // Check main matches
+            let matches = [];
+            let repechageMatches = [];
+            
+            if (data.main && Array.isArray(data.main)) {
+                matches = data.main;
+                repechageMatches = data.repechage || [];
+            } else if (Array.isArray(data)) {
+                matches = data;
+            } else {
+                // Old object structure - match exists as child
+                return { index: null, isRepechage: false }; // Use old method
+            }
+            
+            // Search in main matches first
+            let index = matches.findIndex(m => m.id === matchId);
+            if (index !== -1) {
+                return { index, isRepechage: false };
+            }
+            
+            // Search in repechage matches
+            index = repechageMatches.findIndex(m => m.id === matchId);
+            if (index !== -1) {
+                return { index, isRepechage: true };
+            }
+            
+            return { index: -1, isRepechage: false };
+        }
+        
+        /**
+         * Get match reference (handles both array and object structures, and repechage)
+         */
+        async getMatchRef(matchId) {
+            const result = await this.findMatchIndex(matchId);
+            
+            if (result.index === null) {
+                // Old object structure
+                return this.matchesRef.child(matchId);
+            } else if (result.index >= 0) {
+                // Array structure - check if main or repechage
+                if (result.isRepechage) {
+                    return this.matchesRef.child(`repechage/${result.index}`);
+                } else {
+                    return this.matchesRef.child(`main/${result.index}`);
+                }
+            }
+            
+            return null;
+        }
+        
+        /**
          * Try to lock a match
          */
         async lockMatch(matchId) {
             try {
                 console.log('🔒 Attempting to lock match:', matchId);
-                console.log('📍 Looking in path:', this.matchesRef.toString() + '/' + matchId);
                 
                 const lockRef = this.locksRef.child(matchId);
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    console.error('❌ Match not found:', matchId);
+                    throw new Error('Match not found');
+                }
+                
+                console.log('📍 Match path:', matchRef.toString());
 
                 // Check if match exists and is available
                 const matchSnapshot = await matchRef.once('value');
@@ -218,7 +283,11 @@
         async unlockMatch(matchId) {
             try {
                 const lockRef = this.locksRef.child(matchId);
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    throw new Error('Match not found');
+                }
 
                 // Verify we own the lock
                 const lockSnapshot = await lockRef.once('value');
@@ -266,7 +335,11 @@
                     throw new Error('You must lock the match before starting it');
                 }
 
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    throw new Error('Match not found');
+                }
                 
                 // Update match status
                 await matchRef.update({
@@ -293,11 +366,16 @@
          */
         async completeMatch(matchId, winner, scoreData) {
             try {
-                const matchRef = this.matchesRef.child(matchId);
+                const matchRef = await this.getMatchRef(matchId);
+                
+                if (!matchRef) {
+                    throw new Error('Match not found');
+                }
                 
                 // Update match status
                 await matchRef.update({
                     status: 'completed',
+                    completed: true,
                     winner: winner,
                     scoreData: scoreData,
                     endTime: firebase.database.ServerValue.TIMESTAMP
@@ -312,7 +390,16 @@
                 });
 
                 this.currentMatchId = null;
-                console.log('✅ Match completed:', matchId);
+                console.log('✅ Match completed:', matchId, 'Winner:', winner);
+                
+                // Trigger tournament progression if TournamentProgression is available
+                if (window.TournamentProgression) {
+                    console.log('🔄 Triggering tournament progression...');
+                    const progression = new TournamentProgression();
+                    await progression.onMatchComplete(matchId, winner);
+                    console.log('✅ Tournament progression complete');
+                }
+                
                 return true;
 
             } catch (error) {
@@ -324,8 +411,13 @@
         /**
          * Open scoreboard for match
          */
-        openScoreboard(matchId) {
-            const matchRef = this.matchesRef.child(matchId);
+        async openScoreboard(matchId) {
+            const matchRef = await this.getMatchRef(matchId);
+            
+            if (!matchRef) {
+                console.error('Match not found:', matchId);
+                return;
+            }
             
             matchRef.once('value', snapshot => {
                 const match = snapshot.val();
@@ -362,8 +454,15 @@
         /**
          * Listen for match updates
          */
-        onMatchUpdate(matchId, callback) {
-            return this.matchesRef.child(matchId).on('value', snapshot => {
+        async onMatchUpdate(matchId, callback) {
+            const matchRef = await this.getMatchRef(matchId);
+            
+            if (!matchRef) {
+                console.error('Match not found:', matchId);
+                return null;
+            }
+            
+            return matchRef.on('value', snapshot => {
                 callback(snapshot.val());
             });
         }
@@ -375,22 +474,69 @@
             console.log('👂 Setting up matches listener on:', this.matchesRef.toString());
             return this.matchesRef.on('value', snapshot => {
                 console.log('🔥 Firebase snapshot received, exists:', snapshot.exists());
-                const matches = [];
-                snapshot.forEach(child => {
-                    const matchData = child.val();
-                    // Use Firebase key as the ID, store original ID as originalId if it exists
-                    matches.push({ 
-                        ...matchData,
-                        id: child.key,  // Always use Firebase key as ID
-                        originalId: matchData.id  // Preserve original ID if it exists
+                let matches = [];
+                
+                const data = snapshot.val();
+                
+                if (!data) {
+                    console.log('⚠️ No match data found');
+                    callback(matches);
+                    return;
+                }
+                
+                // Handle new structure: { main: [...], repechage: [...] }
+                if (data.main && Array.isArray(data.main)) {
+                    console.log('📊 Loading matches from new structure (main array)');
+                    matches = data.main.map(match => ({
+                        ...match,
+                        id: match.id || this.generateMatchId()
+                    }));
+                    
+                    // Also load repechage matches if they exist
+                    if (data.repechage && Array.isArray(data.repechage)) {
+                        console.log('🥉 Loading repechage matches:', data.repechage.length);
+                        const repechageMatches = data.repechage.map(match => ({
+                            ...match,
+                            id: match.id || this.generateMatchId(),
+                            isRepechage: true
+                        }));
+                        matches.push(...repechageMatches);
+                    }
+                }
+                // Handle direct array structure (legacy)
+                else if (Array.isArray(data)) {
+                    console.log('📊 Loading matches from array structure');
+                    matches = data.map(match => ({
+                        ...match,
+                        id: match.id || this.generateMatchId()
+                    }));
+                }
+                // Handle object structure (very old format)
+                else {
+                    console.log('📊 Loading matches from object structure');
+                    snapshot.forEach(child => {
+                        const matchData = child.val();
+                        matches.push({ 
+                            ...matchData,
+                            id: child.key,
+                            originalId: matchData.id
+                        });
                     });
-                });
+                }
+                
                 console.log('📦 Parsed matches from Firebase:', matches.length);
                 if (matches.length > 0) {
-                    console.log('📋 Sample match ID:', matches[0].id);
+                    console.log('📋 Sample match:', matches[0]);
                 }
                 callback(matches);
             });
+        }
+        
+        /**
+         * Generate a unique match ID
+         */
+        generateMatchId() {
+            return 'match_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
         /**

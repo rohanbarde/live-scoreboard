@@ -549,13 +549,16 @@
             </select>
         </div>
         <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 10px;">
+            <button id="manageSeedsBtn" class="btn btn-outline" style="background: #f8f9fa; border-color: #dee2e6;">
+                <i class="fas fa-trophy"></i> Manage Seeds
+            </button>
             <button id="shufflePlayersBtn" class="btn btn-outline">
                 <i class="fas fa-shuffle"></i> Shuffle Players
             </button>
         </div>
         <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 10px;">
             <button id="generateDrawBtn" class="btn btn-primary">
-                <i class="fas fa-random"></i> Generate Draw
+                <i class="fas fa-random"></i> Generate IJF Draw
             </button>
         </div>
     </div>
@@ -588,6 +591,38 @@
     </div>
 </div>
 
+<!-- Seeding Modal -->
+<div id="seedingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 24px; color: #333;">
+                <i class="fas fa-trophy" style="color: #ffd700;"></i> IJF Seeding Management
+            </h2>
+            <button id="closeSeedingModal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i> 
+                Assign seeds to players following IJF rules. Seed 1 goes to top, Seed 2 to bottom, Seeds 3-4 in opposite halves.
+            </p>
+        </div>
+        
+        <div id="seedingList" style="display: flex; flex-direction: column; gap: 15px;">
+            <!-- Seeding slots will be populated here -->
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 25px; justify-content: flex-end;">
+            <button id="clearSeeds" class="btn btn-outline" style="padding: 10px 20px;">
+                <i class="fas fa-eraser"></i> Clear All Seeds
+            </button>
+            <button id="saveSeedsBtn" class="btn btn-primary" style="padding: 10px 20px;">
+                <i class="fas fa-save"></i> Save Seeds
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -611,6 +646,15 @@
     document.addEventListener("DOMContentLoaded", () => {
         const shuffleBtn = document.getElementById("shufflePlayersBtn");
         const playersList = document.getElementById("playersList");
+        const manageSeedsBtn = document.getElementById("manageSeedsBtn");
+        const seedingModal = document.getElementById("seedingModal");
+        const closeSeedingModal = document.getElementById("closeSeedingModal");
+        const saveSeedsBtn = document.getElementById("saveSeedsBtn");
+        const clearSeeds = document.getElementById("clearSeeds");
+        const seedingList = document.getElementById("seedingList");
+        
+        // Store seeds in memory
+        let playerSeeds = {};
 
         // Function to shuffle an array (Fisher-Yates)
         function shuffleArray(array) {
@@ -624,6 +668,10 @@
         shuffleBtn.addEventListener("click", () => {
             const playerCards = Array.from(playersList.querySelectorAll(".player-card"));
             if (playerCards.length <= 1) return; // nothing to shuffle
+
+            // Note: This shuffle only affects visual display order
+            // Seed assignments are preserved in player data
+            console.log('ℹ️ Shuffling visual display only - seed assignments preserved');
 
             // Add shuffle animation class
             playersList.style.transition = "transform 0.4s ease";
@@ -653,6 +701,123 @@
                 shuffleBtn.disabled = false;
                 shuffleBtn.innerHTML = '<i class="fas fa-shuffle"></i> Shuffle Players';
             }, 600);
+        });
+        
+        // Seeding Modal Functions
+        manageSeedsBtn.addEventListener("click", () => {
+            openSeedingModal();
+        });
+        
+        closeSeedingModal.addEventListener("click", () => {
+            seedingModal.style.display = "none";
+        });
+        
+        seedingModal.addEventListener("click", (e) => {
+            if (e.target === seedingModal) {
+                seedingModal.style.display = "none";
+            }
+        });
+        
+        function openSeedingModal() {
+            // Get current filtered players
+            const selectedGender = document.getElementById('drawGenderFilter').value;
+            const selectedWeight = document.getElementById('drawWeightFilter').value;
+            
+            const filteredPlayers = players.filter(player => {
+                if (!player.playerInfo) return false;
+                const playerGender = player.playerInfo.gender ? player.playerInfo.gender.toLowerCase() : '';
+                const matchesGender = !selectedGender || playerGender === selectedGender.toLowerCase();
+                const playerWeight = player.playerInfo.weight ? player.playerInfo.weight.toString() : '';
+                const matchesWeight = !selectedWeight || playerWeight === selectedWeight;
+                return matchesGender && matchesWeight;
+            });
+            
+            if (filteredPlayers.length < 2) {
+                alert('Need at least 2 players to assign seeds. Please adjust filters.');
+                return;
+            }
+            
+            // Populate seeding list
+            populateSeedingList(filteredPlayers);
+            seedingModal.style.display = "flex";
+        }
+        
+        function populateSeedingList(filteredPlayers) {
+            const maxSeeds = Math.min(8, filteredPlayers.length); // Allow up to 8 seeds
+            seedingList.innerHTML = '';
+            
+            for (let i = 1; i <= maxSeeds; i++) {
+                const seedDiv = document.createElement('div');
+                seedDiv.style.cssText = 'display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;';
+                
+                const seedLabel = document.createElement('div');
+                seedLabel.style.cssText = 'font-weight: 600; font-size: 18px; color: #ffd700; min-width: 80px;';
+                seedLabel.innerHTML = `<i class="fas fa-medal"></i> Seed ${i}`;
+                
+                const select = document.createElement('select');
+                select.id = `seed${i}`;
+                select.style.cssText = 'flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;';
+                
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select Player --';
+                select.appendChild(defaultOption);
+                
+                filteredPlayers.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player.id;
+                    option.textContent = `${player.fullName} ${player.playerInfo?.team ? '(' + player.playerInfo.team + ')' : ''}`;
+                    
+                    // Pre-select if already seeded
+                    if (playerSeeds[player.id] === i) {
+                        option.selected = true;
+                    }
+                    
+                    select.appendChild(option);
+                });
+                
+                seedDiv.appendChild(seedLabel);
+                seedDiv.appendChild(select);
+                seedingList.appendChild(seedDiv);
+            }
+        }
+        
+        saveSeedsBtn.addEventListener("click", () => {
+            // Save seeds from modal
+            playerSeeds = {};
+            const maxSeeds = seedingList.children.length;
+            
+            for (let i = 1; i <= maxSeeds; i++) {
+                const select = document.getElementById(`seed${i}`);
+                if (select && select.value) {
+                    playerSeeds[select.value] = i;
+                }
+            }
+            
+            // Apply seeds to player objects
+            players.forEach(player => {
+                if (playerSeeds[player.id]) {
+                    player.seed = playerSeeds[player.id];
+                } else {
+                    delete player.seed;
+                }
+            });
+            
+            console.log('Seeds saved:', playerSeeds);
+            alert(`✅ Seeds saved successfully! ${Object.keys(playerSeeds).length} players seeded.`);
+            seedingModal.style.display = "none";
+            
+            // Update player list display to show seeds
+            filterAndRenderDraws();
+        });
+        
+        clearSeeds.addEventListener("click", () => {
+            if (confirm('Clear all seeds?')) {
+                playerSeeds = {};
+                players.forEach(player => delete player.seed);
+                populateSeedingList(players.filter(p => p.playerInfo));
+                console.log('All seeds cleared');
+            }
         });
     });
 </script>

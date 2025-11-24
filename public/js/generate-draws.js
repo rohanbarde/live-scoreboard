@@ -37,10 +37,94 @@ class TournamentDraw {
     }
   }
 
-  // Generate a random seed for players
-  seedPlayers() {
-    // Simple random shuffle
-    return [...this.players].sort(() => Math.random() - 0.5);
+  // IJF Seeding: Seed players based on ranking/seed number
+  seedPlayers(players, seeds = []) {
+    // seeds array contains player IDs in order of seeding (seed 1, seed 2, seed 3, seed 4, etc.)
+    const seededPlayers = [];
+    const unseededPlayers = [...players];
+    
+    // Remove seeded players from unseeded list
+    seeds.forEach(seedId => {
+      const index = unseededPlayers.findIndex(p => p.id === seedId);
+      if (index !== -1) {
+        unseededPlayers.splice(index, 1);
+      }
+    });
+    
+    // Shuffle unseeded players
+    const shuffledUnseeded = unseededPlayers.sort(() => Math.random() - 0.5);
+    
+    return { seeds, unseeded: shuffledUnseeded };
+  }
+  
+  // Apply IJF bracket positioning rules
+  applyIJFSeeding(players, seeds = []) {
+    const bracketSize = this.getNextPowerOf2(players.length);
+    const bracket = new Array(bracketSize).fill(null);
+    
+    // Get seeded and unseeded players
+    const seededPlayers = seeds.map(id => players.find(p => p.id === id)).filter(p => p);
+    const unseededPlayers = players.filter(p => !seeds.includes(p.id));
+    const shuffledUnseeded = unseededPlayers.sort(() => Math.random() - 0.5);
+    
+    // IJF Seeding positions for different bracket sizes
+    const seedPositions = this.getIJFSeedPositions(bracketSize);
+    
+    // Place seeded players
+    seededPlayers.forEach((player, index) => {
+      if (index < seedPositions.length) {
+        const position = seedPositions[index];
+        bracket[position] = player;
+        console.log(`✅ Seed ${index + 1} (${player.fullName}) placed at position ${position}`);
+      }
+    });
+    
+    // Fill remaining positions with unseeded players
+    let unseededIndex = 0;
+    for (let i = 0; i < bracket.length; i++) {
+      if (bracket[i] === null && unseededIndex < shuffledUnseeded.length) {
+        bracket[i] = shuffledUnseeded[unseededIndex++];
+      }
+    }
+    
+    // Debug: Log complete bracket structure
+    console.log('\n🔍 COMPLETE BRACKET POSITIONS:');
+    bracket.forEach((player, idx) => {
+      const name = player?.fullName || 'BYE';
+      const seed = player?.seed ? `[Seed ${player.seed}]` : '';
+      console.log(`Position ${idx}: ${name} ${seed}`);
+    });
+    console.log('');
+    
+    return bracket;
+  }
+  
+  // Get IJF seed positions for bracket size
+  getIJFSeedPositions(size) {
+    // IJF standard seeding positions
+    // Format: [Seed1_pos, Seed2_pos, Seed3_pos, Seed4_pos, Seed5_pos, ...]
+    const positions = {
+      4: [0, 3, 2, 1],  // Seed1=top, Seed2=bottom, Seed3=pos2, Seed4=pos1
+      8: [0, 7, 4, 3, 2, 5, 1, 6],  // Seed1=0, Seed2=7, Seed3=4, Seed4=3
+      16: [0, 15, 8, 7, 4, 11, 3, 12, 2, 13, 5, 10, 6, 9, 1, 14],
+      32: [0, 31, 16, 15, 8, 23, 7, 24, 4, 27, 11, 20, 3, 28, 12, 19,
+           2, 29, 13, 18, 5, 26, 10, 21, 6, 25, 9, 22, 1, 30, 14, 17],
+      64: [0, 63, 32, 31, 16, 47, 15, 48, 8, 55, 23, 40, 7, 56, 24, 39,
+           4, 59, 27, 36, 11, 52, 20, 43, 3, 60, 28, 35, 12, 51, 19, 44,
+           2, 61, 29, 34, 13, 50, 18, 45, 5, 58, 26, 37, 10, 53, 21, 42,
+           6, 57, 25, 38, 9, 54, 22, 41, 1, 62, 30, 33, 14, 49, 17, 46]
+    };
+    
+    return positions[size] || positions[8]; // Default to 8 if size not found
+  }
+  
+  // Get next power of 2 for bracket size
+  getNextPowerOf2(n) {
+    let power = 2;
+    while (power < n) {
+      power *= 2;
+    }
+    return power;
   }
 
   // Generate matches based on number of players
@@ -57,9 +141,25 @@ class TournamentDraw {
 
       console.log(`Generating draw for ${this.players.length} players`);
       
-      // Generate the bracket
-      const seededPlayers = this.seedPlayers();
-      const matches = this.createBracket(seededPlayers);
+      // Extract seed information from players
+      const seedIds = [];
+      this.players.forEach(player => {
+        if (player.seed) {
+          // Store player ID at index (seed - 1) to maintain seed order
+          seedIds[player.seed - 1] = player.id;
+        }
+      });
+      
+      // Remove undefined/null entries and get clean seed array
+      const cleanSeedIds = seedIds.filter(id => id);
+      
+      console.log('Extracted seeds:', cleanSeedIds.map((id, idx) => {
+        const player = this.players.find(p => p.id === id);
+        return `Seed ${idx + 1}: ${player?.fullName}`;
+      }));
+      
+      // Generate the bracket with seeds
+      const matches = this.createBracket(this.players, cleanSeedIds);
       
       // Save to Firebase
       console.log('Saving matches to Firebase...');
@@ -76,35 +176,99 @@ class TournamentDraw {
     }
   }
 
-  // Create bracket based on number of players
-  createBracket(players) {
-//    console.log('Creating bracket with players:', players);
-    const matches = [];
+  // Create bracket with IJF seeding and repechage
+  createBracket(players, seeds = []) {
+    console.log('Creating IJF bracket with', players.length, 'players and', seeds.length, 'seeds');
+    
+    const allMatches = {};
     const numPlayers = players.length;
+    
+    // Apply IJF seeding
+    const seededBracket = this.applyIJFSeeding(players, seeds);
+    
+    // Create main bracket
+    const mainBracket = this.createMainBracket(seededBracket);
+    allMatches.main = mainBracket;
+    
+    // Create empty repechage array (will be populated after semifinals complete)
+    // Note: Repechage matches are created automatically by tournament-progression.js
+    allMatches.repechage = [];
+    
+    console.log('Created complete bracket structure');
+    
+    // Log bracket structure for verification
+    console.log('\n📊 IJF BRACKET STRUCTURE (First Round):');
+    console.log('═══════════════════════════════════════');
+    const firstRound = mainBracket.filter(m => m.round === 1);
+    firstRound.forEach((match, idx) => {
+      const seedA = match.playerASeed ? `[Seed ${match.playerASeed}]` : '';
+      const seedB = match.playerBSeed ? `[Seed ${match.playerBSeed}]` : '';
+      console.log(`Match ${idx + 1}: ${match.playerAName} ${seedA} vs ${match.playerBName} ${seedB}`);
+    });
+    console.log('═══════════════════════════════════════');
+    
+    // Check for seed conflicts
+    const seedConflicts = firstRound.filter(m => 
+      m.playerASeed && m.playerBSeed && 
+      (m.playerASeed <= 2 && m.playerBSeed <= 2)
+    );
+    if (seedConflicts.length > 0) {
+      console.error('❌ SEEDING ERROR: Top 2 seeds meeting in first round!');
+      seedConflicts.forEach(m => {
+        console.error(`   ${m.playerAName} [Seed ${m.playerASeed}] vs ${m.playerBName} [Seed ${m.playerBSeed}]`);
+      });
+    }
+    console.log('');
+    
+    return allMatches;
+  }
+  
+  // Create main elimination bracket
+  createMainBracket(players) {
+    const matches = [];
+    const numPlayers = players.filter(p => p !== null).length;
     let round = 1;
     
     // Create first round matches
     const firstRoundMatches = [];
-    for (let i = 0; i < Math.ceil(numPlayers / 2); i++) {
+    for (let i = 0; i < Math.ceil(players.length / 2); i++) {
       const playerA = players[i * 2];
       const playerB = players[i * 2 + 1];
+      
+      // Skip if both players are null (empty bracket positions)
+      if (!playerA && !playerB) continue;
       
       const match = {
         id: this.generateId(),
         round,
+        matchType: 'main',
         playerA: playerA?.id || null,
         playerB: playerB?.id || null,
         winner: null,
+        loser: null,
         completed: false,
         nextMatchId: null,
-        playerAName: playerA?.fullName || null,
-        playerBName: playerB?.fullName || null,
+        playerAName: playerA?.fullName || 'BYE',
+        playerBName: playerB?.fullName || 'BYE',
         playerAClub: playerA?.playerInfo?.team || null,
         playerBClub: playerB?.playerInfo?.team || null,
-        weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : null
+        playerASeed: playerA?.seed || null,
+        playerBSeed: playerB?.seed || null,
+        weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : null,
+        repechageEligible: true // Losers can enter repechage
       };
       
-//      console.log(`Created match ${match.id}: ${playerA?.fullName || 'BYE'} vs ${playerB?.fullName || 'BYE'}`);
+      // Auto-complete BYE matches
+      if (!playerB && playerA) {
+        match.winner = playerA.id;
+        match.completed = true;
+        match.playerBName = 'BYE';
+      } else if (!playerA && playerB) {
+        match.winner = playerB.id;
+        match.completed = true;
+        match.playerAName = 'BYE';
+      }
+      
       firstRoundMatches.push(match);
     }
     
@@ -120,21 +284,26 @@ class TournamentDraw {
         const match = {
           id: this.generateId(),
           round,
+          matchType: round === this.getMaxRounds(numPlayers) ? 'final' : 'main',
           playerA: null,
           playerB: null,
-          playerAName: 'Winner of match',
-          playerBName: 'Winner of match',
+          playerAName: 'TBD',
+          playerBName: 'TBD',
           winner: null,
+          loser: null,
           completed: false,
-          nextMatchId: null
+          nextMatchId: null,
+          repechageEligible: true
         };
         
         // Link previous matches to this one
         if (currentRound[i * 2]) {
           currentRound[i * 2].nextMatchId = match.id;
+          currentRound[i * 2].winnerTo = 'A'; // Winner goes to position A
         }
         if (currentRound[i * 2 + 1]) {
           currentRound[i * 2 + 1].nextMatchId = match.id;
+          currentRound[i * 2 + 1].winnerTo = 'B'; // Winner goes to position B
         }
         
         nextRound.push(match);
@@ -144,7 +313,124 @@ class TournamentDraw {
       currentRound = nextRound;
     }
     
-    console.log('Created bracket with', matches.length, 'matches');
+    console.log('Created main bracket with', matches.length, 'matches');
+    return matches;
+  }
+  
+  // Calculate maximum rounds needed
+  getMaxRounds(numPlayers) {
+    return Math.ceil(Math.log2(numPlayers));
+  }
+  
+  // Create repechage brackets after semifinals are complete
+  createRepechageBrackets(mainMatches, finalists) {
+    const repechage = {
+      side1: [],
+      side2: [],
+      bronzeMatches: []
+    };
+    
+    if (finalists.length !== 2) {
+      console.warn('Need 2 finalists to create repechage');
+      return repechage;
+    }
+    
+    // Get all losers to each finalist
+    const finalist1Losers = this.getLosersToPlayer(mainMatches, finalists[0]);
+    const finalist2Losers = this.getLosersToPlayer(mainMatches, finalists[1]);
+    
+    // Create repechage matches for side 1
+    if (finalist1Losers.length > 0) {
+      repechage.side1 = this.createRepechageRounds(finalist1Losers, 'repechage-1');
+    }
+    
+    // Create repechage matches for side 2
+    if (finalist2Losers.length > 0) {
+      repechage.side2 = this.createRepechageRounds(finalist2Losers, 'repechage-2');
+    }
+    
+    // Create bronze medal matches
+    if (repechage.side1.length > 0 && repechage.side2.length > 0) {
+      const bronze1 = {
+        id: this.generateId(),
+        round: 'bronze',
+        matchType: 'bronze',
+        playerA: null,
+        playerB: null,
+        playerAName: 'Repechage 1 Winner',
+        playerBName: 'Semifinal Loser',
+        winner: null,
+        completed: false
+      };
+      
+      const bronze2 = {
+        id: this.generateId(),
+        round: 'bronze',
+        matchType: 'bronze',
+        playerA: null,
+        playerB: null,
+        playerAName: 'Repechage 2 Winner',
+        playerBName: 'Semifinal Loser',
+        winner: null,
+        completed: false
+      };
+      
+      repechage.bronzeMatches = [bronze1, bronze2];
+    }
+    
+    return repechage;
+  }
+  
+  // Get all players who lost to a specific player
+  getLosersToPlayer(matches, playerId) {
+    const losers = [];
+    
+    // Traverse the bracket backwards from the player
+    const playerMatches = matches.filter(m => m.winner === playerId);
+    
+    playerMatches.forEach(match => {
+      const loser = match.playerA === playerId ? match.playerB : match.playerA;
+      if (loser) {
+        losers.push(loser);
+      }
+    });
+    
+    return losers;
+  }
+  
+  // Create repechage rounds
+  createRepechageRounds(players, side) {
+    const matches = [];
+    let round = 1;
+    
+    // Create matches for repechage
+    let currentPlayers = [...players];
+    
+    while (currentPlayers.length > 1) {
+      const roundMatches = [];
+      
+      for (let i = 0; i < Math.floor(currentPlayers.length / 2); i++) {
+        const match = {
+          id: this.generateId(),
+          round: `${side}-R${round}`,
+          matchType: 'repechage',
+          playerA: currentPlayers[i * 2],
+          playerB: currentPlayers[i * 2 + 1],
+          playerAName: 'TBD',
+          playerBName: 'TBD',
+          winner: null,
+          completed: false,
+          nextMatchId: null
+        };
+        
+        roundMatches.push(match);
+      }
+      
+      matches.push(...roundMatches);
+      currentPlayers = roundMatches.map(() => null); // Winners will fill next round
+      round++;
+    }
+    
     return matches;
   }
 
@@ -413,13 +699,23 @@ async function animateGenerateDraw() {
   requestAnimationFrame(() => shuffle.classList.add('visible'));
   await new Promise(r => setTimeout(r, 900));
 
-  // shuffle array
-  const shuffled = [...visiblePlayers].sort(() => Math.random() - 0.5);
+  // Get seeds from player data (if they have seed property)
+  const seeds = visiblePlayers
+    .filter(p => p.seed)
+    .sort((a, b) => a.seed - b.seed)
+    .map(p => p.id);
+  
+  // Create bracket with IJF seeding FIRST (so we know the actual pairings)
+  const bracketData = tournamentDraw.createBracket(visiblePlayers, seeds);
+  
+  // Extract first round matches to display in animation
+  const firstRoundMatches = bracketData.main.filter(m => m.round === 1);
+  
+  console.log('🎬 Animating', firstRoundMatches.length, 'first round matches');
 
-  // Create placeholder match slots (half of players rounded up)
-  const numMatches = Math.ceil(shuffled.length / 2);
+  // Create placeholder match slots for first round
   const matchSlots = [];
-  for (let i = 0; i < numMatches; i++) {
+  for (let i = 0; i < firstRoundMatches.length; i++) {
     const slot = document.createElement('div');
     slot.className = 'match-slot';
     slot.dataset.slotIndex = i;
@@ -448,43 +744,41 @@ async function animateGenerateDraw() {
   // small pause before animation begins
   await new Promise(r => setTimeout(r, 350));
 
-  // For each pair, animate two clones from the player-card to the slot positions
-  for (let i = 0; i < shuffled.length; i += 2) {
-    const pA = shuffled[i];
-    const pB = shuffled[i + 1]; // may be undefined -> BYE
+  // Animate the ACTUAL matches that will be saved
+  for (let i = 0; i < firstRoundMatches.length; i++) {
+    const match = firstRoundMatches[i];
+    
+    // Find player objects from visiblePlayers
+    const pA = visiblePlayers.find(p => p.id === match.playerA);
+    const pB = match.playerB ? visiblePlayers.find(p => p.id === match.playerB) : null;
 
-    // Determine source DOM elements using the rendered player-cards (they are in the players-grid)
-    // We gave player cards no id earlier — match by data attribute or by text content
-    // So ensure renderDraws sets data-player-id attribute on .player-card. If not present, fallback to search by name.
-
-    const sourceA = document.querySelector(`.player-card[data-player-id="${pA.id}"]`) ||
-                    document.querySelector(`.player-card h4:contains("${pA.fullName}")`) ||
-                    document.querySelector(`.player-card`); // fallback
+    // Determine source DOM elements
+    const sourceA = pA ? (document.querySelector(`.player-card[data-player-id="${pA.id}"]`) ||
+                    document.querySelector(`.player-card`)) : null;
     const sourceB = pB ? (document.querySelector(`.player-card[data-player-id="${pB.id}"]`) ||
-                    document.querySelector(`.player-card h4:contains("${pB.fullName}")`)) : null;
+                    document.querySelector(`.player-card`)) : null;
 
     // target slot
-    const slot = matchSlots[Math.floor(i / 2)];
+    const slot = matchSlots[i];
 
     // compute target positions (slot left and right)
     const slotLeftEl = slot.querySelector('.slot-left .slot-name');
     const slotRightEl = slot.querySelector('.slot-right .slot-name');
 
     // animate player A -> slot left
-    if (sourceA) {
+    if (pA && sourceA) {
       await animatePlayerToSlot(sourceA, slotLeftEl, pA);
     } else {
       // directly populate if source not found
-      slotLeftEl.textContent = pA.fullName || 'N/A';
+      slotLeftEl.textContent = match.playerAName || 'N/A';
     }
 
     // animate player B -> slot right (or BYE)
-    if (pB) {
-      if (sourceB) {
-        await animatePlayerToSlot(sourceB, slotRightEl, pB);
-      } else {
-        slotRightEl.textContent = pB.fullName || 'N/A';
-      }
+    if (pB && sourceB) {
+      await animatePlayerToSlot(sourceB, slotRightEl, pB);
+    } else if (match.playerB) {
+      // Player B exists but source not found
+      slotRightEl.textContent = match.playerBName || 'N/A';
     } else {
       // BYE
       slotRightEl.textContent = 'BYE';
@@ -498,18 +792,13 @@ async function animateGenerateDraw() {
   shuffle.classList.remove('visible');
   setTimeout(() => shuffle.remove(), 300);
 
-  // Optional: save generated matches to Firebase using tournamentDraw.generateDraw()
-  // but to keep animation in sync, call generateDraw after animation
+  // Save the bracket data to Firebase (already created above)
   try {
-    // Convert shuffled into the format your generateDraw expects (set tournamentDraw.players before call)
-    // We'll set tournamentDraw.players to the current visiblePlayers then call generateDraw()
-    // Slight note: your TournamentDraw.generateDraw loads players from DB. If you want to persist this animated order,
-    // you can call tournamentDraw.createBracket(shuffled) and then save matchesRef.set(matches).
-    const matches = tournamentDraw.createBracket(shuffled);
-    await tournamentDraw.matchesRef.set(matches);
-    console.log('Animated matches saved to Firebase.');
-    // optional reload or re-render
-    // window.location.reload();
+    
+    // Save complete bracket structure (main + repechage)
+    await tournamentDraw.matchesRef.set(bracketData);
+    
+    console.log('IJF-compliant matches saved to Firebase with', seeds.length, 'seeds');
   } catch (err) {
     console.error('Error saving animated draw:', err);
   }
@@ -629,15 +918,19 @@ function renderPlayerList(players) {
                 <h4>${weightTitle} (${weightPlayers.length} players)</h4>
                 <div class="players-grid">
                     ${weightPlayers.map(player => `
-                        <div class="player-card" data-player-id="${player.id}">
+                        <div class="player-card" data-player-id="${player.id}" style="position: relative;">
+                            ${player.seed ? `<div style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; box-shadow: 0 2px 8px rgba(255,215,0,0.4); border: 2px solid white; z-index: 1;">
+                                ${player.seed}
+                            </div>` : ''}
                             <div class="player-avatar" style="background: ${getColorForString(player.fullName || '')}">
                                 ${getInitials(player.fullName || '')}
                             </div>
                             <div class="player-info">
-                                <h4>${player.fullName || 'N/A'}</h4>
+                                <h4>${player.fullName || 'N/A'}${player.seed ? ' <i class="fas fa-trophy" style="color: #ffd700; font-size: 12px;"></i>' : ''}</h4>
                                 <div class="player-details">
                                     ${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : ''}
                                     ${player.playerInfo?.team ? ' • ' + player.playerInfo.team : ''}
+                                    ${player.seed ? ` • <span style="color: #ffd700; font-weight: 600;">Seed ${player.seed}</span>` : ''}
                                 </div>
                             </div>
                         </div>
