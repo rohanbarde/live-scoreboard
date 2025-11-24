@@ -682,6 +682,12 @@ async function animateGenerateDraw() {
     return;
   }
 
+  // Remove the no-draw placeholder (logo and text)
+  const noDraw = drawsContent.querySelector('.no-draw');
+  if (noDraw) {
+    noDraw.remove();
+  }
+
   // Create bracket container
   const existing = document.getElementById('animatedBracket');
   if (existing) existing.remove();
