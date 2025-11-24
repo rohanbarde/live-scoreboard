@@ -638,8 +638,12 @@ class TournamentProgression {
   
   /**
    * Create bronze medal matches (IJF 8-player structure)
-   * M9: SF1 Loser vs Repechage 1 Winner
-   * M10: SF2 Loser vs Repechage 2 Winner
+   * According to IJF rules:
+   * - SF1 (Pool A) Loser faces Repechage2 (Pool B) Winner in Bronze Match 2
+   * - SF2 (Pool B) Loser faces Repechage1 (Pool A) Winner in Bronze Match 1
+   * 
+   * M9: Bronze Match 1 = SF2 (Pool B) Loser vs Repechage1 (Pool A) Winner
+   * M10: Bronze Match 2 = SF1 (Pool A) Loser vs Repechage2 (Pool B) Winner
    */
   createBronzeMatches(mainMatches, semifinals, repechageMatches) {
     const bronzeMatches = [];
@@ -650,8 +654,9 @@ class TournamentProgression {
     }
     
     // Get semifinal losers
-    const semifinal1 = semifinals[0];
-    const semifinal2 = semifinals[1];
+    // SF1 = Pool A, SF2 = Pool B
+    const semifinal1 = semifinals[0]; // Pool A
+    const semifinal2 = semifinals[1]; // Pool B
     
     const semifinal1Loser = semifinal1.loser || (semifinal1.winner === semifinal1.playerA ? semifinal1.playerB : semifinal1.playerA);
     const semifinal2Loser = semifinal2.loser || (semifinal2.winner === semifinal2.playerA ? semifinal2.playerB : semifinal2.playerA);
@@ -684,43 +689,24 @@ class TournamentProgression {
       sf2LoserCountry = semifinal2.playerBCountry;
     }
     
-    // Get repechage matches (M7 and M8)
-    const repechage1 = repechageMatches.find(m => m.side === 'side1');
-    const repechage2 = repechageMatches.find(m => m.side === 'side2');
+    // Get repechage matches
+    // Repechage1 = Pool A losers, Repechage2 = Pool B losers
+    const repechage1 = repechageMatches.find(m => m.side === 'side1'); // Pool A
+    const repechage2 = repechageMatches.find(m => m.side === 'side2'); // Pool B
     
-    // M9: Bronze Match 1 = SF1 Loser vs Repechage1 Winner
+    // IJF RULE: Cross-pool pairing for bronze matches
+    // Bronze Match 1 = SF2 (Pool B) Loser vs Repechage1 (Pool A) Winner
     const bronze1 = {
       id: `bronze_1_${Date.now()}`,
       round: 'bronze',
       matchType: 'bronze',
-      playerA: semifinal1Loser, // SF1 Loser
-      playerAName: sf1LoserName,
-      playerAClub: sf1LoserClub || '',
-      playerASeed: sf1LoserSeed || null,
-      playerACountry: sf1LoserCountry || '',
-      playerB: null, // Will be filled by Repechage1 winner
-      playerBName: 'Repechage 1 Winner',
-      playerBClub: '',
-      playerBSeed: null,
-      playerBCountry: '',
-      winner: null,
-      loser: null,
-      completed: false,
-      status: 'pending'
-    };
-    
-    // M10: Bronze Match 2 = SF2 Loser vs Repechage2 Winner
-    const bronze2 = {
-      id: `bronze_2_${Date.now()}`,
-      round: 'bronze',
-      matchType: 'bronze',
-      playerA: semifinal2Loser, // SF2 Loser
+      playerA: semifinal2Loser, // SF2 (Pool B) Loser
       playerAName: sf2LoserName,
       playerAClub: sf2LoserClub || '',
       playerASeed: sf2LoserSeed || null,
       playerACountry: sf2LoserCountry || '',
-      playerB: null, // Will be filled by Repechage2 winner
-      playerBName: 'Repechage 2 Winner',
+      playerB: null, // Will be filled by Repechage1 (Pool A) winner
+      playerBName: 'Repechage 1 Winner (Pool A)',
       playerBClub: '',
       playerBSeed: null,
       playerBCountry: '',
@@ -730,22 +716,44 @@ class TournamentProgression {
       status: 'pending'
     };
     
-    // Link repechage matches to bronze matches
+    // Bronze Match 2 = SF1 (Pool A) Loser vs Repechage2 (Pool B) Winner
+    const bronze2 = {
+      id: `bronze_2_${Date.now()}`,
+      round: 'bronze',
+      matchType: 'bronze',
+      playerA: semifinal1Loser, // SF1 (Pool A) Loser
+      playerAName: sf1LoserName,
+      playerAClub: sf1LoserClub || '',
+      playerASeed: sf1LoserSeed || null,
+      playerACountry: sf1LoserCountry || '',
+      playerB: null, // Will be filled by Repechage2 (Pool B) winner
+      playerBName: 'Repechage 2 Winner (Pool B)',
+      playerBClub: '',
+      playerBSeed: null,
+      playerBCountry: '',
+      winner: null,
+      loser: null,
+      completed: false,
+      status: 'pending'
+    };
+    
+    // Link repechage matches to bronze matches (CROSSED PAIRING)
     if (repechage1) {
-      repechage1.nextMatchId = bronze1.id;
+      repechage1.nextMatchId = bronze1.id; // Pool A repechage → Bronze Match 1
       repechage1.winnerTo = 'B'; // Repechage1 winner goes to Bronze1 position B
-      console.log('🔗 Linked Repechage 1 → Bronze 1');
+      console.log('🔗 Linked Repechage 1 (Pool A) → Bronze Match 1');
     }
     
     if (repechage2) {
-      repechage2.nextMatchId = bronze2.id;
+      repechage2.nextMatchId = bronze2.id; // Pool B repechage → Bronze Match 2
       repechage2.winnerTo = 'B'; // Repechage2 winner goes to Bronze2 position B
-      console.log('🔗 Linked Repechage 2 → Bronze 2');
+      console.log('🔗 Linked Repechage 2 (Pool B) → Bronze Match 2');
     }
     
     bronzeMatches.push(bronze1, bronze2);
-    console.log('✅ Created Bronze Match 1 (M9): SF1 Loser vs Repechage1 Winner');
-    console.log('✅ Created Bronze Match 2 (M10): SF2 Loser vs Repechage2 Winner');
+    console.log('✅ Created Bronze Match 1 (M9): SF2 (Pool B) Loser vs Repechage1 (Pool A) Winner');
+    console.log('✅ Created Bronze Match 2 (M10): SF1 (Pool A) Loser vs Repechage2 (Pool B) Winner');
+    console.log('📋 IJF Cross-Pool Pairing Applied ✓');
     
     return bronzeMatches;
   }
