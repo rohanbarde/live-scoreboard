@@ -2,6 +2,7 @@
 
 .bracket-wrapper {
   display: flex;
+  flex-direction: column;
   gap: 30px;
   padding: 20px;
   overflow-x: auto;
@@ -210,10 +211,15 @@
 /* Finals Section */
 .finals-section {
   display: flex;
-  gap: 30px;
-  margin-left: 30px;
-  padding-left: 30px;
-  border-left: 3px solid #dee2e6;
+  flex-direction: row;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .round-column {
@@ -471,11 +477,11 @@
 /* Repechage Section */
 .repechage-section {
   width: 100%;
-  margin-top: 40px;
+  margin-top: 20px;
   padding: 30px;
   background: linear-gradient(135deg, #f8f9fa, #ffffff);
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   border: 2px solid #e0e0e0;
 }
 
@@ -483,30 +489,31 @@
   font-size: 1.8rem;
   color: var(--primary-color);
   font-weight: 700;
-  margin-bottom: 25px;
+  margin: 0 0 30px 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  padding-bottom: 15px;
+  padding-bottom: 20px;
   border-bottom: 3px solid var(--primary-color);
+  text-align: center;
 }
 
 .repechage-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 30px;
-  flex-wrap: wrap;
-  justify-content: center;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .repechage-column,
 .bronze-column {
-  flex: 1;
-  min-width: 320px;
-  max-width: 500px;
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e0e0e0;
 }
 
 .repechage-column .round-title {
