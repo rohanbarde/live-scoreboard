@@ -190,12 +190,9 @@ class TournamentDraw {
     const mainBracket = this.createMainBracket(seededBracket);
     allMatches.main = mainBracket;
     
-    // Create repechage brackets (will be populated after main bracket progresses)
-    allMatches.repechage = {
-      side1: [],
-      side2: [],
-      bronzeMatches: []
-    };
+    // Create empty repechage array (will be populated after semifinals complete)
+    // Note: Repechage matches are created automatically by tournament-progression.js
+    allMatches.repechage = [];
     
     console.log('Created complete bracket structure');
     
@@ -702,13 +699,23 @@ async function animateGenerateDraw() {
   requestAnimationFrame(() => shuffle.classList.add('visible'));
   await new Promise(r => setTimeout(r, 900));
 
-  // shuffle array
-  const shuffled = [...visiblePlayers].sort(() => Math.random() - 0.5);
+  // Get seeds from player data (if they have seed property)
+  const seeds = visiblePlayers
+    .filter(p => p.seed)
+    .sort((a, b) => a.seed - b.seed)
+    .map(p => p.id);
+  
+  // Create bracket with IJF seeding FIRST (so we know the actual pairings)
+  const bracketData = tournamentDraw.createBracket(visiblePlayers, seeds);
+  
+  // Extract first round matches to display in animation
+  const firstRoundMatches = bracketData.main.filter(m => m.round === 1);
+  
+  console.log('🎬 Animating', firstRoundMatches.length, 'first round matches');
 
-  // Create placeholder match slots (half of players rounded up)
-  const numMatches = Math.ceil(shuffled.length / 2);
+  // Create placeholder match slots for first round
   const matchSlots = [];
-  for (let i = 0; i < numMatches; i++) {
+  for (let i = 0; i < firstRoundMatches.length; i++) {
     const slot = document.createElement('div');
     slot.className = 'match-slot';
     slot.dataset.slotIndex = i;
@@ -737,43 +744,41 @@ async function animateGenerateDraw() {
   // small pause before animation begins
   await new Promise(r => setTimeout(r, 350));
 
-  // For each pair, animate two clones from the player-card to the slot positions
-  for (let i = 0; i < shuffled.length; i += 2) {
-    const pA = shuffled[i];
-    const pB = shuffled[i + 1]; // may be undefined -> BYE
+  // Animate the ACTUAL matches that will be saved
+  for (let i = 0; i < firstRoundMatches.length; i++) {
+    const match = firstRoundMatches[i];
+    
+    // Find player objects from visiblePlayers
+    const pA = visiblePlayers.find(p => p.id === match.playerA);
+    const pB = match.playerB ? visiblePlayers.find(p => p.id === match.playerB) : null;
 
-    // Determine source DOM elements using the rendered player-cards (they are in the players-grid)
-    // We gave player cards no id earlier — match by data attribute or by text content
-    // So ensure renderDraws sets data-player-id attribute on .player-card. If not present, fallback to search by name.
-
-    const sourceA = document.querySelector(`.player-card[data-player-id="${pA.id}"]`) ||
-                    document.querySelector(`.player-card h4:contains("${pA.fullName}")`) ||
-                    document.querySelector(`.player-card`); // fallback
+    // Determine source DOM elements
+    const sourceA = pA ? (document.querySelector(`.player-card[data-player-id="${pA.id}"]`) ||
+                    document.querySelector(`.player-card`)) : null;
     const sourceB = pB ? (document.querySelector(`.player-card[data-player-id="${pB.id}"]`) ||
-                    document.querySelector(`.player-card h4:contains("${pB.fullName}")`)) : null;
+                    document.querySelector(`.player-card`)) : null;
 
     // target slot
-    const slot = matchSlots[Math.floor(i / 2)];
+    const slot = matchSlots[i];
 
     // compute target positions (slot left and right)
     const slotLeftEl = slot.querySelector('.slot-left .slot-name');
     const slotRightEl = slot.querySelector('.slot-right .slot-name');
 
     // animate player A -> slot left
-    if (sourceA) {
+    if (pA && sourceA) {
       await animatePlayerToSlot(sourceA, slotLeftEl, pA);
     } else {
       // directly populate if source not found
-      slotLeftEl.textContent = pA.fullName || 'N/A';
+      slotLeftEl.textContent = match.playerAName || 'N/A';
     }
 
     // animate player B -> slot right (or BYE)
-    if (pB) {
-      if (sourceB) {
-        await animatePlayerToSlot(sourceB, slotRightEl, pB);
-      } else {
-        slotRightEl.textContent = pB.fullName || 'N/A';
-      }
+    if (pB && sourceB) {
+      await animatePlayerToSlot(sourceB, slotRightEl, pB);
+    } else if (match.playerB) {
+      // Player B exists but source not found
+      slotRightEl.textContent = match.playerBName || 'N/A';
     } else {
       // BYE
       slotRightEl.textContent = 'BYE';
@@ -787,16 +792,8 @@ async function animateGenerateDraw() {
   shuffle.classList.remove('visible');
   setTimeout(() => shuffle.remove(), 300);
 
-  // Save generated matches to Firebase with IJF seeding
+  // Save the bracket data to Firebase (already created above)
   try {
-    // Get seeds from player data (if they have seed property)
-    const seeds = shuffled
-      .filter(p => p.seed)
-      .sort((a, b) => a.seed - b.seed)
-      .map(p => p.id);
-    
-    // Create bracket with IJF seeding
-    const bracketData = tournamentDraw.createBracket(shuffled, seeds);
     
     // Save complete bracket structure (main + repechage)
     await tournamentDraw.matchesRef.set(bracketData);
