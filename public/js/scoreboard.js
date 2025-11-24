@@ -534,9 +534,11 @@ function undoSpecificScore(side, scoreType) {
       await completeMatchInTournament(side);
     }
     
-    /* Complete match in tournament system */
+    /* Complete match in tournament system - VERSION 2.0 - REPECHAGE FIX */
     async function completeMatchInTournament(winningSide) {
       try {
+        console.log('🔧 VERSION 2.0 - Repechage fix active');
+        
         // Get matchId from URL
         const urlParams = new URLSearchParams(window.location.search);
         const matchId = urlParams.get('matchId');
