@@ -325,47 +325,114 @@ class TournamentProgression {
   
   /**
    * Create and schedule repechage matches (IJF Bronze Medal System)
+   * For 8-player bracket: QF losers compete, winners face SF losers for bronze
    */
   async createAndScheduleRepechage(mainMatches) {
     try {
-      console.log('🥉 Creating repechage brackets...');
+      console.log('🥉 Creating IJF repechage brackets...');
       
-      // Find the final match
+      // Find the final match and semifinals
       const finalMatch = mainMatches.find(m => m.matchType === 'final');
       if (!finalMatch || !finalMatch.playerA || !finalMatch.playerB) {
         console.log('⚠️ Final not ready yet');
         return;
       }
       
-      const finalist1 = finalMatch.playerA;
-      const finalist2 = finalMatch.playerB;
+      // Find semifinal matches (matches that feed into the final)
+      const semifinals = mainMatches.filter(m => m.nextMatchId === finalMatch.id);
       
-      console.log('🏆 Finalists identified:', finalist1, finalist2);
+      if (semifinals.length !== 2) {
+        console.error('❌ Could not find 2 semifinals');
+        return;
+      }
       
-      // Get all losers to each finalist (players who lost to the finalists)
-      const finalist1Losers = this.getLosersToPlayer(mainMatches, finalist1);
-      const finalist2Losers = this.getLosersToPlayer(mainMatches, finalist2);
+      console.log('🏆 Semifinals found:', semifinals.length);
       
-      console.log('📋 Finalist 1 losers:', finalist1Losers.length);
-      console.log('📋 Finalist 2 losers:', finalist2Losers.length);
+      // Find quarterfinal matches (matches that feed into semifinals)
+      const quarterfinals = mainMatches.filter(m => 
+        semifinals.some(sf => sf.id === m.nextMatchId)
+      );
+      
+      console.log('📋 Quarterfinals found:', quarterfinals.length);
+      
+      if (quarterfinals.length !== 4) {
+        console.error('❌ Expected 4 quarterfinals, found:', quarterfinals.length);
+        return;
+      }
       
       // Create repechage matches
       const repechageMatches = [];
       
-      // Side 1 repechage (losers to finalist 1)
-      if (finalist1Losers.length > 0) {
-        const side1Matches = this.createRepechageRounds(finalist1Losers, mainMatches, 'side1');
-        repechageMatches.push(...side1Matches);
+      // Group quarterfinals by which semifinal they feed into
+      const sf1QFs = quarterfinals.filter(qf => qf.nextMatchId === semifinals[0].id);
+      const sf2QFs = quarterfinals.filter(qf => qf.nextMatchId === semifinals[1].id);
+      
+      // M7: Repechage 1 - Losers from QF matches that fed into SF1
+      if (sf1QFs.length === 2) {
+        const qf1Loser = this.getMatchLoser(sf1QFs[0]);
+        const qf2Loser = this.getMatchLoser(sf1QFs[1]);
+        
+        if (qf1Loser && qf2Loser) {
+          const repechage1 = {
+            id: `repechage_1_${Date.now()}`,
+            round: 'repechage',
+            matchType: 'repechage',
+            side: 'side1',
+            playerA: qf1Loser.id,
+            playerAName: qf1Loser.name,
+            playerAClub: qf1Loser.club || '',
+            playerASeed: qf1Loser.seed || null,
+            playerACountry: qf1Loser.country || '',
+            playerB: qf2Loser.id,
+            playerBName: qf2Loser.name,
+            playerBClub: qf2Loser.club || '',
+            playerBSeed: qf2Loser.seed || null,
+            playerBCountry: qf2Loser.country || '',
+            winner: null,
+            loser: null,
+            completed: false,
+            status: 'pending',
+            nextMatchId: null // Will be set when creating bronze matches
+          };
+          repechageMatches.push(repechage1);
+          console.log('✅ Created Repechage 1 (M7)');
+        }
       }
       
-      // Side 2 repechage (losers to finalist 2)
-      if (finalist2Losers.length > 0) {
-        const side2Matches = this.createRepechageRounds(finalist2Losers, mainMatches, 'side2');
-        repechageMatches.push(...side2Matches);
+      // M8: Repechage 2 - Losers from QF matches that fed into SF2
+      if (sf2QFs.length === 2) {
+        const qf3Loser = this.getMatchLoser(sf2QFs[0]);
+        const qf4Loser = this.getMatchLoser(sf2QFs[1]);
+        
+        if (qf3Loser && qf4Loser) {
+          const repechage2 = {
+            id: `repechage_2_${Date.now()}`,
+            round: 'repechage',
+            matchType: 'repechage',
+            side: 'side2',
+            playerA: qf3Loser.id,
+            playerAName: qf3Loser.name,
+            playerAClub: qf3Loser.club || '',
+            playerASeed: qf3Loser.seed || null,
+            playerACountry: qf3Loser.country || '',
+            playerB: qf4Loser.id,
+            playerBName: qf4Loser.name,
+            playerBClub: qf4Loser.club || '',
+            playerBSeed: qf4Loser.seed || null,
+            playerBCountry: qf4Loser.country || '',
+            winner: null,
+            loser: null,
+            completed: false,
+            status: 'pending',
+            nextMatchId: null // Will be set when creating bronze matches
+          };
+          repechageMatches.push(repechage2);
+          console.log('✅ Created Repechage 2 (M8)');
+        }
       }
       
       // Create bronze medal matches
-      const bronzeMatches = this.createBronzeMatches(mainMatches, repechageMatches);
+      const bronzeMatches = this.createBronzeMatches(mainMatches, semifinals, repechageMatches);
       repechageMatches.push(...bronzeMatches);
       
       // Save repechage matches to Firebase
@@ -380,6 +447,39 @@ class TournamentProgression {
       console.error('❌ Error creating repechage:', error);
       throw error;
     }
+  }
+  
+  /**
+   * Get loser details from a match
+   */
+  getMatchLoser(match) {
+    if (!match.loser && !match.winner) return null;
+    
+    const loserId = match.loser || (match.winner === match.playerA ? match.playerB : match.playerA);
+    
+    if (!loserId) return null;
+    
+    let loserName, loserClub, loserSeed, loserCountry;
+    
+    if (match.playerA === loserId) {
+      loserName = match.playerAName;
+      loserClub = match.playerAClub;
+      loserSeed = match.playerASeed;
+      loserCountry = match.playerACountry;
+    } else {
+      loserName = match.playerBName;
+      loserClub = match.playerBClub;
+      loserSeed = match.playerBSeed;
+      loserCountry = match.playerBCountry;
+    }
+    
+    return {
+      id: loserId,
+      name: loserName,
+      club: loserClub,
+      seed: loserSeed,
+      country: loserCountry
+    };
   }
   
   /**
@@ -485,16 +585,12 @@ class TournamentProgression {
   }
   
   /**
-   * Create bronze medal matches
+   * Create bronze medal matches (IJF 8-player structure)
+   * M9: SF1 Loser vs Repechage 1 Winner
+   * M10: SF2 Loser vs Repechage 2 Winner
    */
-  createBronzeMatches(mainMatches, repechageMatches) {
+  createBronzeMatches(mainMatches, semifinals, repechageMatches) {
     const bronzeMatches = [];
-    
-    // Find semifinal matches
-    const semifinals = mainMatches.filter(m => {
-      const finalMatch = mainMatches.find(fm => fm.matchType === 'final');
-      return finalMatch && m.nextMatchId === finalMatch.id;
-    });
     
     if (semifinals.length !== 2) {
       console.warn('Could not find 2 semifinals');
@@ -536,62 +632,68 @@ class TournamentProgression {
       sf2LoserCountry = semifinal2.playerBCountry;
     }
     
-    // Get repechage winners (if repechage matches exist)
-    const side1Winner = repechageMatches.find(m => m.side === 'side1' && !m.nextMatchId);
-    const side2Winner = repechageMatches.find(m => m.side === 'side2' && !m.nextMatchId);
+    // Get repechage matches (M7 and M8)
+    const repechage1 = repechageMatches.find(m => m.side === 'side1');
+    const repechage2 = repechageMatches.find(m => m.side === 'side2');
     
-    // Bronze Match 1: Repechage Side 1 Winner vs Semifinal 2 Loser
+    // M9: Bronze Match 1 = SF1 Loser vs Repechage1 Winner
     const bronze1 = {
       id: `bronze_1_${Date.now()}`,
       round: 'bronze',
       matchType: 'bronze',
-      playerA: side1Winner ? null : semifinal1Loser, // Will be filled by repechage winner
-      playerB: semifinal2Loser,
-      playerAName: side1Winner ? 'Repechage Winner (Side 1)' : sf1LoserName,
-      playerBName: sf2LoserName,
-      playerAClub: side1Winner ? '' : sf1LoserClub,
-      playerBClub: sf2LoserClub,
-      playerASeed: side1Winner ? null : sf1LoserSeed,
-      playerBSeed: sf2LoserSeed,
-      playerACountry: side1Winner ? '' : sf1LoserCountry,
-      playerBCountry: sf2LoserCountry,
+      playerA: semifinal1Loser, // SF1 Loser
+      playerAName: sf1LoserName,
+      playerAClub: sf1LoserClub || '',
+      playerASeed: sf1LoserSeed || null,
+      playerACountry: sf1LoserCountry || '',
+      playerB: null, // Will be filled by Repechage1 winner
+      playerBName: 'Repechage 1 Winner',
+      playerBClub: '',
+      playerBSeed: null,
+      playerBCountry: '',
       winner: null,
+      loser: null,
       completed: false,
       status: 'pending'
     };
     
-    // Bronze Match 2: Repechage Side 2 Winner vs Semifinal 1 Loser
+    // M10: Bronze Match 2 = SF2 Loser vs Repechage2 Winner
     const bronze2 = {
       id: `bronze_2_${Date.now()}`,
       round: 'bronze',
       matchType: 'bronze',
-      playerA: side2Winner ? null : semifinal2Loser,
-      playerB: semifinal1Loser,
-      playerAName: side2Winner ? 'Repechage Winner (Side 2)' : sf2LoserName,
-      playerBName: sf1LoserName,
-      playerAClub: side2Winner ? '' : sf2LoserClub,
-      playerBClub: sf1LoserClub,
-      playerASeed: side2Winner ? null : sf2LoserSeed,
-      playerBSeed: sf1LoserSeed,
-      playerACountry: side2Winner ? '' : sf2LoserCountry,
-      playerBCountry: sf1LoserCountry,
+      playerA: semifinal2Loser, // SF2 Loser
+      playerAName: sf2LoserName,
+      playerAClub: sf2LoserClub || '',
+      playerASeed: sf2LoserSeed || null,
+      playerACountry: sf2LoserCountry || '',
+      playerB: null, // Will be filled by Repechage2 winner
+      playerBName: 'Repechage 2 Winner',
+      playerBClub: '',
+      playerBSeed: null,
+      playerBCountry: '',
       winner: null,
+      loser: null,
       completed: false,
       status: 'pending'
     };
     
-    // Link repechage finals to bronze matches
-    if (side1Winner) {
-      side1Winner.nextMatchId = bronze1.id;
-      side1Winner.winnerTo = 'A';
+    // Link repechage matches to bronze matches
+    if (repechage1) {
+      repechage1.nextMatchId = bronze1.id;
+      repechage1.winnerTo = 'B'; // Repechage1 winner goes to Bronze1 position B
+      console.log('🔗 Linked Repechage 1 → Bronze 1');
     }
     
-    if (side2Winner) {
-      side2Winner.nextMatchId = bronze2.id;
-      side2Winner.winnerTo = 'A';
+    if (repechage2) {
+      repechage2.nextMatchId = bronze2.id;
+      repechage2.winnerTo = 'B'; // Repechage2 winner goes to Bronze2 position B
+      console.log('🔗 Linked Repechage 2 → Bronze 2');
     }
     
     bronzeMatches.push(bronze1, bronze2);
+    console.log('✅ Created Bronze Match 1 (M9): SF1 Loser vs Repechage1 Winner');
+    console.log('✅ Created Bronze Match 2 (M10): SF2 Loser vs Repechage2 Winner');
     
     return bronzeMatches;
   }
