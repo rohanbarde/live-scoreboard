@@ -302,9 +302,11 @@ class TournamentDraw {
         // Link previous matches to this one
         if (currentRound[i * 2]) {
           currentRound[i * 2].nextMatchId = match.id;
+          currentRound[i * 2].winnerTo = 'A'; // Winner goes to position A
         }
         if (currentRound[i * 2 + 1]) {
           currentRound[i * 2 + 1].nextMatchId = match.id;
+          currentRound[i * 2 + 1].winnerTo = 'B'; // Winner goes to position B
         }
         
         nextRound.push(match);

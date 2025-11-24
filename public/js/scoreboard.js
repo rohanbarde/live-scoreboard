@@ -518,7 +518,7 @@ function undoSpecificScore(side, scoreType) {
 }
 
     /* declare winner manually */
-    function declareWinner(side) {
+    async function declareWinner(side) {
       if (!side) { // no specified side: ask or skip
         return alert('Specify side to declare winner.');
       }
@@ -529,6 +529,92 @@ function undoSpecificScore(side, scoreType) {
       const animationColor = (side === 'A') ? 'blue-winner' : 'white-winner';
       showBigCard(side, animationColor, 'WINNER');
       refreshUI();
+      
+      // Complete match in Firebase and trigger tournament progression
+      await completeMatchInTournament(side);
+    }
+    
+    /* Complete match in tournament system */
+    async function completeMatchInTournament(winningSide) {
+      try {
+        // Get matchId from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const matchId = urlParams.get('matchId');
+        
+        if (!matchId) {
+          console.warn('No matchId in URL - cannot complete tournament match');
+          return;
+        }
+        
+        console.log('🏆 Completing tournament match:', matchId, 'Winner side:', winningSide);
+        
+        // Get match data from Firebase to find player IDs
+        const matchRef = window.database.ref('tournament/matches');
+        const snapshot = await matchRef.once('value');
+        const data = snapshot.val();
+        
+        if (!data) {
+          console.error('No tournament data found');
+          return;
+        }
+        
+        // Find match in array
+        let matches = [];
+        if (data.main && Array.isArray(data.main)) {
+          matches = data.main;
+        } else if (Array.isArray(data)) {
+          matches = data;
+        }
+        
+        const matchIndex = matches.findIndex(m => m.id === matchId);
+        if (matchIndex === -1) {
+          console.error('Match not found in tournament data');
+          return;
+        }
+        
+        const tournamentMatch = matches[matchIndex];
+        
+        // Determine winner player ID
+        const winnerId = (winningSide === 'A') ? tournamentMatch.playerA : tournamentMatch.playerB;
+        
+        console.log('Winner ID:', winnerId);
+        console.log('Match data:', tournamentMatch);
+        
+        // Build score data
+        const scoreData = {
+          fighterA: match.fighterA,
+          fighterB: match.fighterB,
+          winner: match.winnerName,
+          log: match.log,
+          duration: match.durationMin,
+          goldenScore: match.goldenScoreActive
+        };
+        
+        // Update match status and trigger progression
+        const matchPath = `main/${matchIndex}`;
+        await matchRef.child(matchPath).update({
+          status: 'completed',
+          completed: true,
+          winner: winnerId,
+          scoreData: scoreData,
+          endTime: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        console.log('✅ Match marked as completed in Firebase');
+        
+        // Trigger tournament progression
+        if (window.TournamentProgression) {
+          console.log('🔄 Triggering tournament progression...');
+          const progression = new TournamentProgression();
+          await progression.onMatchComplete(matchId, winnerId);
+          console.log('✅ Tournament progression complete');
+        } else {
+          console.warn('TournamentProgression not available');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error completing tournament match:', error);
+      }
     }
 
     /* timer controls */

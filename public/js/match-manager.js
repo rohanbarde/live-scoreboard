@@ -355,6 +355,7 @@
                 // Update match status
                 await matchRef.update({
                     status: 'completed',
+                    completed: true,
                     winner: winner,
                     scoreData: scoreData,
                     endTime: firebase.database.ServerValue.TIMESTAMP
@@ -369,7 +370,16 @@
                 });
 
                 this.currentMatchId = null;
-                console.log('✅ Match completed:', matchId);
+                console.log('✅ Match completed:', matchId, 'Winner:', winner);
+                
+                // Trigger tournament progression if TournamentProgression is available
+                if (window.TournamentProgression) {
+                    console.log('🔄 Triggering tournament progression...');
+                    const progression = new TournamentProgression();
+                    await progression.onMatchComplete(matchId, winner);
+                    console.log('✅ Tournament progression complete');
+                }
+                
                 return true;
 
             } catch (error) {
@@ -454,13 +464,24 @@
                     return;
                 }
                 
-                // Handle new structure: { main: [...], repechage: {...} }
+                // Handle new structure: { main: [...], repechage: [...] }
                 if (data.main && Array.isArray(data.main)) {
                     console.log('📊 Loading matches from new structure (main array)');
                     matches = data.main.map(match => ({
                         ...match,
                         id: match.id || this.generateMatchId()
                     }));
+                    
+                    // Also load repechage matches if they exist
+                    if (data.repechage && Array.isArray(data.repechage)) {
+                        console.log('🥉 Loading repechage matches:', data.repechage.length);
+                        const repechageMatches = data.repechage.map(match => ({
+                            ...match,
+                            id: match.id || this.generateMatchId(),
+                            isRepechage: true
+                        }));
+                        matches.push(...repechageMatches);
+                    }
                 }
                 // Handle direct array structure (legacy)
                 else if (Array.isArray(data)) {

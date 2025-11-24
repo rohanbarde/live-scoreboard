@@ -194,39 +194,49 @@ function renderMatches(matches) {
         return;
     }
     
+    // Separate main bracket and repechage matches
+    const mainMatches = matches.filter(m => !m.isRepechage && m.matchType !== 'repechage' && m.matchType !== 'bronze');
+    const repechageMatches = matches.filter(m => m.isRepechage || m.matchType === 'repechage' || m.matchType === 'bronze');
+    
     // Group matches by status - handle both old and new format
-    const pending = matches.filter(m => {
+    const pending = mainMatches.filter(m => {
         const status = m.status || (m.completed ? 'completed' : 'pending');
-        return status === 'pending';
+        const isCompleted = m.completed === true || m.status === 'completed';
+        return status === 'pending' && !isCompleted;
     });
-    const locked = matches.filter(m => m.status === 'locked');
-    const inProgress = matches.filter(m => m.status === 'in_progress');
-    const completed = matches.filter(m => {
-        const status = m.status || (m.completed ? 'completed' : 'pending');
-        return status === 'completed';
+    const locked = mainMatches.filter(m => m.status === 'locked');
+    const inProgress = mainMatches.filter(m => m.status === 'in_progress');
+    const completed = mainMatches.filter(m => {
+        return m.status === 'completed' || m.completed === true;
     });
     
+    // Repechage matches by status
+    const repechagePending = repechageMatches.filter(m => {
+        const status = m.status || (m.completed ? 'completed' : 'pending');
+        const isCompleted = m.completed === true || m.status === 'completed';
+        return status === 'pending' && !isCompleted;
+    });
+    const repechageInProgress = repechageMatches.filter(m => m.status === 'in_progress');
+    const repechageCompleted = repechageMatches.filter(m => m.status === 'completed' || m.completed === true);
+    
     console.log('📋 Grouped matches:', {
-        pending: pending.length,
-        locked: locked.length,
-        inProgress: inProgress.length,
-        completed: completed.length
+        main: { pending: pending.length, locked: locked.length, inProgress: inProgress.length, completed: completed.length },
+        repechage: { pending: repechagePending.length, inProgress: repechageInProgress.length, completed: repechageCompleted.length }
     });
     
     let html = '';
     
+    // MAIN BRACKET SECTION
+    html += '<h3 class="mt-3 mb-3"><i class="fas fa-trophy"></i> Main Bracket</h3>';
+    
     // Pending matches
     if (pending.length > 0) {
-        console.log('✅ Rendering pending matches:', pending.length);
         html += `<h4 class="mt-4">⏳ Pending Matches (${pending.length})</h4>`;
         html += '<div class="row g-3">';
-        pending.forEach((match, index) => {
-            const card = renderMatchCard(match);
-            console.log(`Card ${index + 1} HTML length:`, card.length);
-            html += card;
+        pending.forEach(match => {
+            html += renderMatchCard(match);
         });
         html += '</div>';
-        console.log('Pending section HTML length:', html.length);
     }
     
     // Locked matches
@@ -259,6 +269,42 @@ function renderMatches(matches) {
         html += '</div>';
     }
     
+    // REPECHAGE SECTION
+    if (repechageMatches.length > 0) {
+        html += '<hr class="my-5">';
+        html += '<h3 class="mt-4 mb-3"><i class="fas fa-medal"></i> Repechage & Bronze Medals</h3>';
+        
+        // Repechage pending
+        if (repechagePending.length > 0) {
+            html += `<h4 class="mt-4">⏳ Pending Repechage (${repechagePending.length})</h4>`;
+            html += '<div class="row g-3">';
+            repechagePending.forEach(match => {
+                html += renderMatchCard(match);
+            });
+            html += '</div>';
+        }
+        
+        // Repechage in progress
+        if (repechageInProgress.length > 0) {
+            html += `<h4 class="mt-4">▶️ In Progress (${repechageInProgress.length})</h4>`;
+            html += '<div class="row g-3">';
+            repechageInProgress.forEach(match => {
+                html += renderMatchCard(match);
+            });
+            html += '</div>';
+        }
+        
+        // Repechage completed
+        if (repechageCompleted.length > 0) {
+            html += `<h4 class="mt-4">✅ Completed (${repechageCompleted.length})</h4>`;
+            html += '<div class="row g-3">';
+            repechageCompleted.forEach(match => {
+                html += renderMatchCard(match);
+            });
+            html += '</div>';
+        }
+    }
+    
     console.log('📝 Final HTML length:', html.length);
     console.log('📝 Setting innerHTML to container...');
     container.innerHTML = html;
@@ -273,8 +319,9 @@ function renderMatchCard(match) {
     const isLocked = match.status === 'locked' || match.status === 'in_progress';
     
     // Handle both old draw format and new match manager format
-    const status = match.status || (match.completed ? 'completed' : 'pending');
-    const canLock = status === 'pending';
+    const isCompleted = match.completed === true || match.status === 'completed';
+    const status = isCompleted ? 'completed' : (match.status || 'pending');
+    const canLock = status === 'pending' && !isCompleted;
     
     // Get fighter names - support both old and new format
     const fighterAName = match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'TBD';
@@ -289,6 +336,16 @@ function renderMatchCard(match) {
     
     let statusBadge = '';
     let actionButtons = '';
+    
+    // Match type badge
+    let matchTypeBadge = '';
+    if (match.matchType === 'final') {
+        matchTypeBadge = '<span class="badge bg-danger me-1">🏆 FINAL</span>';
+    } else if (match.matchType === 'bronze') {
+        matchTypeBadge = '<span class="badge bg-warning me-1">🥉 BRONZE</span>';
+    } else if (match.matchType === 'repechage') {
+        matchTypeBadge = '<span class="badge bg-info me-1">🔄 REPECHAGE</span>';
+    }
     
     // Status badge
     switch(status) {
@@ -306,11 +363,18 @@ function renderMatchCard(match) {
             break;
     }
     
-    // Action buttons - only show for first round matches with actual players
+    // Winner display for completed matches
+    let winnerDisplay = '';
+    if (isCompleted && match.winner) {
+        const winnerName = match.winner === match.playerA ? fighterAName : fighterBName;
+        winnerDisplay = `<div class="alert alert-success mt-2 mb-0 py-2"><strong>🏆 Winner:</strong> ${winnerName}</div>`;
+    }
+    
+    // Action buttons - only show for matches with actual players and not completed
     const hasPlayers = fighterAName !== 'TBD' && fighterBName !== 'TBD' && 
                        fighterAName !== 'Winner of match' && fighterBName !== 'Winner of match';
     
-    if (canLock && hasPlayers) {
+    if (canLock && hasPlayers && !isCompleted) {
         actionButtons = `
             <button class="btn btn-sm btn-primary" onclick="lockAndStartMatch('${match.id}')">
                 <i class="fas fa-lock"></i> Lock & Start
@@ -335,10 +399,13 @@ function renderMatchCard(match) {
     
     return `
         <div class="col-md-6 col-lg-4">
-            <div class="card ${isOwnedByThisDevice ? 'border-primary' : ''}">
+            <div class="card ${isOwnedByThisDevice ? 'border-primary' : ''} ${isCompleted ? 'opacity-75' : ''}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h6 class="card-title mb-0">Match #${matchNumber} ${match.round ? `(Round ${match.round})` : ''}</h6>
+                        <h6 class="card-title mb-0">
+                            ${matchTypeBadge}
+                            Match #${matchNumber} ${match.round ? `(Round ${match.round})` : ''}
+                        </h6>
                         ${statusBadge}
                     </div>
                     <p class="text-muted small mb-2">
@@ -355,6 +422,7 @@ function renderMatchCard(match) {
                             <br><small class="text-muted">${fighterBTeam}</small>
                         </div>
                     </div>
+                    ${winnerDisplay}
                     ${actionButtons}
                 </div>
             </div>

@@ -170,32 +170,46 @@ class BracketView {
   // Render a single match
   renderMatch(match, matchNumber) {
     const playerAName = match.playerAName || 'TBD';
-    const playerBName = match.playerBName || 'BYE';
+    const playerBName = match.playerBName || 'TBD';
     const playerAClub = match.playerAClub ? `(${match.playerAClub})` : '';
     const playerBClub = match.playerBClub ? `(${match.playerBClub})` : '';
     const playerASeed = match.playerASeed ? `<span class="seed-badge">${match.playerASeed}</span>` : '';
     const playerBSeed = match.playerBSeed ? `<span class="seed-badge">${match.playerBSeed}</span>` : '';
 
     const winner = match.winner;
-    const playerAClass = winner === match.playerA ? 'winner' : '';
-    const playerBClass = winner === match.playerB ? 'winner' : '';
+    const playerAClass = winner === match.playerA ? 'winner' : (playerAName === 'TBD' ? 'tbd' : '');
+    const playerBClass = winner === match.playerB ? 'winner' : (playerBName === 'TBD' ? 'tbd' : '');
+
+    // Match status indicator
+    let statusBadge = '';
+    const status = match.status || (match.completed ? 'completed' : 'pending');
+    if (status === 'in_progress') {
+      statusBadge = '<span class="match-status in-progress">⚔️ In Progress</span>';
+    } else if (status === 'completed') {
+      statusBadge = '<span class="match-status completed">✅ Complete</span>';
+    } else if (playerAName === 'TBD' || playerBName === 'TBD') {
+      statusBadge = '<span class="match-status waiting">⏳ Waiting</span>';
+    } else if (status === 'locked') {
+      statusBadge = '<span class="match-status locked">🔒 Locked</span>';
+    }
 
     return `
-      <div class="bracket-match" data-match-id="${match.id}">
+      <div class="bracket-match ${status}" data-match-id="${match.id}">
         <div class="match-number">${matchNumber}</div>
+        ${statusBadge}
         <div class="match-players">
           <div class="match-player ${playerAClass}">
             <div class="player-name">
               ${playerASeed}
               <span>${playerAName}</span>
-              <span class="player-club">${playerAClub}</span>
+              ${playerAName !== 'TBD' ? `<span class="player-club">${playerAClub}</span>` : ''}
             </div>
           </div>
           <div class="match-player ${playerBClass}">
             <div class="player-name">
               ${playerBSeed}
               <span>${playerBName}</span>
-              <span class="player-club">${playerBClub}</span>
+              ${playerBName !== 'TBD' ? `<span class="player-club">${playerBClub}</span>` : ''}
             </div>
           </div>
         </div>

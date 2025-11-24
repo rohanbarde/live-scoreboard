@@ -95,6 +95,9 @@
     <!-- Authentication Guard - MUST be loaded before other scripts -->
     <script src="../public/js/auth-guard.js"></script>
     
+    <!-- Tournament Progression System -->
+    <script src="../public/js/tournament-progression.js"></script>
+    
     <!-- Match Manager - Multi-Device System -->
     <script src="../public/js/match-manager.js"></script>
     <script src="../public/js/tournament-matches-multi-device.js"></script>
@@ -103,11 +106,23 @@
     <script src="../public/js/bracket-view.js"></script>
     
     <script>
-        // Initialize bracket view when tab is switched
-        document.addEventListener('DOMContentLoaded', () => {
+        // Initialize bracket view and tournament progression
+        document.addEventListener('DOMContentLoaded', async () => {
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
             let bracketView = null;
+            let tournamentProgression = null;
+
+            // Initialize tournament progression
+            if (window.TournamentProgression) {
+                tournamentProgression = new TournamentProgression();
+                
+                // Process BYE matches automatically on load
+                setTimeout(async () => {
+                    console.log('🔄 Checking for BYE matches to process...');
+                    await tournamentProgression.processByes();
+                }, 2000); // Wait 2 seconds for data to load
+            }
 
             tabs.forEach(tab => {
                 tab.addEventListener('click', async () => {
