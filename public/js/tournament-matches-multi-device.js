@@ -510,7 +510,7 @@ function renderDevicesModal(devices) {
     `;
     
     if (onlineDevices.length === 0) {
-        html += '<div class="alert alert-info">No devices currently online</div>';
+        html += '<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No devices currently online</div>';
     } else {
         html += '<div class="list-group">';
         onlineDevices.forEach(device => {
@@ -535,9 +535,14 @@ function renderDevicesModal(devices) {
                                 </div>
                             ` : ''}
                         </div>
-                        <span class="badge bg-success" style="font-size: 1em; padding: 0.5em 1em;">
-                            <i class="fas fa-check-circle"></i> Online
-                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success" style="font-size: 1em; padding: 0.5em 1em;">
+                                <i class="fas fa-check-circle"></i> Online
+                            </span>
+                            <button class="btn btn-sm btn-danger" onclick="deleteDevice('${device.deviceId}', '${device.deviceName}')" title="Delete Device">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -572,9 +577,14 @@ function renderDevicesModal(devices) {
                                 <i class="fas fa-clock me-1"></i> Last seen: ${lastSeen}
                             </div>
                         </div>
-                        <span class="badge bg-secondary" style="font-size: 1em; padding: 0.5em 1em;">
-                            <i class="fas fa-times-circle"></i> Offline
-                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary" style="font-size: 1em; padding: 0.5em 1em;">
+                                <i class="fas fa-times-circle"></i> Offline
+                            </span>
+                            <button class="btn btn-sm btn-danger" onclick="deleteDevice('${device.deviceId}', '${device.deviceName}')" title="Delete Device">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -655,6 +665,34 @@ function openMatchScoreboard(matchId) {
 }
 
 /**
+ * Delete device
+ */
+async function deleteDevice(deviceId, deviceName) {
+    if (!confirm(`Are you sure you want to delete device "${deviceName}"?\n\nThis action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        // Delete device from Firebase
+        const deviceRef = firebase.database().ref(`tournament/devices/${deviceId}`);
+        await deviceRef.remove();
+        
+        console.log(`✅ Device deleted: ${deviceName} (${deviceId})`);
+        
+        // Refresh the devices list
+        const devices = await matchManager.getDevices();
+        renderDevicesModal(devices);
+        
+        // Show success message
+//        alert(`Device "${deviceName}" has been deleted successfully.`);
+        
+    } catch (error) {
+        console.error('❌ Error deleting device:', error);
+        alert('Error deleting device. Please try again.');
+    }
+}
+
+/**
  * Setup event listeners
  */
 function setupEventListeners() {
@@ -675,3 +713,4 @@ window.unlockMatch = unlockMatch;
 window.openMatchScoreboard = openMatchScoreboard;
 window.showDevicesModal = showDevicesModal;
 window.closeDevicesModal = closeDevicesModal;
+window.deleteDevice = deleteDevice;
