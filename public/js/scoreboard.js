@@ -558,27 +558,51 @@ function undoSpecificScore(side, scoreType) {
           return;
         }
         
-        // Find match in array
+        // Find match in array (check both main and repechage)
         let matches = [];
+        let repechageMatches = [];
+        let isRepechageMatch = false;
+        
         if (data.main && Array.isArray(data.main)) {
           matches = data.main;
+          repechageMatches = data.repechage || [];
         } else if (Array.isArray(data)) {
           matches = data;
         }
         
-        const matchIndex = matches.findIndex(m => m.id === matchId);
+        console.log('📊 Main matches:', matches.length);
+        console.log('📊 Repechage matches:', repechageMatches.length);
+        
+        // Search in main matches first
+        let matchIndex = matches.findIndex(m => m.id === matchId);
+        
         if (matchIndex === -1) {
-          console.error('Match not found in tournament data');
-          return;
+          // Check repechage matches
+          console.log('🔍 Not found in main, checking repechage...');
+          matchIndex = repechageMatches.findIndex(m => m.id === matchId);
+          if (matchIndex === -1) {
+            console.error('❌ Match not found in tournament data');
+            console.error('❌ Match ID:', matchId);
+            console.error('❌ Available main IDs:', matches.map(m => m.id));
+            console.error('❌ Available repechage IDs:', repechageMatches.map(m => m.id));
+            return;
+          }
+          isRepechageMatch = true;
+          console.log('✅ Found match in repechage bracket at index:', matchIndex);
+        } else {
+          console.log('✅ Found match in main bracket at index:', matchIndex);
         }
         
-        const tournamentMatch = matches[matchIndex];
+        const tournamentMatch = isRepechageMatch ? repechageMatches[matchIndex] : matches[matchIndex];
         
         // Determine winner player ID
         const winnerId = (winningSide === 'A') ? tournamentMatch.playerA : tournamentMatch.playerB;
+        const loserId = (winningSide === 'A') ? tournamentMatch.playerB : tournamentMatch.playerA;
         
         console.log('Winner ID:', winnerId);
+        console.log('Loser ID:', loserId);
         console.log('Match data:', tournamentMatch);
+        console.log('Is repechage match:', isRepechageMatch);
         
         // Build score data
         const scoreData = {
@@ -591,16 +615,19 @@ function undoSpecificScore(side, scoreType) {
         };
         
         // Update match status and trigger progression
-        const matchPath = `main/${matchIndex}`;
+        const matchPath = isRepechageMatch ? `repechage/${matchIndex}` : `main/${matchIndex}`;
+        console.log('📝 Updating match at path:', matchPath);
+        
         await matchRef.child(matchPath).update({
           status: 'completed',
           completed: true,
           winner: winnerId,
+          loser: loserId,
           scoreData: scoreData,
           endTime: firebase.database.ServerValue.TIMESTAMP
         });
         
-        console.log('✅ Match marked as completed in Firebase');
+        console.log('✅ Match marked as completed in Firebase at path:', matchPath);
         
         // Trigger tournament progression
         if (window.TournamentProgression) {

@@ -39,41 +39,84 @@ class TournamentProgression {
         return;
       }
 
-      // Find the completed match
-      const matchIndex = matches.findIndex(m => m.id === matchId);
+      // Find the completed match (check both main and repechage)
+      console.log('🔍 Searching for match:', matchId);
+      console.log('📊 Main matches count:', matches.length);
+      console.log('📊 Repechage matches count:', repechageMatches.length);
+      
+      let matchIndex = matches.findIndex(m => m.id === matchId);
+      let isRepechageMatch = false;
+      let completedMatch;
+      
       if (matchIndex === -1) {
-        console.error('Completed match not found:', matchId);
-        return;
+        // Check repechage matches
+        console.log('🔍 Not found in main, checking repechage...');
+        matchIndex = repechageMatches.findIndex(m => m.id === matchId);
+        if (matchIndex === -1) {
+          console.error('❌ Completed match not found:', matchId);
+          console.error('Available main IDs:', matches.map(m => m.id));
+          console.error('Available repechage IDs:', repechageMatches.map(m => m.id));
+          return;
+        }
+        completedMatch = repechageMatches[matchIndex];
+        isRepechageMatch = true;
+        console.log('✅ Found completed repechage match at index:', matchIndex);
+      } else {
+        completedMatch = matches[matchIndex];
+        console.log('✅ Found completed main match at index:', matchIndex);
       }
 
-      const completedMatch = matches[matchIndex];
-      console.log('✅ Found completed match:', completedMatch);
+      console.log('📋 Match data:', completedMatch);
       
       // Record loser for repechage
       const loserId = (winnerId === completedMatch.playerA) ? completedMatch.playerB : completedMatch.playerA;
-      matches[matchIndex].loser = loserId;
+      
+      if (isRepechageMatch) {
+        repechageMatches[matchIndex].loser = loserId;
+      } else {
+        matches[matchIndex].loser = loserId;
+      }
 
       // Find next match for winner
       const nextMatchId = completedMatch.nextMatchId;
       if (!nextMatchId) {
-        console.log('🏁 This was a final match - tournament complete!');
+        console.log('🏁 This was a final/bronze match - no next match!');
         
         // Save loser info
         if (data.main && Array.isArray(data.main)) {
           await this.matchesRef.child('main').set(matches);
+          if (repechageMatches.length > 0) {
+            await this.matchesRef.child('repechage').set(repechageMatches);
+          }
         }
-        return;
+        return { success: true, winnerName: completedMatch.playerAName === winnerId ? completedMatch.playerAName : completedMatch.playerBName };
       }
 
-      // Find next match
-      const nextMatchIndex = matches.findIndex(m => m.id === nextMatchId);
+      // Find next match (check both main and repechage)
+      console.log('🔍 Searching for next match:', nextMatchId);
+      let nextMatchIndex = matches.findIndex(m => m.id === nextMatchId);
+      let nextMatchIsRepechage = false;
+      let nextMatch;
+      
       if (nextMatchIndex === -1) {
-        console.error('Next match not found:', nextMatchId);
-        return;
+        // Check repechage matches
+        console.log('🔍 Next match not in main, checking repechage...');
+        nextMatchIndex = repechageMatches.findIndex(m => m.id === nextMatchId);
+        if (nextMatchIndex === -1) {
+          console.error('❌ Next match not found:', nextMatchId);
+          console.error('Available main IDs:', matches.map(m => m.id));
+          console.error('Available repechage IDs:', repechageMatches.map(m => m.id));
+          return;
+        }
+        nextMatch = repechageMatches[nextMatchIndex];
+        nextMatchIsRepechage = true;
+        console.log('➡️ Next match found in repechage at index:', nextMatchIndex);
+      } else {
+        nextMatch = matches[nextMatchIndex];
+        console.log('➡️ Next match found in main at index:', nextMatchIndex);
       }
 
-      const nextMatch = matches[nextMatchIndex];
-      console.log('➡️ Next match found:', nextMatch);
+      console.log('📋 Next match data:', nextMatch);
 
       // Determine which position the winner advances to
       let position = completedMatch.winnerTo; // 'A' or 'B'
@@ -126,35 +169,44 @@ class TournamentProgression {
         updates.playerBCountry = winnerCountry || '';
       }
 
-      // Update the next match in the array
-      matches[nextMatchIndex] = { ...nextMatch, ...updates };
+      // Update the next match in the correct array
+      if (nextMatchIsRepechage) {
+        repechageMatches[nextMatchIndex] = { ...nextMatch, ...updates };
+      } else {
+        matches[nextMatchIndex] = { ...nextMatch, ...updates };
+      }
 
       // Save updated matches back to Firebase
       if (data.main && Array.isArray(data.main)) {
         await this.matchesRef.child('main').set(matches);
+        if (repechageMatches.length > 0) {
+          await this.matchesRef.child('repechage').set(repechageMatches);
+        }
       } else {
         await this.matchesRef.set(matches);
       }
 
       console.log('✅ Tournament progressed:', winnerName, 'advanced to match', nextMatchId);
-      console.log('📊 Updated match:', matches[nextMatchIndex]);
+      
+      // Get the updated match from the correct array
+      const updatedNextMatch = nextMatchIsRepechage ? repechageMatches[nextMatchIndex] : matches[nextMatchIndex];
+      console.log('📊 Updated match:', updatedNextMatch);
 
       // Check if next match is now ready (both players assigned)
-      const updatedNextMatch = matches[nextMatchIndex];
       if (updatedNextMatch.playerA && updatedNextMatch.playerB && 
           updatedNextMatch.playerAName !== 'BYE' && updatedNextMatch.playerBName !== 'BYE') {
         console.log('🎯 Next match is now ready:', nextMatchId);
       }
       
       // Check if we need to trigger repechage (semifinals just completed)
-      if (updatedNextMatch.matchType === 'final' && updatedNextMatch.playerA && updatedNextMatch.playerB) {
+      if (!nextMatchIsRepechage && updatedNextMatch.matchType === 'final' && updatedNextMatch.playerA && updatedNextMatch.playerB) {
         console.log('🥉 Semifinals complete - triggering repechage creation...');
         await this.createAndScheduleRepechage(matches);
       }
 
       return {
         success: true,
-        nextMatch: matches[nextMatchIndex],
+        nextMatch: updatedNextMatch,
         winnerName: winnerName
       };
 

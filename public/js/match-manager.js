@@ -139,39 +139,59 @@
         }
 
         /**
-         * Find match index in the array
+         * Find match index in the array (searches both main and repechage)
          */
         async findMatchIndex(matchId) {
             const snapshot = await this.matchesRef.once('value');
             const data = snapshot.val();
             
-            if (!data) return -1;
+            if (!data) return { index: -1, isRepechage: false };
             
+            // Check main matches
             let matches = [];
+            let repechageMatches = [];
+            
             if (data.main && Array.isArray(data.main)) {
                 matches = data.main;
+                repechageMatches = data.repechage || [];
             } else if (Array.isArray(data)) {
                 matches = data;
             } else {
                 // Old object structure - match exists as child
-                return null; // Use old method
+                return { index: null, isRepechage: false }; // Use old method
             }
             
-            return matches.findIndex(m => m.id === matchId);
+            // Search in main matches first
+            let index = matches.findIndex(m => m.id === matchId);
+            if (index !== -1) {
+                return { index, isRepechage: false };
+            }
+            
+            // Search in repechage matches
+            index = repechageMatches.findIndex(m => m.id === matchId);
+            if (index !== -1) {
+                return { index, isRepechage: true };
+            }
+            
+            return { index: -1, isRepechage: false };
         }
         
         /**
-         * Get match reference (handles both array and object structures)
+         * Get match reference (handles both array and object structures, and repechage)
          */
         async getMatchRef(matchId) {
-            const index = await this.findMatchIndex(matchId);
+            const result = await this.findMatchIndex(matchId);
             
-            if (index === null) {
+            if (result.index === null) {
                 // Old object structure
                 return this.matchesRef.child(matchId);
-            } else if (index >= 0) {
-                // Array structure
-                return this.matchesRef.child(`main/${index}`);
+            } else if (result.index >= 0) {
+                // Array structure - check if main or repechage
+                if (result.isRepechage) {
+                    return this.matchesRef.child(`repechage/${result.index}`);
+                } else {
+                    return this.matchesRef.child(`main/${result.index}`);
+                }
             }
             
             return null;
