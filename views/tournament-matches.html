@@ -32,9 +32,14 @@
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab" data-tab="bracket">Bracket View</button>
-            <button class="tab active" data-tab="list">List View</button>
+        <div class="tabs" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <button class="tab" data-tab="bracket">Bracket View</button>
+                <button class="tab active" data-tab="list">List View</button>
+            </div>
+            <button id="showDevicesBtn" class="btn btn-outline" style="margin-left: auto;">
+                <i class="fas fa-desktop"></i> Show Devices
+            </button>
         </div>
 
         <div id="bracketView" class="tab-content">
@@ -55,7 +60,7 @@
             <div id="deviceInfo"></div>
             
             <div class="row">
-                <div class="col-md-8">
+                <div class="col-12">
                     <div class="matches-list">
                         <h2><i class="fas fa-list-ol"></i> Tournament Matches</h2>
                         <div id="matchesContainer">
@@ -69,19 +74,35 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div id="devicesContainer">
-                                <!-- Devices will be listed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
+    </div>
+
+    <!-- Devices Modal -->
+    <div id="devicesModal" class="modal fade" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-desktop"></i> Connected Devices</h5>
+                    <button type="button" class="btn-close" onclick="closeDevicesModal()"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="devicesModalContainer">
+                        <!-- Devices will be listed here -->
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading devices...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDevicesModal()">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->

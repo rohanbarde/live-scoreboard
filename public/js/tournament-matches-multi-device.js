@@ -107,8 +107,11 @@ function initializeUI() {
     // Load matches
     loadMatches();
     
-    // Load devices
+    // Load devices for modal
     loadDevices();
+    
+    // Setup Show Devices button
+    setupShowDevicesButton();
     
     // Set up event listeners
     setupEventListeners();
@@ -168,8 +171,63 @@ function loadDevices() {
     setInterval(async () => {
         const devices = await matchManager.getDevices();
         currentDevices = devices;
-        renderDevices(devices);
+        // Only render if modal is open
+        const modal = document.getElementById('devicesModal');
+        if (modal && modal.style.display === 'block') {
+            renderDevicesModal(devices);
+        }
     }, 5000);
+}
+
+/**
+ * Setup Show Devices button
+ */
+function setupShowDevicesButton() {
+    const btn = document.getElementById('showDevicesBtn');
+    if (btn) {
+        btn.addEventListener('click', showDevicesModal);
+    }
+}
+
+/**
+ * Show devices modal
+ */
+function showDevicesModal() {
+    const modal = document.getElementById('devicesModal');
+    if (modal) {
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        
+        // Add backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'devicesModalBackdrop';
+        document.body.appendChild(backdrop);
+        
+        // Load and render devices immediately
+        matchManager.getDevices().then(devices => {
+            renderDevicesModal(devices);
+        });
+    }
+}
+
+/**
+ * Close devices modal
+ */
+function closeDevicesModal() {
+    const modal = document.getElementById('devicesModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+        
+        // Remove backdrop
+        const backdrop = document.getElementById('devicesModalBackdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
 }
 
 /**
@@ -398,7 +456,7 @@ function renderMatchCard(match) {
     }
     
     return `
-        <div class="col-md-6 col-lg-4">
+        <div class="col-md-6 col-lg-3">
             <div class="card ${isOwnedByThisDevice ? 'border-primary' : ''} ${isCompleted ? 'opacity-75' : ''}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -431,54 +489,98 @@ function renderMatchCard(match) {
 }
 
 /**
- * Render devices
+ * Render devices in modal
  */
-function renderDevices(devices) {
-    const container = document.getElementById('devicesContainer');
+function renderDevicesModal(devices) {
+    const container = document.getElementById('devicesModalContainer');
     if (!container) return;
     
     const onlineDevices = devices.filter(d => d.status === 'online');
     const offlineDevices = devices.filter(d => d.status === 'offline');
     
-    let html = `<h5>📱 Online Devices (${onlineDevices.length})</h5><div class="list-group mb-3">`;
+    let html = '';
     
-    onlineDevices.forEach(device => {
-        const isThisDevice = device.deviceId === window.DEVICE_ID;
-        const lastSeen = device.lastSeen ? new Date(device.lastSeen).toLocaleTimeString() : 'Unknown';
-        
-        html += `
-            <div class="list-group-item ${isThisDevice ? 'list-group-item-primary' : ''}">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>${device.deviceName}</strong> ${isThisDevice ? '(This Device)' : ''}
-                        <br><small class="text-muted">Last seen: ${lastSeen}</small>
-                        ${device.currentMatch ? `<br><small class="text-info">Currently managing a match</small>` : ''}
-                    </div>
-                    <span class="badge bg-success">Online</span>
-                </div>
-            </div>
-        `;
-    });
+    // Online devices section
+    html += `
+        <div class="mb-4">
+            <h5 class="mb-3">
+                <i class="fas fa-circle text-success" style="font-size: 0.8em;"></i> 
+                Online Devices <span class="badge bg-success">${onlineDevices.length}</span>
+            </h5>
+    `;
     
-    html += '</div>';
-    
-    if (offlineDevices.length > 0) {
-        html += `<h6 class="text-muted">Offline Devices (${offlineDevices.length})</h6><div class="list-group">`;
-        offlineDevices.forEach(device => {
+    if (onlineDevices.length === 0) {
+        html += '<div class="alert alert-info">No devices currently online</div>';
+    } else {
+        html += '<div class="list-group">';
+        onlineDevices.forEach(device => {
+            const isThisDevice = device.deviceId === window.DEVICE_ID;
             const lastSeen = device.lastSeen ? new Date(device.lastSeen).toLocaleTimeString() : 'Unknown';
+            
             html += `
-                <div class="list-group-item list-group-item-secondary">
+                <div class="list-group-item ${isThisDevice ? 'list-group-item-success' : ''}">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${device.deviceName}</strong>
-                            <br><small class="text-muted">Last seen: ${lastSeen}</small>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="fas fa-desktop text-success me-2"></i>
+                                <strong style="font-size: 1.1em;">${device.deviceName}</strong>
+                                ${isThisDevice ? '<span class="badge bg-primary ms-2">This Device</span>' : ''}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.9em;">
+                                <i class="fas fa-clock me-1"></i> Last seen: ${lastSeen}
+                            </div>
+                            ${device.currentMatch ? `
+                                <div class="text-info mt-1" style="font-size: 0.9em;">
+                                    <i class="fas fa-trophy me-1"></i> Currently managing a match
+                                </div>
+                            ` : ''}
                         </div>
-                        <span class="badge bg-secondary">Offline</span>
+                        <span class="badge bg-success" style="font-size: 1em; padding: 0.5em 1em;">
+                            <i class="fas fa-check-circle"></i> Online
+                        </span>
                     </div>
                 </div>
             `;
         });
         html += '</div>';
+    }
+    
+    html += '</div>';
+    
+    // Offline devices section
+    if (offlineDevices.length > 0) {
+        html += `
+            <div>
+                <h5 class="mb-3">
+                    <i class="fas fa-circle text-secondary" style="font-size: 0.8em;"></i> 
+                    Offline Devices <span class="badge bg-secondary">${offlineDevices.length}</span>
+                </h5>
+                <div class="list-group">
+        `;
+        
+        offlineDevices.forEach(device => {
+            const lastSeen = device.lastSeen ? new Date(device.lastSeen).toLocaleTimeString() : 'Unknown';
+            html += `
+                <div class="list-group-item list-group-item-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <i class="fas fa-desktop text-secondary me-2"></i>
+                                <strong style="font-size: 1.1em; color: #6c757d;">${device.deviceName}</strong>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.9em;">
+                                <i class="fas fa-clock me-1"></i> Last seen: ${lastSeen}
+                            </div>
+                        </div>
+                        <span class="badge bg-secondary" style="font-size: 1em; padding: 0.5em 1em;">
+                            <i class="fas fa-times-circle"></i> Offline
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div></div>';
     }
     
     container.innerHTML = html;
@@ -571,3 +673,5 @@ window.lockAndStartMatch = lockAndStartMatch;
 window.startMatch = startMatch;
 window.unlockMatch = unlockMatch;
 window.openMatchScoreboard = openMatchScoreboard;
+window.showDevicesModal = showDevicesModal;
+window.closeDevicesModal = closeDevicesModal;
