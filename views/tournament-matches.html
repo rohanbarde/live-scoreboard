@@ -17,9 +17,9 @@
         <div class="header">
             <h1><i class="fas fa-trophy"></i> Tournament Matches</h1>
             <div class="actions">
-                <a href="/index.html" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
-                    <i class="fas fa-user-plus"></i> Register
-                </a>
+<!--                <a href="/index.html" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">-->
+<!--                    <i class="fas fa-user-plus"></i> Register-->
+<!--                </a>-->
                 <a href="/views/player-list.html" class="btn btn-outline" target="_blank" rel="noopener noreferrer">
                     <i class="fas fa-list"></i> List
                 </a>
@@ -32,14 +32,18 @@
             </div>
         </div>
 
-        <div class="tabs" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
+        <div class="tabs" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; align-items: center;">
                 <button class="tab" data-tab="bracket">Bracket View</button>
                 <button class="tab active" data-tab="list">List View</button>
             </div>
-            <button id="showDevicesBtn" class="btn btn-outline" style="margin-left: auto;">
-                <i class="fas fa-desktop"></i> Show Devices
-            </button>
+            <div style="display: flex; gap: 10px; align-items: center; margin-left: auto;">
+                <!-- Device Info will be inserted here -->
+                <div id="deviceInfo"></div>
+                <button id="showDevicesBtn" class="btn btn-outline">
+                    <i class="fas fa-desktop"></i> Show Devices
+                </button>
+            </div>
         </div>
 
         <div id="bracketView" class="tab-content">
@@ -56,13 +60,10 @@
         </div>
 
         <div id="listView" class="tab-content active">
-            <!-- Device Info -->
-            <div id="deviceInfo"></div>
-            
             <div class="row">
                 <div class="col-12">
                     <div class="matches-list">
-                        <h2><i class="fas fa-list-ol"></i> Tournament Matches</h2>
+<!--                        <h2><i class="fas fa-list-ol"></i> Tournament Matches</h2>-->
                         <div id="matchesContainer">
                             <!-- Matches will be listed here -->
                             <div class="text-center py-5">

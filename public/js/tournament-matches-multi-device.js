@@ -128,9 +128,11 @@ function displayDeviceInfo() {
     
     if (deviceInfoEl) {
         deviceInfoEl.innerHTML = `
-            <div class="alert alert-info">
-                <strong>📱 This Device:</strong> ${deviceInfo.deviceName}
-                <button class="btn btn-sm btn-outline-primary ms-2" onclick="changeDeviceName()">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="font-size: 0.9rem; font-weight: 500; color: #6c757d;">
+                    <i class="fas fa-desktop" style="margin-right: 5px;"></i>${deviceInfo.deviceName}
+                </span>
+                <button class="btn btn-outline" onclick="changeDeviceName()" style="padding: 10px 16px; font-size: 0.9rem;">
                     <i class="fas fa-edit"></i> Change Name
                 </button>
             </div>
