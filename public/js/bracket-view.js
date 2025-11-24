@@ -17,18 +17,20 @@ class BracketView {
         return null;
       }
 
-      // Handle both data structures: direct array or nested under 'main'
+      // Handle both data structures: direct array or nested under 'main' and 'repechage'
       if (Array.isArray(matchesData)) {
         this.matches = matchesData;
+        this.repechageMatches = [];
       } else if (matchesData.main && Array.isArray(matchesData.main)) {
         this.matches = matchesData.main;
+        this.repechageMatches = matchesData.repechage || [];
       } else {
         console.log('Invalid matches data structure');
         return null;
       }
 
-      console.log('Loaded', this.matches.length, 'matches for bracket view');
-      return this.matches;
+      console.log('Loaded', this.matches.length, 'main matches and', this.repechageMatches.length, 'repechage matches for bracket view');
+      return { main: this.matches, repechage: this.repechageMatches };
     } catch (error) {
       console.error('Error loading matches:', error);
       throw error;
@@ -128,6 +130,11 @@ class BracketView {
 
     // Render progression rounds (semifinals, finals)
     html += this.renderProgressionRounds(this.matches);
+
+    // Render repechage and bronze medal matches
+    if (this.repechageMatches && this.repechageMatches.length > 0) {
+      html += this.renderRepechageSection(this.repechageMatches);
+    }
 
     html += '</div>';
 
@@ -309,6 +316,97 @@ class BracketView {
     `;
   }
 
+  // Render repechage and bronze medal section
+  renderRepechageSection(repechageMatches) {
+    const repechage = repechageMatches.filter(m => m.matchType === 'repechage');
+    const bronze = repechageMatches.filter(m => m.matchType === 'bronze');
+
+    if (repechage.length === 0 && bronze.length === 0) {
+      return '';
+    }
+
+    let html = '<div class="repechage-section">';
+    html += '<h2 class="section-title"><i class="fas fa-medal"></i> Repechage & Bronze Medals</h2>';
+    html += '<div class="repechage-container">';
+
+    // Repechage matches
+    if (repechage.length > 0) {
+      html += '<div class="repechage-column">';
+      html += '<h3 class="round-title">🔄 Repechage Matches</h3>';
+      html += '<div class="round-matches">';
+      repechage.forEach((match, idx) => {
+        html += this.renderRepechageMatch(match, idx + 1);
+      });
+      html += '</div></div>';
+    }
+
+    // Bronze medal matches
+    if (bronze.length > 0) {
+      html += '<div class="bronze-column">';
+      html += '<h3 class="round-title">🥉 Bronze Medal Matches</h3>';
+      html += '<div class="round-matches">';
+      bronze.forEach((match, idx) => {
+        html += this.renderBronzeMatch(match, idx + 1);
+      });
+      html += '</div></div>';
+    }
+
+    html += '</div></div>';
+    return html;
+  }
+
+  // Render repechage match
+  renderRepechageMatch(match, matchNumber) {
+    const playerAName = match.playerAName || 'TBD';
+    const playerBName = match.playerBName || 'TBD';
+    const winner = match.winner;
+    const playerAClass = winner === match.playerA ? 'winner' : '';
+    const playerBClass = winner === match.playerB ? 'winner' : '';
+    const status = match.status || (match.completed ? 'completed' : 'pending');
+
+    return `
+      <div class="repechage-match ${status}" data-match-id="${match.id}">
+        <div class="match-label">Repechage ${matchNumber}</div>
+        <div class="match-players">
+          <div class="match-player ${playerAClass}">
+            <span class="player-name">${playerAName}</span>
+          </div>
+          <div class="match-vs">VS</div>
+          <div class="match-player ${playerBClass}">
+            <span class="player-name">${playerBName}</span>
+          </div>
+        </div>
+        ${match.winner ? '<div class="match-winner-badge"><i class="fas fa-trophy"></i></div>' : ''}
+      </div>
+    `;
+  }
+
+  // Render bronze medal match
+  renderBronzeMatch(match, matchNumber) {
+    const playerAName = match.playerAName || 'TBD';
+    const playerBName = match.playerBName || 'TBD';
+    const winner = match.winner;
+    const playerAClass = winner === match.playerA ? 'winner' : '';
+    const playerBClass = winner === match.playerB ? 'winner' : '';
+    const status = match.status || (match.completed ? 'completed' : 'pending');
+
+    return `
+      <div class="bronze-match ${status}" data-match-id="${match.id}">
+        <div class="match-label">🥉 Bronze ${matchNumber}</div>
+        <div class="match-players">
+          <div class="match-player ${playerAClass}">
+            <span class="player-name">${playerAName}</span>
+          </div>
+          <div class="match-vs">VS</div>
+          <div class="match-player ${playerBClass}">
+            <span class="player-name">${playerBName}</span>
+          </div>
+        </div>
+        ${match.winner ? '<div class="match-winner-badge bronze"><i class="fas fa-medal"></i></div>' : ''}
+      </div>
+    `;
+  }
+
   // Initialize and render
   async init() {
     try {
@@ -322,8 +420,10 @@ class BracketView {
           // Handle both data structures
           if (Array.isArray(matchesData)) {
             this.matches = matchesData;
+            this.repechageMatches = [];
           } else if (matchesData.main && Array.isArray(matchesData.main)) {
             this.matches = matchesData.main;
+            this.repechageMatches = matchesData.repechage || [];
           }
           this.renderBracket();
         }

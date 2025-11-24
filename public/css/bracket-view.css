@@ -2,6 +2,7 @@
 
 .bracket-wrapper {
   display: flex;
+  flex-direction: column;
   gap: 30px;
   padding: 20px;
   overflow-x: auto;
@@ -210,10 +211,15 @@
 /* Finals Section */
 .finals-section {
   display: flex;
-  gap: 30px;
-  margin-left: 30px;
-  padding-left: 30px;
-  border-left: 3px solid #dee2e6;
+  flex-direction: row;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .round-column {
@@ -466,4 +472,180 @@
 
 .bracket-match.in_progress {
   animation: pulse 2s ease-in-out infinite;
+}
+
+/* Repechage Section */
+.repechage-section {
+  width: 100%;
+  margin-top: 20px;
+  padding: 30px;
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e0e0e0;
+}
+
+.section-title {
+  font-size: 1.8rem;
+  color: var(--primary-color);
+  font-weight: 700;
+  margin: 0 0 30px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid var(--primary-color);
+  text-align: center;
+}
+
+.repechage-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.repechage-column,
+.bronze-column {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e0e0e0;
+}
+
+.repechage-column .round-title {
+  font-size: 1.3rem;
+  color: #4361ee;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+  padding: 10px;
+  background: linear-gradient(135deg, #e3f2fd, #ffffff);
+  border-radius: 8px;
+}
+
+.bronze-column .round-title {
+  font-size: 1.3rem;
+  color: #cd7f32;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+  padding: 10px;
+  background: linear-gradient(135deg, #fff3e0, #ffffff);
+  border-radius: 8px;
+}
+
+/* Repechage Match */
+.repechage-match,
+.bronze-match {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 15px;
+  position: relative;
+  transition: all 0.3s ease;
+  border-left: 4px solid #4361ee;
+}
+
+.bronze-match {
+  border-left-color: #cd7f32;
+}
+
+.repechage-match:hover,
+.bronze-match:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.repechage-match.completed,
+.bronze-match.completed {
+  opacity: 0.9;
+  border-left-color: #06d6a0;
+}
+
+.repechage-match.in_progress,
+.bronze-match.in_progress {
+  border-left-color: #ffa500;
+  background: linear-gradient(135deg, #fff9e6, #ffffff);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.match-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.match-players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.match-player {
+  background: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.match-player.winner {
+  background: linear-gradient(135deg, #d4edda, #ffffff);
+  border-color: #06d6a0;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(6, 214, 160, 0.2);
+}
+
+.match-vs {
+  text-align: center;
+  font-weight: 700;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.player-name {
+  font-size: 1rem;
+  color: #2b2d42;
+}
+
+.match-winner-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: linear-gradient(135deg, #06d6a0, #1be7b8);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(6, 214, 160, 0.4);
+}
+
+.match-winner-badge.bronze {
+  background: linear-gradient(135deg, #cd7f32, #e89850);
+}
+
+.match-winner-badge i {
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .repechage-container {
+    flex-direction: column;
+  }
+  
+  .repechage-column,
+  .bronze-column {
+    max-width: 100%;
+  }
 }

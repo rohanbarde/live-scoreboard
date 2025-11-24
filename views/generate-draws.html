@@ -7,25 +7,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../public/css/player-list.css">
-    <link rel="icon" href="../public/assets/judoicon.png" type="image/png">
+    <link rel="icon" href="../public/assets/JudoIcon.png" type="image/png">
 
     <style>
         /* Layout */
         .draws-layout {
-            display: flex;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
             margin-top: 20px;
+            width: 100%;
         }
         
         .players-column {
-            flex: 1;
-            min-width: 300px;
-            max-width: 50%;
+            min-width: 0;
         }
         
         .animation-column {
-            flex: 1;
-            min-width: 300px;
+            min-width: 0;
         }
         
         .animation-container {
@@ -122,21 +121,27 @@
         }
         
         /* Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .draws-layout {
-                flex-direction: column;
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .draws-container {
+                padding: 15px;
             }
             
-            .players-column,
-            .animation-column {
-                max-width: 100%;
+            .draws-content {
+                padding: 15px;
             }
         }
         
         .draws-container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
             padding: 20px;
+            min-height: 100vh;
         }
         .draws-header {
             display: flex;
@@ -170,10 +175,11 @@
         }
         .draws-content {
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: var(--shadow);
-            padding: 20px;
+            padding: 25px;
             margin-top: 20px;
+            width: 100%;
         }
         .draws-section {
             margin-bottom: 30px;
@@ -548,15 +554,13 @@
                 <!-- Will be populated by JavaScript -->
             </select>
         </div>
-        <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 10px;">
-            <button id="manageSeedsBtn" class="btn btn-outline" style="background: #f8f9fa; border-color: #dee2e6;">
-                <i class="fas fa-trophy"></i> Manage Seeds
-            </button>
+        <div style="flex: 0 0 auto; display: flex; gap: 10px; align-items: flex-end;">
             <button id="shufflePlayersBtn" class="btn btn-outline">
                 <i class="fas fa-shuffle"></i> Shuffle Players
             </button>
-        </div>
-        <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 10px;">
+            <button id="manageSeedsBtn" class="btn btn-outline" style="background: #f8f9fa; border-color: #dee2e6;">
+                <i class="fas fa-trophy"></i> Manage Seeds
+            </button>
             <button id="generateDrawBtn" class="btn btn-primary">
                 <i class="fas fa-random"></i> Generate IJF Draw
             </button>
@@ -567,7 +571,9 @@
         <div class="draws-layout">
             <!-- Left Column: Player List -->
             <div class="players-column">
-                <h3>Registered Players</h3>
+                <h3 style="color: var(--primary-color); font-size: 1.3rem; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-users"></i> Registered Players
+                </h3>
                 <div id="playersList" class="players-grid">
                     <!-- Players will be populated here by JavaScript -->
                     <div class="no-players">
@@ -579,7 +585,9 @@
 
             <!-- Right Column: Draw Animation -->
             <div class="animation-column">
-                <h3>Draw Preview</h3>
+                <h3 style="color: var(--primary-color); font-size: 1.3rem; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-chess-board"></i> Draw Preview
+                </h3>
                 <div id="drawsContent" class="animation-container">
                     <div class="no-draw">
                         <i class="fas fa-random" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
