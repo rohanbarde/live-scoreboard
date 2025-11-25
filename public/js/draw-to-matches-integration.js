@@ -95,15 +95,15 @@
                     };
                 }
 
-                // Add player with proper structure
+                // Add player with proper structure (ensure no undefined values)
                 matchesByCategory[key].players.push({
                     id: player.id,
-                    fullName: player.fullName,
-                    name: player.fullName,
+                    fullName: player.fullName || '',
+                    name: player.fullName || '',
                     team: player.playerInfo?.team || 'N/A',
-                    weight: player.playerInfo?.weight,
-                    gender: player.playerInfo?.gender,
-                    photoBase64: player.photoBase64
+                    weight: player.playerInfo?.weight || 0,
+                    gender: player.playerInfo?.gender || '',
+                    photoBase64: player.photoBase64 || ''
                 });
             });
 

@@ -716,3 +716,4 @@ window.openMatchScoreboard = openMatchScoreboard;
 window.showDevicesModal = showDevicesModal;
 window.closeDevicesModal = closeDevicesModal;
 window.deleteDevice = deleteDevice;
+window.renderMatches = renderMatches;

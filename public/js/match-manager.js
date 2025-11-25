@@ -112,6 +112,20 @@
             const matches = [];
             const rounds = Math.ceil(Math.log2(players.length));
             
+            // Helper function to sanitize player data
+            const sanitizePlayer = (player) => {
+                if (!player) return null;
+                return {
+                    id: player.id || '',
+                    fullName: player.fullName || player.name || '',
+                    name: player.name || player.fullName || '',
+                    team: player.team || '',
+                    weight: player.weight || 0,
+                    gender: player.gender || '',
+                    photoBase64: player.photoBase64 || ''
+                };
+            };
+            
             // First round matches
             for (let i = 0; i < players.length; i += 2) {
                 if (i + 1 < players.length) {
@@ -122,8 +136,8 @@
                         round: 1,
                         weight: weight,
                         gender: gender,
-                        fighterA: players[i],
-                        fighterB: players[i + 1],
+                        fighterA: sanitizePlayer(players[i]),
+                        fighterB: sanitizePlayer(players[i + 1]),
                         status: 'pending', // pending, locked, in_progress, completed
                         winner: null,
                         mat: null,

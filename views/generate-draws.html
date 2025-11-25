@@ -538,13 +538,22 @@
     </div>
 
     <div class="filters-container" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;">
+        <div class="filter-group" style="flex: 0 0 auto; min-width: 180px;">
+            <label for="ageGroupFilter" style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500;">Age Group</label>
+            <select id="ageGroupFilter" class="filter-select" style="width: 100%;">
+                <option value="">All Age Groups</option>
+                <option value="SENIOR">Senior (Above 15)</option>
+                <option value="JUNIOR">Junior (Under 21)</option>
+                <option value="CADET">Cadet (Under 18)</option>
+                <option value="SUB_JUNIOR">Sub Junior (12-15)</option>
+            </select>
+        </div>
         <div class="filter-group" style="flex: 0 0 auto; min-width: 150px;">
             <label for="drawGenderFilter" style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500;">Gender</label>
             <select id="drawGenderFilter" class="filter-select" style="width: 100%;">
                 <option value="">All Genders</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
-                <option value="other">Other</option>
             </select>
         </div>
         <div class="filter-group" style="flex: 0 0 auto; min-width: 180px;">
@@ -563,6 +572,9 @@
             </button>
             <button id="generateDrawBtn" class="btn btn-primary">
                 <i class="fas fa-random"></i> Generate IJF Draw
+            </button>
+            <button id="saveDrawBtn" class="btn btn-primary" style="background: #28a745; border-color: #28a745; display: none;">
+                <i class="fas fa-save"></i> Save Draw
             </button>
         </div>
     </div>
@@ -641,6 +653,9 @@
 
 <!-- Authentication Guard - MUST be loaded before other scripts -->
 <script src="../public/js/auth-guard.js"></script>
+
+<!-- Weight Categories Configuration -->
+<script src="../public/js/weight-categories.js"></script>
 
 <!-- Match Manager for multi-device integration -->
 <script src="../public/js/match-manager.js"></script>
