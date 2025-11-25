@@ -641,12 +641,18 @@ async function completeMatchInTournament(winningSide) {
 
         console.log('✅ Match marked as completed in Firebase at path:', matchPath);
 
-        // Trigger tournament progression
-        if (window.TournamentProgression) {
-            console.log('🔄 Triggering tournament progression...');
+        // Trigger tournament progression - Use IJF Tournament Manager if available
+        if (window.IJFTournamentManager) {
+            console.log('🔄 Using IJF Tournament Manager for tournament progression...');
+            const tournamentManager = new IJFTournamentManager();
+            await tournamentManager.progressTournament(matchId, winnerId);
+            await tournamentManager.checkAndCreateRepechage(matchId);
+            console.log('✅ IJF Tournament progression complete');
+        } else if (window.TournamentProgression) {
+            console.log('🔄 Using legacy TournamentProgression...');
             const progression = new TournamentProgression();
             await progression.onMatchComplete(matchId, winnerId);
-            console.log('✅ Tournament progression complete');
+            console.log('✅ Legacy tournament progression complete');
         }
 
     } catch (error) {

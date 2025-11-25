@@ -262,6 +262,13 @@
             try {
                 console.log('🔒 Attempting to lock match:', matchId);
                 
+                // Check Firebase connection first
+                const connectedRef = firebase.database().ref('.info/connected');
+                const connSnapshot = await connectedRef.once('value');
+                if (!connSnapshot.val()) {
+                    throw new Error('Not connected to Firebase. Please check your internet connection.');
+                }
+                
                 const lockRef = this.locksRef.child(matchId);
                 const matchRef = await this.getMatchRef(matchId);
                 
@@ -292,21 +299,37 @@
                     throw new Error(`Match is ${currentStatus}`);
                 }
 
-                // Try to acquire lock using transaction
-                const lockResult = await lockRef.transaction(currentLock => {
-                    if (currentLock === null) {
-                        // Lock is available
-                        return {
-                            deviceId: DEVICE_ID,
-                            deviceName: DEVICE_NAME,
-                            lockedAt: Date.now(),
-                            matchId: matchId
-                        };
-                    } else {
-                        // Lock is taken
-                        return undefined; // Abort transaction
+                // Try to acquire lock using transaction with retry logic
+                let lockResult;
+                let retries = 3;
+                
+                while (retries > 0) {
+                    try {
+                        lockResult = await lockRef.transaction(currentLock => {
+                            if (currentLock === null) {
+                                // Lock is available
+                                return {
+                                    deviceId: DEVICE_ID,
+                                    deviceName: DEVICE_NAME,
+                                    lockedAt: Date.now(),
+                                    matchId: matchId
+                                };
+                            } else {
+                                // Lock is taken
+                                return undefined; // Abort transaction
+                            }
+                        }, undefined, false); // applyLocally = false for better consistency
+                        
+                        break; // Success, exit retry loop
+                    } catch (transactionError) {
+                        retries--;
+                        if (retries === 0) {
+                            throw transactionError;
+                        }
+                        console.warn(`⚠️ Transaction failed, retrying... (${retries} attempts left)`);
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
                     }
-                });
+                }
 
                 if (!lockResult.committed) {
                     throw new Error('Match is already locked by another device');
@@ -450,12 +473,18 @@
                 this.currentMatchId = null;
                 console.log('✅ Match completed:', matchId, 'Winner:', winner);
                 
-                // Trigger tournament progression if TournamentProgression is available
-                if (window.TournamentProgression) {
-                    console.log('🔄 Triggering tournament progression...');
+                // Trigger tournament progression - Use IJF Tournament Manager if available
+                if (window.IJFTournamentManager) {
+                    console.log('🔄 Using IJF Tournament Manager for tournament progression...');
+                    const tournamentManager = new IJFTournamentManager();
+                    await tournamentManager.progressTournament(matchId, winner);
+                    await tournamentManager.checkAndCreateRepechage(matchId);
+                    console.log('✅ IJF Tournament progression complete');
+                } else if (window.TournamentProgression) {
+                    console.log('🔄 Using legacy TournamentProgression...');
                     const progression = new TournamentProgression();
                     await progression.onMatchComplete(matchId, winner);
-                    console.log('✅ Tournament progression complete');
+                    console.log('✅ Legacy tournament progression complete');
                 }
                 
                 return true;
