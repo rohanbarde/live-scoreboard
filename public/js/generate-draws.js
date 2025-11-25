@@ -232,11 +232,15 @@ class TournamentDraw {
   createMainBracket(players) {
     const matches = [];
     const numPlayers = players.filter(p => p !== null).length;
+    const bracketSize = players.length;
     let round = 1;
+    
+    console.log(`\n🏗️ Creating bracket: ${numPlayers} players in ${bracketSize}-bracket`);
+    console.log(`   BYEs needed: ${bracketSize - numPlayers}`);
     
     // Create first round matches
     const firstRoundMatches = [];
-    for (let i = 0; i < Math.ceil(players.length / 2); i++) {
+    for (let i = 0; i < bracketSize / 2; i++) {
       const playerA = players[i * 2];
       const playerB = players[i * 2 + 1];
       
@@ -252,6 +256,7 @@ class TournamentDraw {
         winner: null,
         loser: null,
         completed: false,
+        status: 'pending',
         nextMatchId: null,
         playerAName: playerA?.fullName || 'BYE',
         playerBName: playerB?.fullName || 'BYE',
@@ -259,6 +264,8 @@ class TournamentDraw {
         playerBClub: playerB?.playerInfo?.team || null,
         playerASeed: playerA?.seed || null,
         playerBSeed: playerB?.seed || null,
+        playerACountry: playerA?.playerInfo?.country || null,
+        playerBCountry: playerB?.playerInfo?.country || null,
         weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : null,
         repechageEligible: true // Losers can enter repechage
       };
@@ -266,37 +273,52 @@ class TournamentDraw {
       // Auto-complete BYE matches
       if (!playerB && playerA) {
         match.winner = playerA.id;
+        match.loser = null;
         match.completed = true;
+        match.status = 'completed';
         match.playerBName = 'BYE';
+        console.log(`   ✓ BYE: ${playerA.fullName} advances automatically`);
       } else if (!playerA && playerB) {
         match.winner = playerB.id;
+        match.loser = null;
         match.completed = true;
+        match.status = 'completed';
         match.playerAName = 'BYE';
+        console.log(`   ✓ BYE: ${playerB.fullName} advances automatically`);
       }
       
       firstRoundMatches.push(match);
     }
     
     matches.push(...firstRoundMatches);
+    console.log(`   Created ${firstRoundMatches.length} first round matches`);
 
     // Create subsequent rounds
     let currentRound = firstRoundMatches;
     while (currentRound.length > 1) {
       round++;
       const nextRound = [];
+      const matchesInRound = Math.floor(currentRound.length / 2);
       
-      for (let i = 0; i < Math.ceil(currentRound.length / 2); i++) {
+      for (let i = 0; i < matchesInRound; i++) {
         const match = {
           id: this.generateId(),
           round,
-          matchType: round === this.getMaxRounds(numPlayers) ? 'final' : 'main',
+          matchType: matchesInRound === 1 ? 'final' : 'main',
           playerA: null,
           playerB: null,
           playerAName: 'TBD',
           playerBName: 'TBD',
+          playerAClub: null,
+          playerBClub: null,
+          playerASeed: null,
+          playerBSeed: null,
+          playerACountry: null,
+          playerBCountry: null,
           winner: null,
           loser: null,
           completed: false,
+          status: 'pending',
           nextMatchId: null,
           repechageEligible: true
         };
@@ -316,9 +338,10 @@ class TournamentDraw {
       
       matches.push(...nextRound);
       currentRound = nextRound;
+      console.log(`   Round ${round}: ${nextRound.length} matches`);
     }
     
-    console.log('Created main bracket with', matches.length, 'matches');
+    console.log(`✅ Created main bracket with ${matches.length} matches\n`);
     return matches;
   }
   
