@@ -153,15 +153,49 @@
         }
 
         /**
-         * Find match index in the array (searches both main and repechage)
+         * Find match index in array (handles both main and repechage, and category-based structure)
          */
         async findMatchIndex(matchId) {
             const snapshot = await this.matchesRef.once('value');
             const data = snapshot.val();
             
-            if (!data) return { index: -1, isRepechage: false };
+            if (!data) return { index: -1, isRepechage: false, categoryKey: null };
             
-            // Check main matches
+            // Check if category-based structure
+            const firstKey = Object.keys(data)[0];
+            const firstValue = data[firstKey];
+            
+            if (firstValue && typeof firstValue === 'object' && (firstValue.main || firstValue.repechage)) {
+                console.log('🔍 Searching for match in category-based structure');
+                
+                // Search through all categories
+                for (const categoryKey of Object.keys(data)) {
+                    const categoryData = data[categoryKey];
+                    
+                    // Search in main matches
+                    if (categoryData.main && Array.isArray(categoryData.main)) {
+                        const index = categoryData.main.findIndex(m => m.id === matchId);
+                        if (index !== -1) {
+                            console.log(`✅ Match found in category ${categoryKey}, main matches, index ${index}`);
+                            return { index, isRepechage: false, categoryKey };
+                        }
+                    }
+                    
+                    // Search in repechage matches
+                    if (categoryData.repechage && Array.isArray(categoryData.repechage)) {
+                        const index = categoryData.repechage.findIndex(m => m.id === matchId);
+                        if (index !== -1) {
+                            console.log(`✅ Match found in category ${categoryKey}, repechage matches, index ${index}`);
+                            return { index, isRepechage: true, categoryKey };
+                        }
+                    }
+                }
+                
+                console.log('❌ Match not found in any category');
+                return { index: -1, isRepechage: false, categoryKey: null };
+            }
+            
+            // Handle single category or old structure
             let matches = [];
             let repechageMatches = [];
             
@@ -172,26 +206,26 @@
                 matches = data;
             } else {
                 // Old object structure - match exists as child
-                return { index: null, isRepechage: false }; // Use old method
+                return { index: null, isRepechage: false, categoryKey: null }; // Use old method
             }
             
             // Search in main matches first
             let index = matches.findIndex(m => m.id === matchId);
             if (index !== -1) {
-                return { index, isRepechage: false };
+                return { index, isRepechage: false, categoryKey: null };
             }
             
             // Search in repechage matches
             index = repechageMatches.findIndex(m => m.id === matchId);
             if (index !== -1) {
-                return { index, isRepechage: true };
+                return { index, isRepechage: true, categoryKey: null };
             }
             
-            return { index: -1, isRepechage: false };
+            return { index: -1, isRepechage: false, categoryKey: null };
         }
         
         /**
-         * Get match reference (handles both array and object structures, and repechage)
+         * Get match reference (handles both array and object structures, repechage, and category-based structure)
          */
         async getMatchRef(matchId) {
             const result = await this.findMatchIndex(matchId);
@@ -200,11 +234,21 @@
                 // Old object structure
                 return this.matchesRef.child(matchId);
             } else if (result.index >= 0) {
-                // Array structure - check if main or repechage
-                if (result.isRepechage) {
-                    return this.matchesRef.child(`repechage/${result.index}`);
+                // Array structure - check if category-based
+                if (result.categoryKey) {
+                    // Category-based structure
+                    if (result.isRepechage) {
+                        return this.matchesRef.child(`${result.categoryKey}/repechage/${result.index}`);
+                    } else {
+                        return this.matchesRef.child(`${result.categoryKey}/main/${result.index}`);
+                    }
                 } else {
-                    return this.matchesRef.child(`main/${result.index}`);
+                    // Single category structure
+                    if (result.isRepechage) {
+                        return this.matchesRef.child(`repechage/${result.index}`);
+                    } else {
+                        return this.matchesRef.child(`main/${result.index}`);
+                    }
                 }
             }
             

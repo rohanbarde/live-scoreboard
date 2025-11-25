@@ -535,117 +535,125 @@ function undoSpecificScore(side, scoreType) {
     }
     
     /* Complete match in tournament system - VERSION 2.0 - REPECHAGE FIX */
-    async function completeMatchInTournament(winningSide) {
-      try {
-        console.log('🔧 VERSION 2.0 - Repechage fix active');
-        
+// In scoreboard.js, update the completeMatchInTournament function
+async function completeMatchInTournament(winningSide) {
+    try {
+        console.log('🔧 VERSION 3.1 - Enhanced category-based search');
+
         // Get matchId from URL
         const urlParams = new URLSearchParams(window.location.search);
         const matchId = urlParams.get('matchId');
-        
+
         if (!matchId) {
-          console.warn('No matchId in URL - cannot complete tournament match');
-          return;
-        }
-        
-        console.log('🏆 Completing tournament match:', matchId, 'Winner side:', winningSide);
-        
-        // Get match data from Firebase to find player IDs
-        const matchRef = window.database.ref('tournament/matches');
-        const snapshot = await matchRef.once('value');
-        const data = snapshot.val();
-        
-        if (!data) {
-          console.error('No tournament data found');
-          return;
-        }
-        
-        // Find match in array (check both main and repechage)
-        let matches = [];
-        let repechageMatches = [];
-        let isRepechageMatch = false;
-        
-        if (data.main && Array.isArray(data.main)) {
-          matches = data.main;
-          repechageMatches = data.repechage || [];
-        } else if (Array.isArray(data)) {
-          matches = data;
-        }
-        
-        console.log('📊 Main matches:', matches.length);
-        console.log('📊 Repechage matches:', repechageMatches.length);
-        
-        // Search in main matches first
-        let matchIndex = matches.findIndex(m => m.id === matchId);
-        
-        if (matchIndex === -1) {
-          // Check repechage matches
-          console.log('🔍 Not found in main, checking repechage...');
-          matchIndex = repechageMatches.findIndex(m => m.id === matchId);
-          if (matchIndex === -1) {
-            console.error('❌ Match not found in tournament data');
-            console.error('❌ Match ID:', matchId);
-            console.error('❌ Available main IDs:', matches.map(m => m.id));
-            console.error('❌ Available repechage IDs:', repechageMatches.map(m => m.id));
+            console.warn('No matchId in URL - cannot complete tournament match');
             return;
-          }
-          isRepechageMatch = true;
-          console.log('✅ Found match in repechage bracket at index:', matchIndex);
-        } else {
-          console.log('✅ Found match in main bracket at index:', matchIndex);
         }
-        
-        const tournamentMatch = isRepechageMatch ? repechageMatches[matchIndex] : matches[matchIndex];
-        
-        // Determine winner player ID
+
+        console.log('🏆 Completing tournament match:', matchId, 'Winner side:', winningSide);
+
+        // Get all matches
+        const matchesRef = window.database.ref('tournament/matches');
+        const snapshot = await matchesRef.once('value');
+        const data = snapshot.val();
+
+        if (!data) {
+            console.error('No tournament data found');
+            return;
+        }
+
+        // Find the match in the category structure
+        let tournamentMatch = null;
+        let matchPath = '';
+        let isRepechageMatch = false;
+        let categoryKey = '';
+
+        // Search through all categories
+        for (const catKey of Object.keys(data)) {
+            const category = data[catKey];
+
+            // Check main matches
+            if (category.main && Array.isArray(category.main)) {
+                const matchIndex = category.main.findIndex(m => m.id === matchId);
+                if (matchIndex !== -1) {
+                    tournamentMatch = category.main[matchIndex];
+                    matchPath = `${catKey}/main/${matchIndex}`;
+                    categoryKey = catKey;
+                    console.log(`✅ Found match in category ${catKey}, main matches, index ${matchIndex}`);
+                    break;
+                }
+            }
+
+            // Check repechage matches
+            if (category.repechage && Array.isArray(category.repechage)) {
+                const matchIndex = category.repechage.findIndex(m => m.id === matchId);
+                if (matchIndex !== -1) {
+                    tournamentMatch = category.repechage[matchIndex];
+                    matchPath = `${catKey}/repechage/${matchIndex}`;
+                    isRepechageMatch = true;
+                    categoryKey = catKey;
+                    console.log(`✅ Found match in category ${catKey}, repechage matches, index ${matchIndex}`);
+                    break;
+                }
+            }
+        }
+
+        if (!tournamentMatch) {
+            console.error('❌ Match not found in any category');
+            console.error('❌ Match ID:', matchId);
+            console.error('❌ Available categories:', Object.keys(data));
+            return;
+        }
+
+        // Rest of your existing code...
         const winnerId = (winningSide === 'A') ? tournamentMatch.playerA : tournamentMatch.playerB;
         const loserId = (winningSide === 'A') ? tournamentMatch.playerB : tournamentMatch.playerA;
-        
+
         console.log('Winner ID:', winnerId);
         console.log('Loser ID:', loserId);
         console.log('Match data:', tournamentMatch);
         console.log('Is repechage match:', isRepechageMatch);
-        
+        console.log('Category key:', categoryKey);
+
         // Build score data
         const scoreData = {
-          fighterA: match.fighterA,
-          fighterB: match.fighterB,
-          winner: match.winnerName,
-          log: match.log,
-          duration: match.durationMin,
-          goldenScore: match.goldenScoreActive
+            fighterA: match.fighterA,
+            fighterB: match.fighterB,
+            winner: match.winnerName,
+            log: match.log,
+            duration: match.durationMin,
+            goldenScore: match.goldenScoreActive
         };
-        
-        // Update match status and trigger progression
-        const matchPath = isRepechageMatch ? `repechage/${matchIndex}` : `main/${matchIndex}`;
+
+        // Update match status
         console.log('📝 Updating match at path:', matchPath);
-        
-        await matchRef.child(matchPath).update({
-          status: 'completed',
-          completed: true,
-          winner: winnerId,
-          loser: loserId,
-          scoreData: scoreData,
-          endTime: firebase.database.ServerValue.TIMESTAMP
+
+        // Use the correct reference
+        const updateRef = matchesRef.child(matchPath);
+
+        await updateRef.update({
+            status: 'completed',
+            completed: true,
+            winner: winnerId,
+            loser: loserId,
+            scoreData: scoreData,
+            endTime: firebase.database.ServerValue.TIMESTAMP
         });
-        
+
         console.log('✅ Match marked as completed in Firebase at path:', matchPath);
-        
+
         // Trigger tournament progression
         if (window.TournamentProgression) {
-          console.log('🔄 Triggering tournament progression...');
-          const progression = new TournamentProgression();
-          await progression.onMatchComplete(matchId, winnerId);
-          console.log('✅ Tournament progression complete');
-        } else {
-          console.warn('TournamentProgression not available');
+            console.log('🔄 Triggering tournament progression...');
+            const progression = new TournamentProgression();
+            await progression.onMatchComplete(matchId, winnerId);
+            console.log('✅ Tournament progression complete');
         }
-        
-      } catch (error) {
-        console.error('❌ Error completing tournament match:', error);
-      }
-    }
 
+    } catch (error) {
+        console.error('❌ Error completing match:', error);
+        throw error;
+    }
+}
     /* timer controls */
 function updateTimerDisplay() {
   const timerDisplay = document.getElementById('timerDisplay');
