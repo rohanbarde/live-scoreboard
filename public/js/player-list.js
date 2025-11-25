@@ -325,8 +325,8 @@ function renderPlayers() {
         }
         // Edit button
         const editBtn = `<button class='btn btn-sm btn-outline-primary' onclick='editPlayer("${player.id}")'>Edit</button>`;
-        // Always show MJA/2025/XX if present, else blank
-        const regId = player.playerId && /^MJA\/2025\/.+/.test(player.playerId) ? player.playerId : '';
+        // Show player ID if present (supports all formats like MJA/MH12-OSH-000002 or MJA/2025/XX)
+        const regId = player.playerId || '';
         return `
             <tr>
                 <td>${index + 1}</td>
