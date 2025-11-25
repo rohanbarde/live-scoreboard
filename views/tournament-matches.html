@@ -37,6 +37,12 @@
                 <button class="tab" data-tab="bracket">Bracket View</button>
                 <button class="tab active" data-tab="list">List View</button>
             </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="categoryFilter" class="form-select" style="width: auto; min-width: 200px;">
+                    <option value="">All Categories</option>
+                    <!-- Will be populated dynamically -->
+                </select>
+            </div>
             <div style="display: flex; gap: 10px; align-items: center; margin-left: auto;">
                 <!-- Device Info will be inserted here -->
                 <div id="deviceInfo"></div>
@@ -120,6 +126,9 @@
     <!-- Tournament Progression System -->
     <script src="../public/js/tournament-progression.js"></script>
     
+    <!-- IJF Tournament Manager (Enhanced) -->
+    <script src="../public/js/ijf-tournament-manager.js"></script>
+    
     <!-- Match Manager - Multi-Device System -->
     <script src="../public/js/match-manager.js"></script>
     <script src="../public/js/tournament-matches-multi-device.js"></script>
@@ -128,12 +137,118 @@
     <script src="../public/js/bracket-view.js"></script>
     
     <script>
+        // Load saved categories from tournament/draws
+        async function loadCategories() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (!categoryFilter) return;
+            
+            try {
+                const drawsRef = firebase.database().ref('tournament/draws');
+                const snapshot = await drawsRef.once('value');
+                
+                if (!snapshot.exists()) {
+                    console.log('No saved draws found');
+                    return;
+                }
+                
+                const draws = snapshot.val();
+                categoryFilter.innerHTML = '<option value="">All Categories</option>';
+                
+                Object.keys(draws).forEach(categoryKey => {
+                    const draw = draws[categoryKey];
+                    const option = document.createElement('option');
+                    option.value = categoryKey;
+                    option.textContent = draw.category.displayName;
+                    categoryFilter.appendChild(option);
+                });
+                
+                console.log('✅ Loaded', Object.keys(draws).length, 'categories');
+                
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+        
+        // Store selected category and all matches
+        let selectedCategoryKey = '';
+        let allMatches = [];
+        
+        // Filter matches by category
+        function filterMatchesByCategory(categoryKey) {
+            console.log('Filtering matches by category:', categoryKey);
+            selectedCategoryKey = categoryKey;
+            
+            if (categoryKey) {
+                // Filter already loaded matches by category
+                const filteredMatches = allMatches.filter(match => match.category === categoryKey);
+                console.log('✅ Filtered', filteredMatches.length, 'matches for category:', categoryKey);
+                
+                if (filteredMatches.length > 0) {
+                    if (window.renderMatches) {
+                        window.renderMatches(filteredMatches);
+                    }
+                } else {
+                    const container = document.getElementById('matchesContainer');
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i> No matches found for this category.
+                                <a href="/views/generate-draws.html" class="alert-link">Generate and save draw first</a>
+                            </div>
+                        `;
+                    }
+                }
+            } else {
+                // Show all matches
+                console.log('✅ Showing all', allMatches.length, 'matches');
+                if (window.renderMatches) {
+                    window.renderMatches(allMatches);
+                }
+            }
+        }
+        
+        // Store matches when they're loaded
+        function storeAndRenderMatches(matches) {
+            allMatches = matches;
+            console.log('📦 Stored', matches.length, 'total matches');
+            
+            // Debug: Show categories in matches
+            if (matches.length > 0) {
+                const categories = [...new Set(matches.map(m => m.category))];
+                console.log('📋 Available categories in matches:', categories);
+                console.log('📋 Sample match:', matches[0]);
+            }
+            
+            // If a category is selected, filter; otherwise show all
+            if (selectedCategoryKey) {
+                filterMatchesByCategory(selectedCategoryKey);
+            } else {
+                if (window.renderMatches) {
+                    window.renderMatches(matches);
+                }
+            }
+        }
+        
+        // Make function available globally
+        window.storeAndRenderMatches = storeAndRenderMatches;
+        
         // Initialize bracket view and tournament progression
         document.addEventListener('DOMContentLoaded', async () => {
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
+            const categoryFilter = document.getElementById('categoryFilter');
             let bracketView = null;
             let tournamentProgression = null;
+
+            // Load categories
+            await loadCategories();
+            
+            // Category filter change handler
+            if (categoryFilter) {
+                categoryFilter.addEventListener('change', (e) => {
+                    filterMatchesByCategory(e.target.value);
+                });
+            }
 
             // Initialize tournament progression
             if (window.TournamentProgression) {

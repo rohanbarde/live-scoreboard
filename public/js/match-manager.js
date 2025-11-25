@@ -112,6 +112,20 @@
             const matches = [];
             const rounds = Math.ceil(Math.log2(players.length));
             
+            // Helper function to sanitize player data
+            const sanitizePlayer = (player) => {
+                if (!player) return null;
+                return {
+                    id: player.id || '',
+                    fullName: player.fullName || player.name || '',
+                    name: player.name || player.fullName || '',
+                    team: player.team || '',
+                    weight: player.weight || 0,
+                    gender: player.gender || '',
+                    photoBase64: player.photoBase64 || ''
+                };
+            };
+            
             // First round matches
             for (let i = 0; i < players.length; i += 2) {
                 if (i + 1 < players.length) {
@@ -122,8 +136,8 @@
                         round: 1,
                         weight: weight,
                         gender: gender,
-                        fighterA: players[i],
-                        fighterB: players[i + 1],
+                        fighterA: sanitizePlayer(players[i]),
+                        fighterB: sanitizePlayer(players[i + 1]),
                         status: 'pending', // pending, locked, in_progress, completed
                         winner: null,
                         mat: null,
@@ -139,15 +153,49 @@
         }
 
         /**
-         * Find match index in the array (searches both main and repechage)
+         * Find match index in array (handles both main and repechage, and category-based structure)
          */
         async findMatchIndex(matchId) {
             const snapshot = await this.matchesRef.once('value');
             const data = snapshot.val();
             
-            if (!data) return { index: -1, isRepechage: false };
+            if (!data) return { index: -1, isRepechage: false, categoryKey: null };
             
-            // Check main matches
+            // Check if category-based structure
+            const firstKey = Object.keys(data)[0];
+            const firstValue = data[firstKey];
+            
+            if (firstValue && typeof firstValue === 'object' && (firstValue.main || firstValue.repechage)) {
+                console.log('🔍 Searching for match in category-based structure');
+                
+                // Search through all categories
+                for (const categoryKey of Object.keys(data)) {
+                    const categoryData = data[categoryKey];
+                    
+                    // Search in main matches
+                    if (categoryData.main && Array.isArray(categoryData.main)) {
+                        const index = categoryData.main.findIndex(m => m.id === matchId);
+                        if (index !== -1) {
+                            console.log(`✅ Match found in category ${categoryKey}, main matches, index ${index}`);
+                            return { index, isRepechage: false, categoryKey };
+                        }
+                    }
+                    
+                    // Search in repechage matches
+                    if (categoryData.repechage && Array.isArray(categoryData.repechage)) {
+                        const index = categoryData.repechage.findIndex(m => m.id === matchId);
+                        if (index !== -1) {
+                            console.log(`✅ Match found in category ${categoryKey}, repechage matches, index ${index}`);
+                            return { index, isRepechage: true, categoryKey };
+                        }
+                    }
+                }
+                
+                console.log('❌ Match not found in any category');
+                return { index: -1, isRepechage: false, categoryKey: null };
+            }
+            
+            // Handle single category or old structure
             let matches = [];
             let repechageMatches = [];
             
@@ -158,26 +206,26 @@
                 matches = data;
             } else {
                 // Old object structure - match exists as child
-                return { index: null, isRepechage: false }; // Use old method
+                return { index: null, isRepechage: false, categoryKey: null }; // Use old method
             }
             
             // Search in main matches first
             let index = matches.findIndex(m => m.id === matchId);
             if (index !== -1) {
-                return { index, isRepechage: false };
+                return { index, isRepechage: false, categoryKey: null };
             }
             
             // Search in repechage matches
             index = repechageMatches.findIndex(m => m.id === matchId);
             if (index !== -1) {
-                return { index, isRepechage: true };
+                return { index, isRepechage: true, categoryKey: null };
             }
             
-            return { index: -1, isRepechage: false };
+            return { index: -1, isRepechage: false, categoryKey: null };
         }
         
         /**
-         * Get match reference (handles both array and object structures, and repechage)
+         * Get match reference (handles both array and object structures, repechage, and category-based structure)
          */
         async getMatchRef(matchId) {
             const result = await this.findMatchIndex(matchId);
@@ -186,11 +234,21 @@
                 // Old object structure
                 return this.matchesRef.child(matchId);
             } else if (result.index >= 0) {
-                // Array structure - check if main or repechage
-                if (result.isRepechage) {
-                    return this.matchesRef.child(`repechage/${result.index}`);
+                // Array structure - check if category-based
+                if (result.categoryKey) {
+                    // Category-based structure
+                    if (result.isRepechage) {
+                        return this.matchesRef.child(`${result.categoryKey}/repechage/${result.index}`);
+                    } else {
+                        return this.matchesRef.child(`${result.categoryKey}/main/${result.index}`);
+                    }
                 } else {
-                    return this.matchesRef.child(`main/${result.index}`);
+                    // Single category structure
+                    if (result.isRepechage) {
+                        return this.matchesRef.child(`repechage/${result.index}`);
+                    } else {
+                        return this.matchesRef.child(`main/${result.index}`);
+                    }
                 }
             }
             
@@ -203,6 +261,13 @@
         async lockMatch(matchId) {
             try {
                 console.log('🔒 Attempting to lock match:', matchId);
+                
+                // Check Firebase connection first
+                const connectedRef = firebase.database().ref('.info/connected');
+                const connSnapshot = await connectedRef.once('value');
+                if (!connSnapshot.val()) {
+                    throw new Error('Not connected to Firebase. Please check your internet connection.');
+                }
                 
                 const lockRef = this.locksRef.child(matchId);
                 const matchRef = await this.getMatchRef(matchId);
@@ -234,21 +299,37 @@
                     throw new Error(`Match is ${currentStatus}`);
                 }
 
-                // Try to acquire lock using transaction
-                const lockResult = await lockRef.transaction(currentLock => {
-                    if (currentLock === null) {
-                        // Lock is available
-                        return {
-                            deviceId: DEVICE_ID,
-                            deviceName: DEVICE_NAME,
-                            lockedAt: Date.now(),
-                            matchId: matchId
-                        };
-                    } else {
-                        // Lock is taken
-                        return undefined; // Abort transaction
+                // Try to acquire lock using transaction with retry logic
+                let lockResult;
+                let retries = 3;
+                
+                while (retries > 0) {
+                    try {
+                        lockResult = await lockRef.transaction(currentLock => {
+                            if (currentLock === null) {
+                                // Lock is available
+                                return {
+                                    deviceId: DEVICE_ID,
+                                    deviceName: DEVICE_NAME,
+                                    lockedAt: Date.now(),
+                                    matchId: matchId
+                                };
+                            } else {
+                                // Lock is taken
+                                return undefined; // Abort transaction
+                            }
+                        }, undefined, false); // applyLocally = false for better consistency
+                        
+                        break; // Success, exit retry loop
+                    } catch (transactionError) {
+                        retries--;
+                        if (retries === 0) {
+                            throw transactionError;
+                        }
+                        console.warn(`⚠️ Transaction failed, retrying... (${retries} attempts left)`);
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
                     }
-                });
+                }
 
                 if (!lockResult.committed) {
                     throw new Error('Match is already locked by another device');
@@ -392,12 +473,18 @@
                 this.currentMatchId = null;
                 console.log('✅ Match completed:', matchId, 'Winner:', winner);
                 
-                // Trigger tournament progression if TournamentProgression is available
-                if (window.TournamentProgression) {
-                    console.log('🔄 Triggering tournament progression...');
+                // Trigger tournament progression - Use IJF Tournament Manager if available
+                if (window.IJFTournamentManager) {
+                    console.log('🔄 Using IJF Tournament Manager for tournament progression...');
+                    const tournamentManager = new IJFTournamentManager();
+                    await tournamentManager.progressTournament(matchId, winner);
+                    await tournamentManager.checkAndCreateRepechage(matchId);
+                    console.log('✅ IJF Tournament progression complete');
+                } else if (window.TournamentProgression) {
+                    console.log('🔄 Using legacy TournamentProgression...');
                     const progression = new TournamentProgression();
                     await progression.onMatchComplete(matchId, winner);
-                    console.log('✅ Tournament progression complete');
+                    console.log('✅ Legacy tournament progression complete');
                 }
                 
                 return true;
@@ -484,9 +571,43 @@
                     return;
                 }
                 
-                // Handle new structure: { main: [...], repechage: [...] }
-                if (data.main && Array.isArray(data.main)) {
-                    console.log('📊 Loading matches from new structure (main array)');
+                // Handle new category-based structure: { SENIOR_male_60: {main: [...], repechage: [...]}, ... }
+                // Check if data has category keys (e.g., SENIOR_male_60)
+                const firstKey = Object.keys(data)[0];
+                const firstValue = data[firstKey];
+                
+                if (firstValue && typeof firstValue === 'object' && (firstValue.main || firstValue.repechage)) {
+                    console.log('📊 Loading matches from category-based structure');
+                    // Iterate through all categories
+                    Object.keys(data).forEach(categoryKey => {
+                        const categoryData = data[categoryKey];
+                        
+                        // Load main matches
+                        if (categoryData.main && Array.isArray(categoryData.main)) {
+                            const categoryMatches = categoryData.main.map(match => ({
+                                ...match,
+                                id: match.id || this.generateMatchId(),
+                                category: categoryKey
+                            }));
+                            matches.push(...categoryMatches);
+                        }
+                        
+                        // Load repechage matches
+                        if (categoryData.repechage && Array.isArray(categoryData.repechage)) {
+                            const repechageMatches = categoryData.repechage.map(match => ({
+                                ...match,
+                                id: match.id || this.generateMatchId(),
+                                isRepechage: true,
+                                category: categoryKey
+                            }));
+                            matches.push(...repechageMatches);
+                        }
+                    });
+                    console.log('✅ Loaded', matches.length, 'matches from', Object.keys(data).length, 'categories');
+                }
+                // Handle single category structure: { main: [...], repechage: [...] }
+                else if (data.main && Array.isArray(data.main)) {
+                    console.log('📊 Loading matches from single category structure (main array)');
                     matches = data.main.map(match => ({
                         ...match,
                         id: match.id || this.generateMatchId()

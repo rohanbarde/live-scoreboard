@@ -1,11 +1,23 @@
 /**
  * Integration between Draw Generation and Match Manager
  * This script connects the draw generation system with the multi-device match manager
+ * 
+ * NOTE: This script is DISABLED. Matches are now created only when "Save Draw" is clicked.
+ * The new category-based system saves matches directly in generate-draws.js
  */
 
-// Override the generate draw function to use Match Manager
+// DISABLED - Matches are now saved via "Save Draw" button
 (function() {
     'use strict';
+
+    console.log('ℹ️ Draw-to-Matches integration is DISABLED. Use "Save Draw" button instead.');
+    
+    // This integration is disabled to prevent conflicts with the new category-based system
+    // Matches are now saved when the admin clicks "Save Draw" button
+    
+    return; // Exit immediately
+    
+    // The code below is kept for reference but will not execute
 
     // Wait for both systems to be ready
     function waitForSystems() {
@@ -95,15 +107,15 @@
                     };
                 }
 
-                // Add player with proper structure
+                // Add player with proper structure (ensure no undefined values)
                 matchesByCategory[key].players.push({
                     id: player.id,
-                    fullName: player.fullName,
-                    name: player.fullName,
+                    fullName: player.fullName || '',
+                    name: player.fullName || '',
                     team: player.playerInfo?.team || 'N/A',
-                    weight: player.playerInfo?.weight,
-                    gender: player.playerInfo?.gender,
-                    photoBase64: player.photoBase64
+                    weight: player.playerInfo?.weight || 0,
+                    gender: player.playerInfo?.gender || '',
+                    photoBase64: player.photoBase64 || ''
                 });
             });
 

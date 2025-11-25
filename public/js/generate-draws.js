@@ -5,10 +5,15 @@ let weights = new Set();
 let tournamentDraw;
 
 // DOM Elements
+const ageGroupFilter = document.getElementById('ageGroupFilter');
 const genderFilter = document.getElementById('drawGenderFilter');
 const weightFilter = document.getElementById('drawWeightFilter');
 const generateDrawBtn = document.getElementById('generateDrawBtn');
+const saveDrawBtn = document.getElementById('saveDrawBtn');
 const drawsContent = document.getElementById('drawsContent');
+
+// Store current draw data
+let currentDrawData = null;
 
 // Tournament Draw System
 class TournamentDraw {
@@ -626,9 +631,57 @@ function updateWeightFilter() {
 
 // Set up event listeners
 function setupEventListeners() {
-    // Filter dropdowns
-    genderFilter.addEventListener('change', filterAndRenderDraws);
-    weightFilter.addEventListener('change', filterAndRenderDraws);
+    // Age group filter - updates weight categories
+    if (ageGroupFilter) {
+        ageGroupFilter.addEventListener('change', () => {
+            updateWeightCategories();
+            filterAndRenderDraws();
+        });
+    }
+    
+    // Gender filter - updates weight categories
+    if (genderFilter) {
+        genderFilter.addEventListener('change', () => {
+            updateWeightCategories();
+            filterAndRenderDraws();
+        });
+    }
+    
+    // Weight filter
+    if (weightFilter) {
+        weightFilter.addEventListener('change', filterAndRenderDraws);
+    }
+}
+
+// Update weight categories based on age group and gender
+function updateWeightCategories() {
+    const ageGroup = ageGroupFilter ? ageGroupFilter.value : '';
+    const gender = genderFilter ? genderFilter.value : '';
+    
+    if (!weightFilter) return;
+    
+    // Clear current options
+    weightFilter.innerHTML = '<option value="">All Weights</option>';
+    
+    if (ageGroup && gender && window.getWeightCategories) {
+        // Get categories for selected age group and gender
+        const categories = window.getWeightCategories(ageGroup, gender);
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.value;
+            option.textContent = cat.label;
+            weightFilter.appendChild(option);
+        });
+    } else {
+        // Show all unique weights from players
+        const uniqueWeights = [...weights].sort((a, b) => a - b);
+        uniqueWeights.forEach(weight => {
+            const option = document.createElement('option');
+            option.value = weight;
+            option.textContent = `${weight} kg`;
+            weightFilter.appendChild(option);
+        });
+    }
 }
 
 // Filter players and render draws
@@ -798,16 +851,33 @@ async function animateGenerateDraw() {
   shuffle.classList.remove('visible');
   setTimeout(() => shuffle.remove(), 300);
 
-  // Save the bracket data to Firebase (already created above)
-  try {
-    
-    // Save complete bracket structure (main + repechage)
-    await tournamentDraw.matchesRef.set(bracketData);
-    
-    console.log('IJF-compliant matches saved to Firebase with', seeds.length, 'seeds');
-  } catch (err) {
-    console.error('Error saving animated draw:', err);
+  // Get age group
+  const selectedAgeGroup = ageGroupFilter ? ageGroupFilter.value : '';
+  const ageGroupLabel = selectedAgeGroup ? 
+    ageGroupFilter.options[ageGroupFilter.selectedIndex].text : 'All Ages';
+  
+  // Store the bracket data for saving later
+  currentDrawData = {
+    bracketData: bracketData,
+    category: {
+      ageGroup: selectedAgeGroup || 'all',
+      gender: selectedGender || 'all',
+      weight: selectedWeight || 'all',
+      ageGroupLabel: ageGroupLabel,
+      weightLabel: selectedWeight ? `${selectedWeight} kg` : 'All Weights',
+      genderLabel: selectedGender ? (selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1)) : 'All Genders'
+    },
+    players: visiblePlayers,
+    seeds: seeds,
+    createdAt: Date.now()
+  };
+  
+  // Show the Save Draw button
+  if (saveDrawBtn) {
+    saveDrawBtn.style.display = 'inline-block';
   }
+  
+  console.log('✅ Draw generated successfully. Click "Save Draw" to save to database.');
 }
 
 /* Animate a DOM element clone from `sourceEl` to overlay target name element `targetNameEl`.
@@ -1002,6 +1072,72 @@ function showError(message) {
 }
 
 
+// Save draw to database
+async function saveDraw() {
+    if (!currentDrawData) {
+        alert('⚠️ No draw to save. Please generate a draw first.');
+        return;
+    }
+    
+    // Disable button and show loading
+    saveDrawBtn.disabled = true;
+    const originalText = saveDrawBtn.innerHTML;
+    saveDrawBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    try {
+        const { bracketData, category, players, seeds, createdAt } = currentDrawData;
+        
+        // Create a unique key for this category
+        const categoryKey = `${category.ageGroup}_${category.gender}_${category.weight}`.replace(/\./g, '_');
+        
+        // Prepare draw data to save
+        const drawToSave = {
+            categoryKey: categoryKey,
+            category: {
+                ageGroup: category.ageGroup,
+                gender: category.gender,
+                weight: category.weight,
+                ageGroupLabel: category.ageGroupLabel,
+                weightLabel: category.weightLabel,
+                genderLabel: category.genderLabel,
+                displayName: `${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}`
+            },
+            bracketData: bracketData,
+            playerCount: players.length,
+            seedCount: seeds.length,
+            createdAt: createdAt,
+            savedAt: firebase.database.ServerValue.TIMESTAMP,
+            status: 'pending' // pending, in-progress, completed
+        };
+        
+        // Save to tournament/draws/{categoryKey}
+        await firebase.database().ref(`tournament/draws/${categoryKey}`).set(drawToSave);
+        
+        // Also save matches to tournament/matches/{categoryKey}
+        console.log('💾 Saving matches to:', `tournament/matches/${categoryKey}`);
+        console.log('💾 Bracket data:', bracketData);
+        await tournamentDraw.matchesRef.child(categoryKey).set(bracketData);
+        
+        console.log('✅ Draw saved successfully:', categoryKey);
+        console.log('✅ Matches saved to tournament/matches/' + categoryKey);
+        
+        // Show success message
+        alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}`);
+        
+        // Hide save button and reset
+        saveDrawBtn.style.display = 'none';
+        currentDrawData = null;
+        
+    } catch (error) {
+        console.error('❌ Error saving draw:', error);
+        alert('❌ Failed to save draw. Please try again.');
+    } finally {
+        // Reset button
+        saveDrawBtn.disabled = false;
+        saveDrawBtn.innerHTML = originalText;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize TournamentDraw system
     tournamentDraw = new TournamentDraw();
@@ -1014,5 +1150,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bind Generate Draw button
     generateDrawBtn.addEventListener("click", animateGenerateDraw);
+    
+    // Bind Save Draw button
+    if (saveDrawBtn) {
+        saveDrawBtn.addEventListener("click", saveDraw);
+    }
 });
 
