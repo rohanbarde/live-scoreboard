@@ -31,7 +31,7 @@ const WEIGHT_CATEGORIES = {
     JUNIOR: {
         name: 'Junior',
         ageRange: 'Under 21',
-        minAge: 0,
+        minAge: 12,
         maxAge: 21,
         men: [
             { value: 55, label: '-55 kg', max: 55 },
@@ -57,7 +57,7 @@ const WEIGHT_CATEGORIES = {
     CADET: {
         name: 'Cadet',
         ageRange: 'Under 18',
-        minAge: 0,
+        minAge: 12,
         maxAge: 18,
         men: [
             { value: 50, label: '-50 kg', max: 50 },
