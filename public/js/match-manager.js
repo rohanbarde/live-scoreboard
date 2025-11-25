@@ -498,9 +498,43 @@
                     return;
                 }
                 
-                // Handle new structure: { main: [...], repechage: [...] }
-                if (data.main && Array.isArray(data.main)) {
-                    console.log('📊 Loading matches from new structure (main array)');
+                // Handle new category-based structure: { SENIOR_male_60: {main: [...], repechage: [...]}, ... }
+                // Check if data has category keys (e.g., SENIOR_male_60)
+                const firstKey = Object.keys(data)[0];
+                const firstValue = data[firstKey];
+                
+                if (firstValue && typeof firstValue === 'object' && (firstValue.main || firstValue.repechage)) {
+                    console.log('📊 Loading matches from category-based structure');
+                    // Iterate through all categories
+                    Object.keys(data).forEach(categoryKey => {
+                        const categoryData = data[categoryKey];
+                        
+                        // Load main matches
+                        if (categoryData.main && Array.isArray(categoryData.main)) {
+                            const categoryMatches = categoryData.main.map(match => ({
+                                ...match,
+                                id: match.id || this.generateMatchId(),
+                                category: categoryKey
+                            }));
+                            matches.push(...categoryMatches);
+                        }
+                        
+                        // Load repechage matches
+                        if (categoryData.repechage && Array.isArray(categoryData.repechage)) {
+                            const repechageMatches = categoryData.repechage.map(match => ({
+                                ...match,
+                                id: match.id || this.generateMatchId(),
+                                isRepechage: true,
+                                category: categoryKey
+                            }));
+                            matches.push(...repechageMatches);
+                        }
+                    });
+                    console.log('✅ Loaded', matches.length, 'matches from', Object.keys(data).length, 'categories');
+                }
+                // Handle single category structure: { main: [...], repechage: [...] }
+                else if (data.main && Array.isArray(data.main)) {
+                    console.log('📊 Loading matches from single category structure (main array)');
                     matches = data.main.map(match => ({
                         ...match,
                         id: match.id || this.generateMatchId()

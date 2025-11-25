@@ -1113,10 +1113,13 @@ async function saveDraw() {
         // Save to tournament/draws/{categoryKey}
         await firebase.database().ref(`tournament/draws/${categoryKey}`).set(drawToSave);
         
-        // Also save matches to tournament/matches for backward compatibility
+        // Also save matches to tournament/matches/{categoryKey}
+        console.log('💾 Saving matches to:', `tournament/matches/${categoryKey}`);
+        console.log('💾 Bracket data:', bracketData);
         await tournamentDraw.matchesRef.child(categoryKey).set(bracketData);
         
         console.log('✅ Draw saved successfully:', categoryKey);
+        console.log('✅ Matches saved to tournament/matches/' + categoryKey);
         
         // Show success message
         alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}`);

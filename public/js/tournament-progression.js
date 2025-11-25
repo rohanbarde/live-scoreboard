@@ -312,60 +312,125 @@ class TournamentProgression {
       
       if (!data) return;
 
-      let matches = [];
-      if (data.main && Array.isArray(data.main)) {
-        matches = data.main;
-      } else if (Array.isArray(data)) {
-        matches = data;
-      }
-
-      // Find matches with BYE
-      const byeMatches = matches.filter(m => 
-        (m.playerAName === 'BYE' || m.playerBName === 'BYE') && 
-        m.status !== 'completed' && !m.completed
-      );
-
-      console.log('🔄 Processing', byeMatches.length, 'BYE matches');
-
-      for (const match of byeMatches) {
-        // Determine winner (the player who is not BYE)
-        let winnerId, winnerName, winnerClub, winnerSeed, winnerCountry;
+      // Handle category-based structure
+      const firstKey = Object.keys(data)[0];
+      const firstValue = data[firstKey];
+      
+      if (firstValue && typeof firstValue === 'object' && (firstValue.main || firstValue.repechage)) {
+        console.log('🔄 Processing BYEs for category-based structure');
         
-        if (match.playerAName === 'BYE') {
-          winnerId = match.playerB;
-          winnerName = match.playerBName;
-          winnerClub = match.playerBClub;
-          winnerSeed = match.playerBSeed;
-          winnerCountry = match.playerBCountry;
-        } else {
-          winnerId = match.playerA;
-          winnerName = match.playerAName;
-          winnerClub = match.playerAClub;
-          winnerSeed = match.playerASeed;
-          winnerCountry = match.playerACountry;
+        // Process each category separately
+        for (const categoryKey of Object.keys(data)) {
+          const categoryData = data[categoryKey];
+          if (!categoryData.main || !Array.isArray(categoryData.main)) continue;
+          
+          let matches = categoryData.main;
+          
+          // Find matches with BYE
+          const byeMatches = matches.filter(m => 
+            (m.playerAName === 'BYE' || m.playerBName === 'BYE') && 
+            m.status !== 'completed' && !m.completed
+          );
+
+          if (byeMatches.length === 0) continue;
+          
+          console.log(`🔄 Processing ${byeMatches.length} BYE matches for category: ${categoryKey}`);
+
+          for (const match of byeMatches) {
+            // Determine winner (the player who is not BYE)
+            let winnerId, winnerName, winnerClub, winnerSeed, winnerCountry;
+            
+            if (match.playerAName === 'BYE') {
+              winnerId = match.playerB;
+              winnerName = match.playerBName;
+              winnerClub = match.playerBClub;
+              winnerSeed = match.playerBSeed;
+              winnerCountry = match.playerBCountry;
+            } else {
+              winnerId = match.playerA;
+              winnerName = match.playerAName;
+              winnerClub = match.playerAClub;
+              winnerSeed = match.playerASeed;
+              winnerCountry = match.playerACountry;
+            }
+
+            // Mark match as completed
+            const matchIndex = matches.findIndex(m => m.id === match.id);
+            matches[matchIndex] = {
+              ...match,
+              status: 'completed',
+              completed: true,
+              winner: winnerId,
+              byeAdvancement: true
+            };
+
+            console.log('✅ BYE processed:', winnerName, 'advances automatically');
+
+            // Progress to next round
+            await this.onMatchComplete(match.id, winnerId);
+          }
+
+          // Save updated matches for this category
+          await this.matchesRef.child(categoryKey).child('main').set(matches);
+          console.log(`✅ BYE matches processed for category: ${categoryKey}`);
+        }
+      } else {
+        // Handle old structure (single category or array)
+        let matches = [];
+        if (data.main && Array.isArray(data.main)) {
+          matches = data.main;
+        } else if (Array.isArray(data)) {
+          matches = data;
         }
 
-        // Mark match as completed
-        const matchIndex = matches.findIndex(m => m.id === match.id);
-        matches[matchIndex] = {
-          ...match,
-          status: 'completed',
-          completed: true,
-          winner: winnerId,
-          byeAdvancement: true
-        };
+        // Find matches with BYE
+        const byeMatches = matches.filter(m => 
+          (m.playerAName === 'BYE' || m.playerBName === 'BYE') && 
+          m.status !== 'completed' && !m.completed
+        );
 
-        console.log('✅ BYE processed:', winnerName, 'advances automatically');
+        console.log('🔄 Processing', byeMatches.length, 'BYE matches');
 
-        // Progress to next round
-        await this.onMatchComplete(match.id, winnerId);
-      }
+        for (const match of byeMatches) {
+          // Determine winner (the player who is not BYE)
+          let winnerId, winnerName, winnerClub, winnerSeed, winnerCountry;
+          
+          if (match.playerAName === 'BYE') {
+            winnerId = match.playerB;
+            winnerName = match.playerBName;
+            winnerClub = match.playerBClub;
+            winnerSeed = match.playerBSeed;
+            winnerCountry = match.playerBCountry;
+          } else {
+            winnerId = match.playerA;
+            winnerName = match.playerAName;
+            winnerClub = match.playerAClub;
+            winnerSeed = match.playerASeed;
+            winnerCountry = match.playerACountry;
+          }
 
-      // Save updated matches
-      if (data.main && Array.isArray(data.main)) {
-        await this.matchesRef.child('main').set(matches);
-      } else {
-        await this.matchesRef.set(matches);
+          // Mark match as completed
+          const matchIndex = matches.findIndex(m => m.id === match.id);
+          matches[matchIndex] = {
+            ...match,
+            status: 'completed',
+            completed: true,
+            winner: winnerId,
+            byeAdvancement: true
+          };
+
+          console.log('✅ BYE processed:', winnerName, 'advances automatically');
+
+          // Progress to next round
+          await this.onMatchComplete(match.id, winnerId);
+        }
+
+        // Save updated matches
+        if (data.main && Array.isArray(data.main)) {
+          await this.matchesRef.child('main').set(matches);
+        } else {
+          await this.matchesRef.set(matches);
+        }
       }
 
       console.log('✅ All BYE matches processed');

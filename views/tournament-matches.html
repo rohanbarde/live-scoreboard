@@ -166,61 +166,68 @@
             }
         }
         
-        // Store selected category
+        // Store selected category and all matches
         let selectedCategoryKey = '';
+        let allMatches = [];
         
         // Filter matches by category
         function filterMatchesByCategory(categoryKey) {
             console.log('Filtering matches by category:', categoryKey);
             selectedCategoryKey = categoryKey;
             
-            // If a category is selected, load matches from that specific path
-            if (categoryKey && window.matchManager) {
-                // Load matches from the specific category
-                const categoryRef = firebase.database().ref(`tournament/matches/${categoryKey}`);
-                categoryRef.once('value').then(snapshot => {
-                    if (snapshot.exists()) {
-                        const data = snapshot.val();
-                        console.log('Category matches data:', data);
-                        
-                        // Convert bracket data to match list
-                        let matches = [];
-                        if (data.main && Array.isArray(data.main)) {
-                            matches = data.main;
-                        }
-                        
-                        // Update the matches display
-                        if (window.renderMatches) {
-                            window.renderMatches(matches);
-                        }
-                        
-                        console.log('✅ Loaded', matches.length, 'matches for category:', categoryKey);
-                    } else {
-                        console.log('⚠️ No matches found for category:', categoryKey);
-                        const container = document.getElementById('matchesContainer');
-                        if (container) {
-                            container.innerHTML = `
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-info-circle"></i> No matches found for this category.
-                                    <a href="/views/generate-draws.html" class="alert-link">Generate and save draw first</a>
-                                </div>
-                            `;
-                        }
+            if (categoryKey) {
+                // Filter already loaded matches by category
+                const filteredMatches = allMatches.filter(match => match.category === categoryKey);
+                console.log('✅ Filtered', filteredMatches.length, 'matches for category:', categoryKey);
+                
+                if (filteredMatches.length > 0) {
+                    if (window.renderMatches) {
+                        window.renderMatches(filteredMatches);
                     }
-                }).catch(error => {
-                    console.error('Error loading category matches:', error);
-                });
+                } else {
+                    const container = document.getElementById('matchesContainer');
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i> No matches found for this category.
+                                <a href="/views/generate-draws.html" class="alert-link">Generate and save draw first</a>
+                            </div>
+                        `;
+                    }
+                }
             } else {
-                // Load all matches
-                if (window.matchManager) {
-                    window.matchManager.onMatchesUpdate(matches => {
-                        if (window.renderMatches) {
-                            window.renderMatches(matches);
-                        }
-                    });
+                // Show all matches
+                console.log('✅ Showing all', allMatches.length, 'matches');
+                if (window.renderMatches) {
+                    window.renderMatches(allMatches);
                 }
             }
         }
+        
+        // Store matches when they're loaded
+        function storeAndRenderMatches(matches) {
+            allMatches = matches;
+            console.log('📦 Stored', matches.length, 'total matches');
+            
+            // Debug: Show categories in matches
+            if (matches.length > 0) {
+                const categories = [...new Set(matches.map(m => m.category))];
+                console.log('📋 Available categories in matches:', categories);
+                console.log('📋 Sample match:', matches[0]);
+            }
+            
+            // If a category is selected, filter; otherwise show all
+            if (selectedCategoryKey) {
+                filterMatchesByCategory(selectedCategoryKey);
+            } else {
+                if (window.renderMatches) {
+                    window.renderMatches(matches);
+                }
+            }
+        }
+        
+        // Make function available globally
+        window.storeAndRenderMatches = storeAndRenderMatches;
         
         // Initialize bracket view and tournament progression
         document.addEventListener('DOMContentLoaded', async () => {
