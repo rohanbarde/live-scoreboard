@@ -297,6 +297,7 @@ function filterAndRenderPlayers() {
     });
     
     renderPlayers();
+    updateStats(); // Update stats to reflect filtered count
 }
 
 // Render players in the table
@@ -352,8 +353,9 @@ function renderPlayers() {
 
 // Update statistics
 function updateStats() {
-    // Total players
-    totalPlayersEl.textContent = players.length;
+    // Show filtered count if filters are active, otherwise show total
+    const hasActiveFilters = searchInput.value || weightFilter.value || teamFilter.value || genderFilter.value;
+    totalPlayersEl.textContent = hasActiveFilters ? filteredPlayers.length : players.length;
     
     // Total teams
     totalTeamsEl.textContent = teams.size;

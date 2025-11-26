@@ -11,7 +11,7 @@
     const AUTH_CONFIG = {
         loginPage: '/views/log-in.html',
         checkInterval: 5000, // Check auth state every 5 seconds
-        sessionTimeout: 3600000, // 1 hour in milliseconds
+        sessionTimeout: 43200000, // 12 hours in milliseconds
         publicPages: [
             '/views/log-in.html', 
             '/log-in.html', 
