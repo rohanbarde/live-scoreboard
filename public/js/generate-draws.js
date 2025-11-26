@@ -273,11 +273,31 @@ class TournamentDraw {
         if (current[i]) {
           current[i].nextMatchId = m.id;
           current[i].winnerTo = 'A';
+          
+          // CRITICAL: If previous match is already completed (BYE), advance winner immediately
+          if (current[i].completed && current[i].winner) {
+            m.playerA = current[i].winner;
+            m.playerAName = current[i].winner === current[i].playerA ? current[i].playerAName : current[i].playerBName;
+            m.playerAClub = current[i].winner === current[i].playerA ? current[i].playerAClub : current[i].playerBClub;
+            m.playerASeed = current[i].winner === current[i].playerA ? current[i].playerASeed : current[i].playerBSeed;
+            m.playerACountry = current[i].winner === current[i].playerA ? current[i].playerACountry : current[i].playerBCountry;
+            console.log(`   → Auto-filled position A in R${round} match ${i/2+1}: ${m.playerAName}`);
+          }
         }
 
         if (current[i + 1]) {
           current[i + 1].nextMatchId = m.id;
           current[i + 1].winnerTo = 'B';
+          
+          // CRITICAL: If previous match is already completed (BYE), advance winner immediately
+          if (current[i + 1].completed && current[i + 1].winner) {
+            m.playerB = current[i + 1].winner;
+            m.playerBName = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerAName : current[i + 1].playerBName;
+            m.playerBClub = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerAClub : current[i + 1].playerBClub;
+            m.playerBSeed = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerASeed : current[i + 1].playerBSeed;
+            m.playerBCountry = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerACountry : current[i + 1].playerBCountry;
+            console.log(`   → Auto-filled position B in R${round} match ${i/2+1}: ${m.playerBName}`);
+          }
         }
 
         next.push(m);
@@ -289,6 +309,19 @@ class TournamentDraw {
     }
     
     console.log(`✅ Linked ${all.length} total matches across ${round} rounds`);
+    
+    // Count auto-filled positions
+    const autoFilledCount = all.filter(m => 
+      m.round > 1 && (
+        (m.playerAName !== 'TBD' && m.playerA !== null) || 
+        (m.playerBName !== 'TBD' && m.playerB !== null)
+      )
+    ).length;
+    
+    if (autoFilledCount > 0) {
+      console.log(`✅ Auto-filled ${autoFilledCount} next-round positions from BYE winners`);
+    }
+    
     return all;
   }
 
