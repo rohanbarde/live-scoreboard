@@ -63,37 +63,17 @@ class BracketView {
   }
 
   // Group matches into pools based on bracket structure
-  groupMatchesIntoPools(matches) {
-    if (!matches || matches.length === 0) return [];
+groupMatchesIntoPools(matches) {
+  const firstRound = matches.filter(m => m.round === 1);
+  const pools = { A:[], B:[], C:[], D:[] };
 
-    // Get first round matches only
-    const firstRoundMatches = matches.filter(m => m.round === 1);
-    
-    // Calculate pool size based on total matches
-    const totalMatches = firstRoundMatches.length;
-    let poolSize = 2; // Default: 2 matches per pool
-    
-    // Determine pool size based on bracket structure
-    if (totalMatches >= 16) {
-      poolSize = 4; // 4 matches per pool for large brackets
-    } else if (totalMatches >= 8) {
-      poolSize = 2; // 2 matches per pool for medium brackets
-    } else {
-      poolSize = 2; // 2 matches per pool for small brackets
-    }
+  firstRound.forEach(m => pools[m.pool].push(m));
 
-    // Group matches into pools
-    const pools = [];
-    for (let i = 0; i < firstRoundMatches.length; i += poolSize) {
-      const poolMatches = firstRoundMatches.slice(i, i + poolSize);
-      pools.push({
-        name: String.fromCharCode(65 + pools.length), // A, B, C, D...
-        matches: poolMatches
-      });
-    }
-
-    return pools;
-  }
+  return Object.keys(pools).map(p => ({
+    name: p,
+    matches: pools[p]
+  }));
+}
 
   // Get subsequent round matches for a pool
   getPoolProgressionMatches(poolMatches, allMatches) {

@@ -246,6 +246,30 @@ class TournamentProgression {
       const finalMatch = matches.find(m => m.matchType === 'final');
       const tournamentComplete = finalMatch && (finalMatch.status === 'completed' || finalMatch.completed);
 
+
+// ✅ AUTO ADVANCE WINNER TO NEXT MATCH
+if (match.winner && match.nextMatchId) {
+
+  const nextRef = firebase.database().ref(`tournament/matches/${categoryKey}/main`)
+    .orderByChild('id')
+    .equalTo(match.nextMatchId);
+
+  nextRef.once("value", snap => {
+    snap.forEach(s => {
+      const update = {};
+
+      if (match.winnerTo === 'A') {
+        update.playerA = match.winner;
+      } else {
+        update.playerB = match.winner;
+      }
+
+      s.ref.update(update);
+    });
+  });
+}
+
+
       return {
         total,
         completed,
@@ -822,6 +846,47 @@ class TournamentProgression {
     
     return bronzeMatches;
   }
+
+  generateRepechage(mainMatches) {
+
+    const qfs = mainMatches.filter(m => m.round === 3);
+    const sfs = mainMatches.filter(m => m.round === 4);
+
+    if (qfs.length !== 4) return [];
+
+    const repA = [qfs[0], qfs[1]];
+    const repB = [qfs[2], qfs[3]];
+
+    const mk = (loserA, loserB, side) => ({
+      id: `REP_${side}_${Date.now()}`,
+      matchType: "repechage",
+      side,
+      playerA: loserA.id,
+      playerAName: loserA.name,
+      playerB: loserB.id,
+      playerBName: loserB.name,
+      completed: false
+    });
+
+    const A = mk(this.getMatchLoser(repA[0]), this.getMatchLoser(repA[1]), "A");
+    const B = mk(this.getMatchLoser(repB[0]), this.getMatchLoser(repB[1]), "B");
+
+    return [
+      A,
+      B,
+      {
+        id: 'BRONZE_A',
+        playerAName: 'Winner Rep A',
+        playerBName: this.getMatchLoser(sfs[0])?.name,
+      },
+      {
+        id: 'BRONZE_B',
+        playerAName: 'Winner Rep B',
+        playerBName: this.getMatchLoser(sfs[1])?.name,
+      }
+    ];
+  }
+
 }
 
 // Export for use in other scripts

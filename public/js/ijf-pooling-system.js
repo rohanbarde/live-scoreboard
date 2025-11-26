@@ -51,6 +51,7 @@ class IJFPoolingSystem {
 
         // Apply IJF seeding
         const seededBracket = this.applyIJFSeeding(players, seeds, structure.bracketSize);
+        this.validateNoByeVsBye(seededBracket);
 
         // Generate matches based on structure
         let tournament;
@@ -241,7 +242,18 @@ class IJFPoolingSystem {
             const playerA = seededBracket[i * 2];
             const playerB = seededBracket[i * 2 + 1];
             
-            if (!playerA && !playerB) continue;
+            if (!playerA && !playerB) {
+              matches.push({
+                id: this.generateMatchId(),
+                round: 1,
+                matchType: 'empty',
+                status: 'skipped',
+                completed: true
+              });
+              continue;
+            }
+
+
             
             const match = this.createMatch({
                 round: 1,
@@ -301,11 +313,11 @@ class IJFPoolingSystem {
      * Generate pool-based tournament
      * Used for specific formats (e.g., team competitions)
      */
-    generatePoolTournament(seededBracket, structure, categoryKey) {
-        // For now, use direct elimination
-        // Pool system can be expanded later for team competitions
-        return this.generateDirectEliminationTournament(seededBracket, structure, categoryKey);
-    }
+//    generatePoolTournament(seededBracket, structure, categoryKey) {
+//        // For now, use direct elimination
+//        // Pool system can be expanded later for team competitions
+//        return this.generateDirectEliminationTournament(seededBracket, structure, categoryKey);
+//    }
 
     /**
      * Create a match object
@@ -337,15 +349,17 @@ class IJFPoolingSystem {
         
         // Auto-complete BYE matches
         if (playerA && !playerB) {
-            match.winner = playerA.id;
-            match.loser = null;
-            match.completed = true;
-            match.status = 'completed';
-        } else if (playerB && !playerA) {
-            match.winner = playerB.id;
-            match.loser = null;
-            match.completed = true;
-            match.status = 'completed';
+          match.winner = playerA.id;
+          match.completed = true;
+          match.status = 'completed';
+          match.winByBye = true;
+        }
+
+        if (playerB && !playerA) {
+          match.winner = playerB.id;
+          match.completed = true;
+          match.status = 'completed';
+          match.winByBye = true;
         }
         
         return match;
