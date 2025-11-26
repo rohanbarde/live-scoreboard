@@ -46,8 +46,7 @@ class IJFTournamentManager {
             await this.updateMatchStatus(matchId, 'completed', winnerId, scoreData);
 
             // Step 2: Progress tournament (advance winner to next match)
-//            await this.progressTournament(matchId, winnerId);
-            await this.progressTournament(match.id, winnerId);
+            await this.progressTournament(matchId, winnerId);
 
 
             // Step 3: Check if repechage should be triggered
