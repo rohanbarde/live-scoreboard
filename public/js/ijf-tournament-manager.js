@@ -360,6 +360,7 @@ class IJFTournamentManager {
                 const qf2Loser = this.getMatchLoser(sf1QFs[1]);
 
                 if (qf1Loser && qf2Loser) {
+                    const weight = categoryKey ? categoryKey.split('_').pop() : '';
                     const repechage1 = {
                         id: `repechage_1_${categoryKey}_${Date.now()}`,
                         round: 'repechage',
@@ -379,7 +380,10 @@ class IJFTournamentManager {
                         loser: null,
                         completed: false,
                         status: 'pending',
-                        nextMatchId: null // Set when creating bronze matches
+                        nextMatchId: null, // Set when creating bronze matches
+                        category: categoryKey,
+                        weight: weight,
+                        weightCategory: weight
                     };
                     repechageMatches.push(repechage1);
                     console.log('✅ Created Repechage 1 (Pool A)');
@@ -392,6 +396,7 @@ class IJFTournamentManager {
                 const qf4Loser = this.getMatchLoser(sf2QFs[1]);
 
                 if (qf3Loser && qf4Loser) {
+                    const weight = categoryKey ? categoryKey.split('_').pop() : '';
                     const repechage2 = {
                         id: `repechage_2_${categoryKey}_${Date.now()}`,
                         round: 'repechage',
@@ -411,7 +416,10 @@ class IJFTournamentManager {
                         loser: null,
                         completed: false,
                         status: 'pending',
-                        nextMatchId: null // Set when creating bronze matches
+                        nextMatchId: null, // Set when creating bronze matches
+                        category: categoryKey,
+                        weight: weight,
+                        weightCategory: weight
                     };
                     repechageMatches.push(repechage2);
                     console.log('✅ Created Repechage 2 (Pool B)');
@@ -459,6 +467,9 @@ class IJFTournamentManager {
         const repechage1 = repechageMatches.find(m => m.side === 'side1'); // Pool A
         const repechage2 = repechageMatches.find(m => m.side === 'side2'); // Pool B
 
+        // Extract weight from categoryKey
+        const weight = categoryKey ? categoryKey.split('_').pop() : '';
+        
         // Bronze Match 1: SF2 (Pool B) Loser vs Repechage1 (Pool A) Winner
         const bronze1 = {
             id: `bronze_1_${categoryKey}_${Date.now()}`,
@@ -477,7 +488,10 @@ class IJFTournamentManager {
             winner: null,
             loser: null,
             completed: false,
-            status: 'pending'
+            status: 'pending',
+            category: categoryKey,
+            weight: weight,
+            weightCategory: weight
         };
 
         // Bronze Match 2: SF1 (Pool A) Loser vs Repechage2 (Pool B) Winner
@@ -498,7 +512,10 @@ class IJFTournamentManager {
             winner: null,
             loser: null,
             completed: false,
-            status: 'pending'
+            status: 'pending',
+            category: categoryKey,
+            weight: weight,
+            weightCategory: weight
         };
 
         // Link repechage to bronze matches (cross-pool pairing)

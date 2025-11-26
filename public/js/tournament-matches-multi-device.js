@@ -303,13 +303,20 @@ function renderMatches(matches) {
         final: finalMatch ? 1 : 0
     });
     
+    // Check if all matches are completed
+    const allMatchesCompleted = matches.every(m => m.completed === true || m.status === 'completed');
+    
     let html = '';
     
     // Create table header
     html += '<div class="table-responsive">';
     html += '<table class="table table-hover">';
     html += '<thead><tr>';
-    html += '<th>#</th><th>Type</th><th>Round</th><th>Player A</th><th>VS</th><th>Player B</th><th>Status</th><th>Actions</th>';
+    html += '<th>#</th><th>Type</th><th>Round</th><th>Judoka White</th><th>VS</th><th>Judoka Blue</th><th>Mat</th><th>Status</th><th>Winner</th>';
+    // Only show Actions column if not all matches are completed
+    if (!allMatchesCompleted) {
+        html += '<th>Actions</th>';
+    }
     html += '</tr></thead><tbody>';
     
     let matchCounter = 1;
@@ -320,22 +327,22 @@ function renderMatches(matches) {
         
         // Pending matches
         pending.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         
         // Locked matches
         locked.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         
         // In progress matches
         inProgress.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         
         // Completed matches
         completed.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
     }
     
@@ -343,13 +350,13 @@ function renderMatches(matches) {
     if (repechageOnlyMatches.length > 0) {
         html += `<tr class="table-info"><td colspan="8"><strong><i class="fas fa-redo"></i> Repechage Matches</strong></td></tr>`;
         repechagePending.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         repechageInProgress.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         repechageCompleted.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
     }
     
@@ -357,20 +364,20 @@ function renderMatches(matches) {
     if (bronzeMatches.length > 0) {
         html += `<tr class="table-warning"><td colspan="8"><strong><i class="fas fa-medal"></i> Bronze Medal Matches</strong></td></tr>`;
         bronzePending.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         bronzeInProgress.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
         bronzeCompleted.forEach(match => {
-            html += renderMatchRow(match, matchCounter++);
+            html += renderMatchRow(match, matchCounter++, allMatchesCompleted);
         });
     }
     
     // FINAL MATCH (shown last)
     if (finalMatch) {
         html += `<tr class="table-danger"><td colspan="8"><strong><i class="fas fa-crown"></i> Final Match</strong></td></tr>`;
-        html += renderMatchRow(finalMatch, matchCounter++);
+        html += renderMatchRow(finalMatch, matchCounter++, allMatchesCompleted);
     }
     
     html += '</tbody></table></div>';
@@ -382,9 +389,40 @@ function renderMatches(matches) {
 }
 
 /**
+ * Get proper round name based on match data
+ */
+function getRoundName(match) {
+    // For special match types, return their type
+    if (match.matchType === 'final') return 'Final';
+    if (match.matchType === 'bronze') return 'Bronze';
+    if (match.matchType === 'repechage') return 'Repechage';
+    
+    // Get round number
+    const round = match.round;
+    if (!round) return '';
+    
+    // Determine bracket size from match data or estimate
+    const bracketSize = match.bracketSize || 16; // Default to 16 if not specified
+    const totalRounds = Math.log2(bracketSize);
+    const playersInRound = Math.pow(2, totalRounds - round + 1);
+    
+    // Return proper round names
+    if (playersInRound === 2) return 'Final';
+    if (playersInRound === 4) return 'Semifinal';
+    if (playersInRound === 8) return 'Quarterfinal';
+    
+    // For earlier rounds
+    if (round === 1) return 'Round 1';
+    if (round === 2 && totalRounds > 3) return 'Round 1/2';
+    if (round === 3 && totalRounds > 4) return 'Round 2/3';
+    
+    return `Round ${round}`;
+}
+
+/**
  * Render match row (list format)
  */
-function renderMatchRow(match, rowNumber) {
+function renderMatchRow(match, rowNumber, hideActions = false) {
     const isOwnedByThisDevice = match.deviceId === window.DEVICE_ID;
     const isCompleted = match.completed === true || match.status === 'completed';
     const status = isCompleted ? 'completed' : (match.status || 'pending');
@@ -406,22 +444,43 @@ function renderMatchRow(match, rowNumber) {
         matchTypeBadge = '<span class="badge bg-info">🔄 REPECHAGE</span>';
     }
     
-    // Status badge
+    // Mat number input/display
+    let matNumberCell = '';
+    if (status === 'pending' && !isCompleted) {
+        // Editable input for pending matches
+        matNumberCell = `<input type="number" class="form-control form-control-sm" style="width: 60px;" 
+                         value="${match.matNumber || ''}" 
+                         placeholder="Mat" 
+                         onchange="updateMatNumber('${match.id}', this.value)">`;
+    } else {
+        // Display mat number for locked/in-progress/completed
+        matNumberCell = match.matNumber ? `<strong>Mat ${match.matNumber}</strong>` : '-';
+    }
+    
+    // Status badge (without mat number)
     let statusBadge = '';
     switch(status) {
         case 'pending':
             statusBadge = '<span class="badge bg-secondary">⏳ Pending</span>';
             break;
         case 'locked':
-            statusBadge = `<span class="badge bg-warning">🔒 Locked</span>`;
+            statusBadge = '<span class="badge bg-warning">🔒 Locked</span>';
             break;
         case 'in_progress':
-            statusBadge = `<span class="badge bg-primary">▶️ In Progress</span>`;
+            statusBadge = '<span class="badge bg-primary">▶️ In Progress</span>';
             break;
         case 'completed':
-            const winnerName = match.winner === match.playerA ? fighterAName : fighterBName;
-            statusBadge = `<span class="badge bg-success">✅ ${winnerName}</span>`;
+            statusBadge = '<span class="badge bg-success">✅ Completed</span>';
             break;
+    }
+    
+    // Winner display
+    let winnerCell = '';
+    if (isCompleted && match.winner) {
+        const winnerName = match.winner === match.playerA ? fighterAName : fighterBName;
+        winnerCell = `<strong class="text-success">🏆 ${winnerName}</strong>`;
+    } else {
+        winnerCell = '-';
     }
     
     // Action buttons
@@ -440,18 +499,31 @@ function renderMatchRow(match, rowNumber) {
         actionButtons = `<button class="btn btn-sm btn-info" onclick="openMatchScoreboard('${match.id}')"><i class="fas fa-external-link-alt"></i> Open</button>`;
     }
     
-    return `
+    // Use actual match number from data
+    const displayMatchNumber = match.matchNumber || rowNumber;
+    
+    // Get proper round name
+    const roundName = getRoundName(match);
+    
+    let rowHtml = `
         <tr class="${isOwnedByThisDevice ? 'table-primary' : ''} ${isCompleted ? 'table-light' : ''}">
-            <td>${rowNumber}</td>
+            <td><strong>#${displayMatchNumber}</strong></td>
             <td>${matchTypeBadge}</td>
-            <td>R${match.round || '?'}</td>
+            <td>${roundName}</td>
             <td><strong>${fighterAName}</strong>${fighterATeam ? '<br><small class="text-muted">' + fighterATeam + '</small>' : ''}</td>
             <td><strong>VS</strong></td>
             <td><strong>${fighterBName}</strong>${fighterBTeam ? '<br><small class="text-muted">' + fighterBTeam + '</small>' : ''}</td>
+            <td>${matNumberCell}</td>
             <td>${statusBadge}</td>
-            <td>${actionButtons}</td>
-        </tr>
-    `;
+            <td>${winnerCell}</td>`;
+    
+    // Only add actions column if not hiding actions
+    if (!hideActions) {
+        rowHtml += `<td>${actionButtons}</td>`;
+    }
+    
+    rowHtml += `</tr>`;
+    return rowHtml;
 }
 
 /**
@@ -689,13 +761,22 @@ async function lockAndStartMatch(matchId) {
         console.log('🎯 lockAndStartMatch called with matchId:', matchId);
         console.log('🎯 matchId type:', typeof matchId);
         
-        // Prompt for mat number
-        const matNumber = prompt('Enter Mat Number:', '1');
-        if (!matNumber) return;
+        // Get match data to check if mat number is already assigned
+        const matchRef = await matchManager.getMatchRef(matchId);
+        const matchSnapshot = await matchRef.once('value');
+        const matchData = matchSnapshot.val();
         
-        // Lock the match
-        console.log('🔒 Calling matchManager.lockMatch...');
-        await matchManager.lockMatch(matchId);
+        let matNumber = matchData.matNumber;
+        
+        // If no mat number assigned, prompt for it
+        if (!matNumber) {
+            matNumber = prompt('Enter Mat Number:', '1');
+            if (!matNumber) return;
+        }
+        
+        // Lock the match with mat number
+        console.log('🔒 Calling matchManager.lockMatch with mat number:', matNumber);
+        await matchManager.lockMatch(matchId, matNumber);
         
         // Start the match
         console.log('▶️ Calling matchManager.startMatch...');
@@ -778,6 +859,32 @@ async function deleteDevice(deviceId, deviceName) {
 }
 
 /**
+ * Update mat number for a match
+ */
+async function updateMatNumber(matchId, matNumber) {
+    try {
+        if (!matNumber || matNumber.trim() === '') {
+            return; // Don't update if empty
+        }
+        
+        const matchRef = await matchManager.getMatchRef(matchId);
+        if (!matchRef) {
+            throw new Error('Match not found');
+        }
+        
+        await matchRef.update({
+            matNumber: matNumber.trim()
+        });
+        
+        console.log(`✅ Mat number ${matNumber} assigned to match ${matchId}`);
+        
+    } catch (error) {
+        console.error('❌ Error updating mat number:', error);
+        alert('Error updating mat number: ' + error.message);
+    }
+}
+
+/**
  * Setup event listeners
  */
 function setupEventListeners() {
@@ -799,4 +906,5 @@ window.openMatchScoreboard = openMatchScoreboard;
 window.showDevicesModal = showDevicesModal;
 window.closeDevicesModal = closeDevicesModal;
 window.deleteDevice = deleteDevice;
+window.updateMatNumber = updateMatNumber;
 window.renderMatches = renderMatches;

@@ -568,6 +568,11 @@ function setupEventListeners() {
         ageGroupFilter.addEventListener('change', () => {
             updateWeightCategories();
             filterAndRenderDraws();
+            // Hide save button when filter changes
+            if (saveDrawBtn && currentDrawData) {
+                saveDrawBtn.style.display = 'none';
+                currentDrawData = null;
+            }
         });
     }
 
@@ -576,12 +581,24 @@ function setupEventListeners() {
         genderFilter.addEventListener('change', () => {
             updateWeightCategories();
             filterAndRenderDraws();
+            // Hide save button when filter changes
+            if (saveDrawBtn && currentDrawData) {
+                saveDrawBtn.style.display = 'none';
+                currentDrawData = null;
+            }
         });
     }
 
     // Weight filter
     if (weightFilter) {
-        weightFilter.addEventListener('change', filterAndRenderDraws);
+        weightFilter.addEventListener('change', () => {
+            filterAndRenderDraws();
+            // Hide save button when filter changes
+            if (saveDrawBtn && currentDrawData) {
+                saveDrawBtn.style.display = 'none';
+                currentDrawData = null;
+            }
+        });
     }
 }
 

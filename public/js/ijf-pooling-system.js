@@ -164,11 +164,19 @@ class IJFPoolingSystem {
      */
     getRoundName(playersRemaining, bracketSize) {
         if (playersRemaining === 2) return 'Final';
-        if (playersRemaining === 4) return 'Semifinals';
-        if (playersRemaining === 8) return 'Quarterfinals';
-        if (playersRemaining === 16) return 'Round of 16';
-        if (playersRemaining === 32) return 'Round of 32';
-        return `Round ${Math.log2(bracketSize) - Math.log2(playersRemaining) + 1}`;
+        if (playersRemaining === 4) return 'Semifinal';
+        if (playersRemaining === 8) return 'Quarterfinal';
+        
+        // Calculate round number from the beginning
+        const totalRounds = Math.log2(bracketSize);
+        const currentRoundFromStart = totalRounds - Math.log2(playersRemaining) + 1;
+        
+        // For earlier rounds, use Round X/Y format where Y is total rounds before finals
+        if (currentRoundFromStart === 1) return 'Round 1';
+        if (currentRoundFromStart === 2 && totalRounds > 3) return 'Round 1/2';
+        if (currentRoundFromStart === 3 && totalRounds > 4) return 'Round 2/3';
+        
+        return `Round ${currentRoundFromStart}`;
     }
 
     /**
@@ -343,6 +351,9 @@ class IJFPoolingSystem {
      * Create a match object
      */
     createMatch({ round, matchNumber, playerA, playerB, categoryKey, isFinal = false, pool = null }) {
+        // Extract weight from categoryKey (e.g., "Men_U60" -> "U60")
+        const weight = categoryKey ? categoryKey.split('_').pop() : '';
+        
         const match = {
             id: this.generateMatchId(),
             round,
@@ -365,7 +376,9 @@ class IJFPoolingSystem {
             status: 'pending',
             nextMatchId: null,
             winnerTo: null,
-            category: categoryKey
+            category: categoryKey,
+            weight: weight,
+            weightCategory: weight
         };
         
         // Auto-complete BYE matches

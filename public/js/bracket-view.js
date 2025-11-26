@@ -124,6 +124,20 @@ groupMatchesIntoPools(matches) {
     let matchesToRender = this.matches;
     let repechageToRender = this.repechageMatches || [];
     
+    // If no category filter (All Categories), show selection message
+    if (!categoryFilter) {
+      container.innerHTML = `
+        <div class="no-draw">
+          <i class="fas fa-filter"></i>
+          <p>Please select a specific category to view the bracket.</p>
+          <p style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            Use the category dropdown above to select a weight category.
+          </p>
+        </div>
+      `;
+      return;
+    }
+    
     if (categoryFilter) {
       matchesToRender = this.matches.filter(m => m.category === categoryFilter);
       repechageToRender = (this.repechageMatches || []).filter(m => m.category === categoryFilter);
@@ -185,11 +199,19 @@ groupMatchesIntoPools(matches) {
   renderCategoryBracket(categoryData) {
     const { category, main, repechage } = categoryData;
     
+    // Check if all matches are completed
+    const allMatches = [...main, ...(repechage || [])];
+    const completedMatches = allMatches.filter(m => m.completed || m.status === 'completed');
+    const allCompleted = allMatches.length > 0 && completedMatches.length === allMatches.length;
+    const statusBadge = allCompleted 
+      ? '<span class="badge bg-success" style="margin-left: 15px; font-size: 0.9rem;">✅ Matches Completed</span>'
+      : '<span class="badge bg-warning" style="margin-left: 15px; font-size: 0.9rem;">⏳ Matches Pending</span>';
+    
     let html = `<div class="category-bracket" data-category="${category}">`;
     
-    // Category header
+    // Category header with status
     if (category !== 'default') {
-      html += `<div class="category-header"><h2><i class="fas fa-trophy"></i> ${category.replace(/_/g, ' ')}</h2></div>`;
+      html += `<div class="category-header"><h2><i class="fas fa-trophy"></i> ${category.replace(/_/g, ' ')} ${statusBadge}</h2></div>`;
     }
     
     // Group matches into pools
@@ -210,8 +232,138 @@ groupMatchesIntoPools(matches) {
       html += this.renderRepechageSection(repechage);
     }
 
+    // Render results box
+    html += this.renderResultsBox(main, repechage);
+
     html += '</div>';
     
+    return html;
+  }
+
+  // Render results box with all winners (IJF ranking)
+  renderResultsBox(mainMatches, repechageMatches) {
+    // Find winners
+    const finalMatch = mainMatches.find(m => m.matchType === 'final');
+    const bronzeMatches = (repechageMatches || []).filter(m => m.matchType === 'bronze');
+    
+    // Get repechage matches (excluding bronze)
+    const repechageOnly = (repechageMatches || []).filter(m => m.matchType === 'repechage' || (m.isRepechage && m.matchType !== 'bronze'));
+    
+    // Find the highest round number in repechage
+    const maxRepechageRound = repechageOnly.length > 0 
+      ? Math.max(...repechageOnly.map(m => m.round || 1))
+      : 0;
+    
+    // Get repechage finals (last round before bronze)
+    const repechageFinals = repechageOnly.filter(m => m.round === maxRepechageRound);
+    
+    console.log('📊 Results calculation:', {
+      repechageOnly: repechageOnly.length,
+      maxRepechageRound,
+      repechageFinals: repechageFinals.length
+    });
+    
+    if (!finalMatch || !finalMatch.winner) {
+      return ''; // Don't show results box if tournament not complete
+    }
+
+    // 1st - Gold (Final winner)
+    const goldWinner = finalMatch.winner === finalMatch.playerA ? 
+      { name: finalMatch.playerAName, club: finalMatch.playerAClub } :
+      { name: finalMatch.playerBName, club: finalMatch.playerBClub };
+    
+    // 2nd - Silver (Final loser)
+    const silverWinner = finalMatch.winner === finalMatch.playerA ? 
+      { name: finalMatch.playerBName, club: finalMatch.playerBClub } :
+      { name: finalMatch.playerAName, club: finalMatch.playerAClub };
+
+    // 3rd - Bronze winners (Two bronze medal winners)
+    const bronzeWinners = bronzeMatches
+      .filter(m => m.winner)
+      .map(m => {
+        const isPlayerA = m.winner === m.playerA;
+        return {
+          name: isPlayerA ? m.playerAName : m.playerBName,
+          club: isPlayerA ? m.playerAClub : m.playerBClub
+        };
+      });
+
+    // 5th - Bronze losers (Winners of repechage who lost bronze bouts)
+    const fifthPlace = bronzeMatches
+      .filter(m => m.winner)
+      .map(m => {
+        const isPlayerA = m.winner === m.playerA;
+        return {
+          name: isPlayerA ? m.playerBName : m.playerAName,
+          club: isPlayerA ? m.playerBClub : m.playerAClub
+        };
+      });
+
+    // 7th - Repechage final losers
+    const seventhPlace = repechageFinals
+      .filter(m => m.winner)
+      .map(m => {
+        const isPlayerA = m.winner === m.playerA;
+        return {
+          name: isPlayerA ? m.playerBName : m.playerAName,
+          club: isPlayerA ? m.playerBClub : m.playerAClub
+        };
+      });
+
+    let html = `
+      <div class="results-box">
+        <h3><i class="fas fa-trophy"></i> IJF Tournament Results</h3>
+        <div class="results-grid">
+          <div class="result-item gold">
+            <div class="result-position">🥇 1st Place - Gold Medal</div>
+            <div class="result-name">${goldWinner.name}</div>
+            <div class="result-club">${goldWinner.club || 'N/A'}</div>
+          </div>
+          <div class="result-item silver">
+            <div class="result-position">🥈 2nd Place - Silver Medal</div>
+            <div class="result-name">${silverWinner.name}</div>
+            <div class="result-club">${silverWinner.club || 'N/A'}</div>
+          </div>
+    `;
+
+    // Add bronze winners (3rd place)
+    bronzeWinners.forEach((winner, idx) => {
+      html += `
+        <div class="result-item bronze">
+          <div class="result-position">🥉 3rd Place - Bronze Medal</div>
+          <div class="result-name">${winner.name}</div>
+          <div class="result-club">${winner.club || 'N/A'}</div>
+        </div>
+      `;
+    });
+
+    // Add 5th place
+    fifthPlace.forEach((winner, idx) => {
+      html += `
+        <div class="result-item fifth">
+          <div class="result-position">5th Place</div>
+          <div class="result-name">${winner.name}</div>
+          <div class="result-club">${winner.club || 'N/A'}</div>
+        </div>
+      `;
+    });
+
+    // Add 7th place
+    seventhPlace.forEach((winner, idx) => {
+      html += `
+        <div class="result-item seventh">
+          <div class="result-position">7th Place</div>
+          <div class="result-name">${winner.name}</div>
+          <div class="result-club">${winner.club || 'N/A'}</div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
     return html;
   }
 
@@ -261,6 +413,9 @@ groupMatchesIntoPools(matches) {
     const playerAClass = winner === match.playerA ? 'winner' : (playerAName === 'TBD' ? 'tbd' : '');
     const playerBClass = winner === match.playerB ? 'winner' : (playerBName === 'TBD' ? 'tbd' : '');
 
+    // Use actual match number from data
+    const displayMatchNumber = match.matchNumber || matchNumber;
+
     // Match status indicator
     let statusBadge = '';
     const status = match.status || (match.completed ? 'completed' : 'pending');
@@ -276,7 +431,7 @@ groupMatchesIntoPools(matches) {
 
     return `
       <div class="bracket-match ${status}" data-match-id="${match.id}">
-        <div class="match-number">${matchNumber}</div>
+        <div class="match-number">${displayMatchNumber}</div>
         ${statusBadge}
         <div class="match-players">
           <div class="match-player ${playerAClass}">

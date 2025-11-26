@@ -36,6 +36,9 @@
             <div style="display: flex; gap: 10px; align-items: center;">
                 <button class="tab" data-tab="bracket">Bracket View</button>
                 <button class="tab active" data-tab="list">List View</button>
+                <button class="btn btn-outline" onclick="window.print()" style="margin-left: 10px;">
+                    <i class="fas fa-print"></i> Print
+                </button>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <select id="categoryFilter" class="form-select" style="width: auto; min-width: 200px;">
@@ -202,10 +205,19 @@
                     }
                 }
             } else {
-                // Show all matches
-                console.log('✅ Showing all', allMatches.length, 'matches');
-                if (window.renderMatches) {
-                    window.renderMatches(allMatches);
+                // Show category selection message instead of all matches
+                console.log('⚠️ No category selected - showing selection message');
+                const container = document.getElementById('matchesContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="alert alert-info" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-filter" style="font-size: 3em; margin-bottom: 20px;"></i>
+                            <h4>Please select a specific category to view matches</h4>
+                            <p style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+                                Use the category dropdown above to select a weight category.
+                            </p>
+                        </div>
+                    `;
                 }
             }
         }
@@ -222,12 +234,22 @@
                 console.log('📋 Sample match:', matches[0]);
             }
             
-            // If a category is selected, filter; otherwise show all
+            // If a category is selected, filter; otherwise show selection message
             if (selectedCategoryKey) {
                 filterMatchesByCategory(selectedCategoryKey);
             } else {
-                if (window.renderMatches) {
-                    window.renderMatches(matches);
+                // Show category selection message
+                const container = document.getElementById('matchesContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="alert alert-info" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-filter" style="font-size: 3em; margin-bottom: 20px;"></i>
+                            <h4>Please select a specific category to view matches</h4>
+                            <p style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+                                Use the category dropdown above to select a weight category.
+                            </p>
+                        </div>
+                    `;
                 }
             }
         }

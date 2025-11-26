@@ -13,19 +13,20 @@
 /* Pools Container */
 .pools-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 20px;
   flex-wrap: nowrap;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 /* Pool Section */
 .pool-section {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  min-width: 320px;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+  max-width: 320px;
   border: 2px solid #e0e0e0;
 }
 
@@ -63,11 +64,12 @@
 /* Bracket Match */
 .bracket-match {
   background: #f8f9fa;
-  border-radius: 10px;
-  padding: 15px;
-  border-left: 4px solid var(--primary-color);
+  border-radius: 6px;
+  padding: 10px;
+  border-left: 3px solid var(--primary-color);
   position: relative;
   transition: all 0.3s ease;
+  font-size: 13px;
 }
 
 .bracket-match:hover {
@@ -91,19 +93,19 @@
 
 .match-number {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 6px;
+  right: 6px;
   background: var(--primary-color);
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
-  box-shadow: 0 2px 6px rgba(67, 97, 238, 0.3);
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(67, 97, 238, 0.3);
 }
 
 .match-players {
@@ -114,8 +116,8 @@
 
 .match-player {
   background: white;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 8px;
+  border-radius: 6px;
   border: 2px solid transparent;
   transition: all 0.3s ease;
 }
@@ -129,8 +131,9 @@
 .player-name {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .player-name span:first-of-type {
@@ -138,9 +141,10 @@
 }
 
 .player-club {
-  font-size: 12px;
+  font-size: 11px;
   color: #6c757d;
   font-weight: 400;
+  margin-top: 2px;
 }
 
 .seed-badge {
@@ -642,6 +646,275 @@
   font-size: 1rem;
 }
 
+/* Results Box */
+.results-box {
+  background: linear-gradient(135deg, #fff9e6, #ffffff);
+  border: 3px solid #ffd700;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 30px;
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
+}
+
+.results-box h3 {
+  color: #d4af37;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.result-item {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.result-item.gold {
+  border-left-color: #ffd700;
+}
+
+.result-item.silver {
+  border-left-color: #c0c0c0;
+}
+
+.result-item.bronze {
+  border-left-color: #cd7f32;
+}
+
+.result-item.fifth {
+  border-left-color: #4a90e2;
+}
+
+.result-item.seventh {
+  border-left-color: #95a5a6;
+}
+
+.result-position {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.result-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2b2d42;
+  margin-bottom: 4px;
+}
+
+.result-club {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+/* Print styles - fit all brackets on single page */
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 0.3cm;
+  }
+  
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  
+  .bracket-wrapper {
+    page-break-inside: avoid;
+    transform: scale(0.55);
+    transform-origin: top left;
+    width: 181.818%; /* 100% / 0.55 */
+    margin: 0;
+    padding: 0;
+  }
+  
+  .category-bracket {
+    page-break-inside: avoid;
+    margin-bottom: 5px;
+  }
+  
+  .pools-container {
+    gap: 8px;
+  }
+  
+  .pool-section {
+    padding: 6px;
+    min-width: 200px;
+    max-width: 250px;
+  }
+  
+  .pool-header h3 {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+  
+  .bracket-match {
+    font-size: 6px;
+    padding: 3px;
+    min-height: 30px;
+    margin-bottom: 3px;
+  }
+  
+  .player-name {
+    font-size: 7px;
+    margin-bottom: 1px;
+  }
+  
+  .player-club {
+    font-size: 5px;
+  }
+  
+  .match-number {
+    font-size: 5px;
+    padding: 1px 3px;
+  }
+  
+  .seed-badge {
+    font-size: 5px;
+    padding: 1px 3px;
+  }
+  
+  .category-header h2 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  
+  .category-header .badge {
+    font-size: 8px !important;
+    padding: 2px 6px;
+  }
+  
+  .finals-section {
+    gap: 8px;
+  }
+  
+  .round-column h3 {
+    font-size: 10px;
+  }
+  
+  .results-box {
+    font-size: 8px;
+    padding: 8px;
+    margin-top: 10px;
+  }
+  
+  .results-box h3 {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  
+  .results-grid {
+    gap: 6px;
+  }
+  
+  .result-item {
+    padding: 6px;
+  }
+  
+  .result-name {
+    font-size: 9px;
+  }
+  
+  .result-position {
+    font-size: 7px;
+  }
+  
+  .result-club {
+    font-size: 6px;
+  }
+  
+  /* Hide non-essential elements when printing */
+  button,
+  .btn,
+  .print-bracket-btn,
+  nav,
+  .navbar,
+  header,
+  .tabs,
+  .tab,
+  .form-select,
+  .form-control,
+  #deviceInfo,
+  .alert,
+  .no-draw,
+  input,
+  select {
+    display: none !important;
+  }
+  
+  /* Show only bracket content */
+  #bracketView {
+    display: block !important;
+  }
+  
+  #listView {
+    display: none !important;
+  }
+}
+
+/* Print Button */
+.print-bracket-btn {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.print-bracket-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
+}
+
+.print-bracket-btn i {
+  margin-right: 8px;
+}
+
+/* Print Styles */
+@media print {
+  .print-bracket-btn {
+    display: none;
+  }
+  
+  .bracket-wrapper {
+    overflow-x: visible;
+  }
+  
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .repechage-container {
@@ -651,5 +924,12 @@
   .repechage-column,
   .bronze-column {
     max-width: 100%;
+  }
+  
+  .print-bracket-btn {
+    top: 80px;
+    right: 10px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
   }
 }
