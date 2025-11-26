@@ -38,11 +38,11 @@ class IJFPoolingSystem {
         const numPlayers = players.length;
 
         // Validate player count
-        if (numPlayers < 2) {
-            throw new Error('Minimum 2 players required for tournament');
+        if (numPlayers < 1) {
+            throw new Error('Minimum 1 player required for tournament');
         }
-        if (numPlayers > 32) {
-            throw new Error('Maximum 32 players supported');
+        if (numPlayers > 64) {
+            throw new Error('Maximum 64 players supported');
         }
 
         // Determine tournament structure based on player count
@@ -51,7 +51,12 @@ class IJFPoolingSystem {
 
         // Apply IJF seeding
         const seededBracket = this.applyIJFSeeding(players, seeds, structure.bracketSize);
-        this.validateNoByeVsBye(seededBracket);
+        
+        // Validate and fix BYE vs BYE matches
+        const validatedBracket = this.validateNoByeVsBye(seededBracket);
+        
+        console.log('\n📋 Bracket Validation:');
+        this.printBracketSlots(validatedBracket);
 
         // Generate matches based on structure
         let tournament;
@@ -223,7 +228,11 @@ class IJFPoolingSystem {
             8: [0, 7, 4, 3, 2, 5, 6, 1],
             16: [0, 15, 8, 7, 4, 11, 12, 3, 2, 13, 10, 5, 6, 9, 14, 1],
             32: [0, 31, 16, 15, 8, 23, 24, 7, 4, 27, 20, 11, 12, 19, 28, 3,
-                 2, 29, 18, 13, 10, 21, 26, 5, 6, 25, 22, 9, 14, 17, 30, 1]
+                 2, 29, 18, 13, 10, 21, 26, 5, 6, 25, 22, 9, 14, 17, 30, 1],
+            64: [0, 63, 32, 31, 16, 47, 48, 15, 8, 55, 40, 23, 24, 39, 56, 7,
+                 4, 59, 36, 27, 20, 43, 52, 11, 12, 51, 44, 19, 28, 35, 60, 3,
+                 2, 61, 34, 29, 18, 45, 50, 13, 10, 53, 42, 21, 26, 37, 58, 5,
+                 6, 57, 38, 25, 22, 41, 54, 9, 14, 49, 46, 17, 30, 33, 62, 1]
         };
         
         return positions[size] || positions[8];
@@ -260,7 +269,8 @@ class IJFPoolingSystem {
                 matchNumber: matchCounter++,
                 playerA,
                 playerB,
-                categoryKey
+                categoryKey,
+                pool: this.getPoolForPosition(i * 2, seededBracket.length)
             });
             
             firstRoundMatches.push(match);
@@ -320,14 +330,25 @@ class IJFPoolingSystem {
 //    }
 
     /**
+     * Get pool assignment for a position in the bracket
+     */
+    getPoolForPosition(position, bracketSize) {
+        // IJF Rule: Always 4 pools (A, B, C, D)
+        const perPool = bracketSize / 4;
+        const poolIndex = Math.floor(position / perPool);
+        return ["A", "B", "C", "D"][poolIndex] || "D";
+    }
+
+    /**
      * Create a match object
      */
-    createMatch({ round, matchNumber, playerA, playerB, categoryKey, isFinal = false }) {
+    createMatch({ round, matchNumber, playerA, playerB, categoryKey, isFinal = false, pool = null }) {
         const match = {
             id: this.generateMatchId(),
             round,
             matchNumber,
             matchType: isFinal ? 'final' : 'main',
+            pool: pool,
             playerA: playerA?.id || null,
             playerB: playerB?.id || null,
             playerAName: playerA?.fullName || (playerB ? 'BYE' : 'TBD'),
@@ -411,6 +432,63 @@ class IJFPoolingSystem {
             totalMatches: structure.totalMatches,
             repechageEnabled: structure.repechageEnabled
         };
+    }
+
+    /**
+     * Validate and fix BYE vs BYE matches
+     */
+    validateNoByeVsBye(bracket) {
+        let maxAttempts = 100;
+        let attempt = 0;
+        
+        while (attempt < maxAttempts) {
+            let hasDoublebye = false;
+            
+            // Check all pairs
+            for (let i = 0; i < bracket.length; i += 2) {
+                if (!bracket[i] && !bracket[i + 1]) {
+                    hasDoublebye = true;
+                    
+                    // Find a player in a different pair to swap with
+                    for (let j = 0; j < bracket.length; j++) {
+                        // Skip if same pair or not a player
+                        if (Math.floor(j / 2) === Math.floor(i / 2) || !bracket[j]) continue;
+                        
+                        // Swap player with one of the BYEs
+                        [bracket[i], bracket[j]] = [bracket[j], bracket[i]];
+                        console.log(`   🔄 Fixed BYE vs BYE at positions ${i}-${i+1}, swapped with position ${j}`);
+                        break;
+                    }
+                    break; // Re-check from start after swap
+                }
+            }
+            
+            if (!hasDoublebye) {
+                console.log(`   ✅ No BYE vs BYE matches found after ${attempt + 1} attempts`);
+                break;
+            }
+            
+            attempt++;
+        }
+        
+        if (attempt >= maxAttempts) {
+            console.warn('   ⚠️ Could not eliminate all BYE vs BYE matches');
+        }
+        
+        return bracket;
+    }
+
+    /**
+     * Print bracket slots for debugging
+     */
+    printBracketSlots(bracket) {
+        console.log('   Bracket slots:');
+        for (let i = 0; i < bracket.length; i += 2) {
+            const playerA = bracket[i]?.fullName || 'BYE';
+            const playerB = bracket[i + 1]?.fullName || 'BYE';
+            const pool = this.getPoolForPosition(i, bracket.length);
+            console.log(`   Match ${i/2 + 1} (Pool ${pool}): ${playerA} vs ${playerB}`);
+        }
     }
 
     /**

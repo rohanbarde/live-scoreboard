@@ -36,7 +36,8 @@ class TournamentDraw {
   }
 
   nextBracketSize(n) {
-    return [2,4,8,16,32,64].find(s => s >= n);
+    // IJF bracket sizes: 2, 4, 8, 16, 32, 64
+    return [2, 4, 8, 16, 32, 64].find(s => s >= n) || 64;
   }
 
   shuffle(arr) {
@@ -50,39 +51,129 @@ class TournamentDraw {
 
   generateSlots(players) {
     const bracketSize = this.nextBracketSize(players.length);
-    let slots = [...players];
     const byes = bracketSize - players.length;
+    
+    console.log(`🎯 Generating slots: ${players.length} players, ${bracketSize} bracket size, ${byes} BYEs`);
 
-    for (let i = 0; i < byes; i++) slots.push(null);
-
-    slots = this.shuffle(slots);
-
-    // FIX: Prevent BYE vs BYE
-    for (let i = 0; i < slots.length; i += 2) {
-      if (!slots[i] && !slots[i+1]) {
-        const swapIndex = slots.findIndex(p => p !== null);
-        if (swapIndex !== -1) {
-          [slots[i], slots[swapIndex]] = [slots[swapIndex], slots[i]];
+    // Shuffle players
+    let shuffledPlayers = this.shuffle([...players]);
+    
+    // NEW STRATEGY: Distribute players and BYEs to ensure no BYE vs BYE
+    // Create slots array
+    let slots = new Array(bracketSize).fill(null);
+    
+    // Calculate number of matches
+    const numMatches = bracketSize / 2;
+    
+    // Distribute BYEs across matches (max 1 BYE per match)
+    if (byes >= numMatches) {
+      // Too many BYEs - this is impossible to avoid BYE vs BYE
+      console.error(`❌ IMPOSSIBLE: ${byes} BYEs for ${numMatches} matches - BYE vs BYE unavoidable`);
+      // Fall back to simple distribution
+      slots = this.shuffle([...shuffledPlayers, ...new Array(byes).fill(null)]);
+    } else {
+      // Distribute BYEs evenly across matches (max 1 per match)
+      let byePositions = [];
+      
+      // Create list of all possible positions
+      let availablePositions = [];
+      for (let i = 0; i < bracketSize; i++) {
+        availablePositions.push(i);
+      }
+      
+      // Shuffle positions
+      availablePositions = this.shuffle(availablePositions);
+      
+      // Select BYE positions ensuring no two BYEs in same match
+      let usedMatches = new Set();
+      for (let i = 0; i < availablePositions.length && byePositions.length < byes; i++) {
+        const pos = availablePositions[i];
+        const matchIndex = Math.floor(pos / 2);
+        
+        if (!usedMatches.has(matchIndex)) {
+          byePositions.push(pos);
+          usedMatches.add(matchIndex);
         }
       }
+      
+      // Mark BYE positions as null
+      byePositions.forEach(pos => {
+        slots[pos] = 'BYE_MARKER';
+      });
+      
+      // Fill remaining positions with players
+      let playerIndex = 0;
+      for (let i = 0; i < bracketSize; i++) {
+        if (slots[i] === null) {
+          slots[i] = shuffledPlayers[playerIndex++];
+        }
+      }
+      
+      // Convert BYE markers back to null
+      for (let i = 0; i < bracketSize; i++) {
+        if (slots[i] === 'BYE_MARKER') {
+          slots[i] = null;
+        }
+      }
+      
+      console.log(`✅ Distributed ${byes} BYEs across ${byes} different matches`);
+    }
+    
+    // Debug: Show bracket structure
+    console.log('📋 Bracket structure:');
+    for (let i = 0; i < slots.length; i += 2) {
+      const playerA = slots[i]?.fullName || 'BYE';
+      const playerB = slots[i + 1]?.fullName || 'BYE';
+      const matchNum = i / 2 + 1;
+      const pool = this.assignPools(i, bracketSize);
+      console.log(`   Match ${matchNum} (Pool ${pool}): ${playerA} vs ${playerB}`);
+    }
+    
+    // Final validation
+    let byeVsByeCount = 0;
+    for (let i = 0; i < slots.length; i += 2) {
+      if (slots[i] === null && slots[i + 1] === null) {
+        byeVsByeCount++;
+        console.error(`❌ BYE vs BYE at match ${i/2 + 1} (positions ${i}-${i+1})`);
+      }
+    }
+    
+    if (byeVsByeCount === 0) {
+      console.log('✅ Slot validation passed: No BYE vs BYE matches');
+    } else {
+      console.error(`❌ VALIDATION FAILED: ${byeVsByeCount} BYE vs BYE matches still exist`);
     }
 
     return { slots, bracketSize, byes };
   }
 
   assignPools(slotIndex, bracketSize) {
+    // IJF Rule: Always 4 pools (A, B, C, D)
+    // Pools are bracket quarters with fixed slot counts:
+    //   8-slot  → 2 per pool
+    //   16-slot → 4 per pool
+    //   32-slot → 8 per pool
+    //   64-slot → 16 per pool
     const perPool = bracketSize / 4;
-    return ["A","B","C","D"][Math.floor(slotIndex / perPool)];
+    const poolIndex = Math.floor(slotIndex / perPool);
+    return ["A", "B", "C", "D"][poolIndex] || "D";
   }
 
   createRound1(slots, bracketSize, categoryKey) {
     const matches = [];
+    
+    // IJF Rule: Round-1 ALWAYS FULL - Create ALL matches
     for (let i = 0; i < slots.length; i += 2) {
       const A = slots[i];
-      const B = slots[i+1];
+      const B = slots[i + 1];
+      
+      // Validate no BYE vs BYE
+      if (!A && !B) {
+        console.error(`❌ CRITICAL: BYE vs BYE at match ${i/2 + 1}`);
+      }
 
       const match = {
-        id: `M1_${i/2+1}_${Date.now()}`,
+        id: `M1_${i/2+1}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         round: 1,
         pool: this.assignPools(i, bracketSize),
         matchType: 'main',
@@ -90,28 +181,47 @@ class TournamentDraw {
         playerB: B?.id || null,
         playerAName: A?.fullName || 'BYE',
         playerBName: B?.fullName || 'BYE',
+        playerAClub: A?.playerInfo?.team || A?.team || '',
+        playerBClub: B?.playerInfo?.team || B?.team || '',
+        playerASeed: A?.seed || null,
+        playerBSeed: B?.seed || null,
+        playerACountry: A?.playerInfo?.country || A?.country || '',
+        playerBCountry: B?.playerInfo?.country || B?.country || '',
         winner: null,
         loser: null,
         completed: false,
         status: 'pending',
         nextMatchId: null,
+        winnerTo: null,
         category: categoryKey
       };
 
-      // Auto BYE win
+      // IJF Rule: If player faces BYE → Auto Win (show "Auto Win (BYE)")
+      // Always show BYE in opponent slot
       if (A && !B) {
         match.winner = A.id;
+        match.loser = null;
         match.completed = true;
         match.status = 'completed';
-      }
-      if (B && !A) {
+        match.winByBye = true;
+        console.log(`✅ Auto-advance: ${A.fullName} (BYE in position B)`);
+      } else if (B && !A) {
         match.winner = B.id;
+        match.loser = null;
         match.completed = true;
         match.status = 'completed';
+        match.winByBye = true;
+        console.log(`✅ Auto-advance: ${B.fullName} (BYE in position A)`);
       }
 
       matches.push(match);
     }
+    
+    console.log(`✅ Created ${matches.length} Round-1 matches`);
+    const byeMatches = matches.filter(m => m.winByBye);
+    console.log(`   - ${byeMatches.length} auto-advance (BYE) matches`);
+    console.log(`   - ${matches.length - byeMatches.length} regular matches`);
+    
     return matches;
   }
 
@@ -119,55 +229,73 @@ class TournamentDraw {
     let round = 1;
     let current = matches;
     const all = [...matches];
+    
+    const totalRounds = Math.log2(matches.length) + 1;
+    console.log(`🔗 Linking rounds: ${totalRounds} total rounds`);
 
     while (current.length > 1) {
       round++;
       const next = [];
+      
       for (let i = 0; i < current.length; i += 2) {
+        const isFinal = (current.length === 2);
+        const isSemifinal = (current.length === 4);
+        const isQuarterfinal = (current.length === 8);
+        
+        let roundName = 'main';
+        if (isFinal) roundName = 'final';
+        else if (isSemifinal) roundName = 'semifinal';
+        else if (isQuarterfinal) roundName = 'quarterfinal';
 
         const m = {
-          id: `R${round}_${i/2+1}_${Date.now()}`,
+          id: `R${round}_M${i/2+1}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
           round,
-          matchType: round === Math.log2(matches.length) + 1 ? 'final' : 'main',
+          matchType: isFinal ? 'final' : 'main',
           playerA: null,
           playerB: null,
           playerAName: 'TBD',
           playerBName: 'TBD',
+          playerAClub: '',
+          playerBClub: '',
+          playerASeed: null,
+          playerBSeed: null,
+          playerACountry: '',
+          playerBCountry: '',
           winner: null,
           loser: null,
           completed: false,
           status: 'pending',
-          nextMatchId: null
+          nextMatchId: null,
+          winnerTo: null
         };
 
+        // Link previous matches to this match
         if (current[i]) {
           current[i].nextMatchId = m.id;
           current[i].winnerTo = 'A';
         }
 
-        if (current[i+1]) {
-          current[i+1].nextMatchId = m.id;
-          current[i+1].winnerTo = 'B';
+        if (current[i + 1]) {
+          current[i + 1].nextMatchId = m.id;
+          current[i + 1].winnerTo = 'B';
         }
-
-
-
-        current[i+1] && (current[i+1].nextMatchId = m.id);
 
         next.push(m);
       }
-
+      
+      console.log(`   Round ${round}: ${next.length} matches`);
       all.push(...next);
       current = next;
     }
-
+    
+    console.log(`✅ Linked ${all.length} total matches across ${round} rounds`);
     return all;
   }
 
   async generateDraw(players) {
-  if (!players || players.length < 1) {
+    if (!players || players.length < 1) {
       throw new Error("No players passed to generator");
-  }
+    }
 
     if (players.length === 0) throw new Error("No players");
 
@@ -189,7 +317,31 @@ class TournamentDraw {
       repechage: []
     };
 
+    // Save to Firebase
     await this.matchesRef.child(categoryKey).set(full);
+    
+    console.log('✅ Draw saved to Firebase');
+    console.log('🔄 Processing BYE auto-advancements...');
+    
+    // CRITICAL: Process BYE matches immediately after generation
+    // This ensures players with BYE in Round-1 advance to Round-2
+    try {
+      if (typeof TournamentProgression !== 'undefined') {
+        const progression = new TournamentProgression();
+        await progression.processByes();
+        console.log('✅ BYE processing complete');
+      } else if (window.TournamentProgression) {
+        const progression = new window.TournamentProgression();
+        await progression.processByes();
+        console.log('✅ BYE processing complete');
+      } else {
+        console.error('❌ TournamentProgression not available - BYEs not processed');
+        console.error('   Make sure tournament-progression.js is loaded before generate-draws.js');
+      }
+    } catch (error) {
+      console.error('❌ Error processing BYEs:', error);
+    }
+    
     return full;   // ← REQUIRED
   }
 
@@ -867,9 +1019,28 @@ async function saveDraw() {
 
         console.log('✅ Draw saved successfully:', categoryKey);
         console.log('✅ Matches saved to tournament/matches/' + categoryKey);
+        
+        // CRITICAL: Process BYE matches after saving
+        console.log('🔄 Processing BYE auto-advancements for category:', categoryKey);
+        try {
+            if (typeof TournamentProgression !== 'undefined') {
+                const progression = new TournamentProgression();
+                await progression.processByes();
+                console.log('✅ BYE processing complete for category:', categoryKey);
+            } else if (window.TournamentProgression) {
+                const progression = new window.TournamentProgression();
+                await progression.processByes();
+                console.log('✅ BYE processing complete for category:', categoryKey);
+            } else {
+                console.error('❌ TournamentProgression not available');
+                alert('⚠️ Warning: BYE matches were not auto-processed. Please reload the page.');
+            }
+        } catch (error) {
+            console.error('❌ Error processing BYEs:', error);
+        }
 
         // Show success message
-        alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}`);
+        alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}\n\nBYE matches have been auto-processed.`);
 
         // Hide save button and reset
         saveDrawBtn.style.display = 'none';
