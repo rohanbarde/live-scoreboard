@@ -260,9 +260,11 @@ function renderMatches(matches) {
         return;
     }
     
-    // Separate main bracket and repechage matches
-    const mainMatches = matches.filter(m => !m.isRepechage && m.matchType !== 'repechage' && m.matchType !== 'bronze');
-    const repechageMatches = matches.filter(m => m.isRepechage || m.matchType === 'repechage' || m.matchType === 'bronze');
+    // Separate main bracket, repechage, bronze, and final matches
+    const finalMatch = matches.find(m => m.matchType === 'final');
+    const bronzeMatches = matches.filter(m => m.matchType === 'bronze');
+    const repechageOnlyMatches = matches.filter(m => (m.isRepechage || m.matchType === 'repechage') && m.matchType !== 'bronze');
+    const mainMatches = matches.filter(m => !m.isRepechage && m.matchType !== 'repechage' && m.matchType !== 'bronze' && m.matchType !== 'final');
     
     // Group matches by status - handle both old and new format
     const pending = mainMatches.filter(m => {
@@ -277,104 +279,179 @@ function renderMatches(matches) {
     });
     
     // Repechage matches by status
-    const repechagePending = repechageMatches.filter(m => {
+    const repechagePending = repechageOnlyMatches.filter(m => {
         const status = m.status || (m.completed ? 'completed' : 'pending');
         const isCompleted = m.completed === true || m.status === 'completed';
         return status === 'pending' && !isCompleted;
     });
-    const repechageInProgress = repechageMatches.filter(m => m.status === 'in_progress');
-    const repechageCompleted = repechageMatches.filter(m => m.status === 'completed' || m.completed === true);
+    const repechageInProgress = repechageOnlyMatches.filter(m => m.status === 'in_progress');
+    const repechageCompleted = repechageOnlyMatches.filter(m => m.status === 'completed' || m.completed === true);
+    
+    // Bronze matches by status
+    const bronzePending = bronzeMatches.filter(m => {
+        const status = m.status || (m.completed ? 'completed' : 'pending');
+        const isCompleted = m.completed === true || m.status === 'completed';
+        return status === 'pending' && !isCompleted;
+    });
+    const bronzeInProgress = bronzeMatches.filter(m => m.status === 'in_progress');
+    const bronzeCompleted = bronzeMatches.filter(m => m.status === 'completed' || m.completed === true);
     
     console.log('📋 Grouped matches:', {
         main: { pending: pending.length, locked: locked.length, inProgress: inProgress.length, completed: completed.length },
-        repechage: { pending: repechagePending.length, inProgress: repechageInProgress.length, completed: repechageCompleted.length }
+        repechage: { pending: repechagePending.length, inProgress: repechageInProgress.length, completed: repechageCompleted.length },
+        bronze: { pending: bronzePending.length, inProgress: bronzeInProgress.length, completed: bronzeCompleted.length },
+        final: finalMatch ? 1 : 0
     });
     
     let html = '';
     
+    // Create table header
+    html += '<div class="table-responsive">';
+    html += '<table class="table table-hover">';
+    html += '<thead><tr>';
+    html += '<th>#</th><th>Type</th><th>Round</th><th>Player A</th><th>VS</th><th>Player B</th><th>Status</th><th>Actions</th>';
+    html += '</tr></thead><tbody>';
+    
+    let matchCounter = 1;
+    
     // MAIN BRACKET SECTION
-    html += '<h3 class="mt-3 mb-3"><i class="fas fa-trophy"></i> Main Bracket</h3>';
-    
-    // Pending matches
-    if (pending.length > 0) {
-        html += `<h4 class="mt-4">⏳ Pending Matches (${pending.length})</h4>`;
-        html += '<div class="row g-3">';
+    if (mainMatches.length > 0) {
+        html += `<tr class="table-secondary"><td colspan="8"><strong><i class="fas fa-trophy"></i> Main Bracket</strong></td></tr>`;
+        
+        // Pending matches
         pending.forEach(match => {
-            html += renderMatchCard(match);
+            html += renderMatchRow(match, matchCounter++);
         });
-        html += '</div>';
-    }
-    
-    // Locked matches
-    if (locked.length > 0) {
-        html += `<h4 class="mt-4">🔒 Locked Matches (${locked.length})</h4>`;
-        html += '<div class="row g-3">';
+        
+        // Locked matches
         locked.forEach(match => {
-            html += renderMatchCard(match);
+            html += renderMatchRow(match, matchCounter++);
         });
-        html += '</div>';
-    }
-    
-    // In progress matches
-    if (inProgress.length > 0) {
-        html += `<h4 class="mt-4">▶️ In Progress (${inProgress.length})</h4>`;
-        html += '<div class="row g-3">';
+        
+        // In progress matches
         inProgress.forEach(match => {
-            html += renderMatchCard(match);
+            html += renderMatchRow(match, matchCounter++);
         });
-        html += '</div>';
-    }
-    
-    // Completed matches
-    if (completed.length > 0) {
-        html += `<h4 class="mt-4">✅ Completed (${completed.length})</h4>`;
-        html += '<div class="row g-3">';
+        
+        // Completed matches
         completed.forEach(match => {
-            html += renderMatchCard(match);
+            html += renderMatchRow(match, matchCounter++);
         });
-        html += '</div>';
     }
     
     // REPECHAGE SECTION
-    if (repechageMatches.length > 0) {
-        html += '<hr class="my-5">';
-        html += '<h3 class="mt-4 mb-3"><i class="fas fa-medal"></i> Repechage & Bronze Medals</h3>';
-        
-        // Repechage pending
-        if (repechagePending.length > 0) {
-            html += `<h4 class="mt-4">⏳ Pending Repechage (${repechagePending.length})</h4>`;
-            html += '<div class="row g-3">';
-            repechagePending.forEach(match => {
-                html += renderMatchCard(match);
-            });
-            html += '</div>';
-        }
-        
-        // Repechage in progress
-        if (repechageInProgress.length > 0) {
-            html += `<h4 class="mt-4">▶️ In Progress (${repechageInProgress.length})</h4>`;
-            html += '<div class="row g-3">';
-            repechageInProgress.forEach(match => {
-                html += renderMatchCard(match);
-            });
-            html += '</div>';
-        }
-        
-        // Repechage completed
-        if (repechageCompleted.length > 0) {
-            html += `<h4 class="mt-4">✅ Completed (${repechageCompleted.length})</h4>`;
-            html += '<div class="row g-3">';
-            repechageCompleted.forEach(match => {
-                html += renderMatchCard(match);
-            });
-            html += '</div>';
-        }
+    if (repechageOnlyMatches.length > 0) {
+        html += `<tr class="table-info"><td colspan="8"><strong><i class="fas fa-redo"></i> Repechage Matches</strong></td></tr>`;
+        repechagePending.forEach(match => {
+            html += renderMatchRow(match, matchCounter++);
+        });
+        repechageInProgress.forEach(match => {
+            html += renderMatchRow(match, matchCounter++);
+        });
+        repechageCompleted.forEach(match => {
+            html += renderMatchRow(match, matchCounter++);
+        });
     }
+    
+    // BRONZE MEDAL SECTION
+    if (bronzeMatches.length > 0) {
+        html += `<tr class="table-warning"><td colspan="8"><strong><i class="fas fa-medal"></i> Bronze Medal Matches</strong></td></tr>`;
+        bronzePending.forEach(match => {
+            html += renderMatchRow(match, matchCounter++);
+        });
+        bronzeInProgress.forEach(match => {
+            html += renderMatchRow(match, matchCounter++);
+        });
+        bronzeCompleted.forEach(match => {
+            html += renderMatchRow(match, matchCounter++);
+        });
+    }
+    
+    // FINAL MATCH (shown last)
+    if (finalMatch) {
+        html += `<tr class="table-danger"><td colspan="8"><strong><i class="fas fa-crown"></i> Final Match</strong></td></tr>`;
+        html += renderMatchRow(finalMatch, matchCounter++);
+    }
+    
+    html += '</tbody></table></div>';
     
     console.log('📝 Final HTML length:', html.length);
     console.log('📝 Setting innerHTML to container...');
     container.innerHTML = html;
     console.log('✅ innerHTML set successfully');
+}
+
+/**
+ * Render match row (list format)
+ */
+function renderMatchRow(match, rowNumber) {
+    const isOwnedByThisDevice = match.deviceId === window.DEVICE_ID;
+    const isCompleted = match.completed === true || match.status === 'completed';
+    const status = isCompleted ? 'completed' : (match.status || 'pending');
+    const canLock = status === 'pending' && !isCompleted;
+    
+    // Get fighter names
+    const fighterAName = match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'TBD';
+    const fighterBName = match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'TBD';
+    const fighterATeam = match.fighterA?.team || match.playerAClub || '';
+    const fighterBTeam = match.fighterB?.team || match.playerBClub || '';
+    
+    // Match type badge
+    let matchTypeBadge = '';
+    if (match.matchType === 'final') {
+        matchTypeBadge = '<span class="badge bg-danger">🏆 FINAL</span>';
+    } else if (match.matchType === 'bronze') {
+        matchTypeBadge = '<span class="badge bg-warning">🥉 BRONZE</span>';
+    } else if (match.matchType === 'repechage') {
+        matchTypeBadge = '<span class="badge bg-info">🔄 REPECHAGE</span>';
+    }
+    
+    // Status badge
+    let statusBadge = '';
+    switch(status) {
+        case 'pending':
+            statusBadge = '<span class="badge bg-secondary">⏳ Pending</span>';
+            break;
+        case 'locked':
+            statusBadge = `<span class="badge bg-warning">🔒 Locked</span>`;
+            break;
+        case 'in_progress':
+            statusBadge = `<span class="badge bg-primary">▶️ In Progress</span>`;
+            break;
+        case 'completed':
+            const winnerName = match.winner === match.playerA ? fighterAName : fighterBName;
+            statusBadge = `<span class="badge bg-success">✅ ${winnerName}</span>`;
+            break;
+    }
+    
+    // Action buttons
+    let actionButtons = '';
+    const hasPlayers = fighterAName !== 'TBD' && fighterBName !== 'TBD' && 
+                       fighterAName !== 'Winner of match' && fighterBName !== 'Winner of match';
+    
+    if (canLock && hasPlayers && !isCompleted) {
+        actionButtons = `<button class="btn btn-sm btn-primary" onclick="lockAndStartMatch('${match.id}')"><i class="fas fa-lock"></i> Lock & Start</button>`;
+    } else if (isOwnedByThisDevice && status === 'locked') {
+        actionButtons = `
+            <button class="btn btn-sm btn-success" onclick="startMatch('${match.id}')"><i class="fas fa-play"></i> Start</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="unlockMatch('${match.id}')"><i class="fas fa-unlock"></i></button>
+        `;
+    } else if (isOwnedByThisDevice && status === 'in_progress') {
+        actionButtons = `<button class="btn btn-sm btn-info" onclick="openMatchScoreboard('${match.id}')"><i class="fas fa-external-link-alt"></i> Open</button>`;
+    }
+    
+    return `
+        <tr class="${isOwnedByThisDevice ? 'table-primary' : ''} ${isCompleted ? 'table-light' : ''}">
+            <td>${rowNumber}</td>
+            <td>${matchTypeBadge}</td>
+            <td>R${match.round || '?'}</td>
+            <td><strong>${fighterAName}</strong>${fighterATeam ? '<br><small class="text-muted">' + fighterATeam + '</small>' : ''}</td>
+            <td><strong>VS</strong></td>
+            <td><strong>${fighterBName}</strong>${fighterBTeam ? '<br><small class="text-muted">' + fighterBTeam + '</small>' : ''}</td>
+            <td>${statusBadge}</td>
+            <td>${actionButtons}</td>
+        </tr>
+    `;
 }
 
 /**
@@ -624,7 +701,7 @@ async function lockAndStartMatch(matchId) {
         console.log('▶️ Calling matchManager.startMatch...');
         await matchManager.startMatch(matchId, matNumber);
         
-        alert('Match started! Scoreboard opened in new window.');
+        // Scoreboard opens automatically in matchManager.startMatch()
         
     } catch (error) {
         console.error('Error:', error);
@@ -641,7 +718,7 @@ async function startMatch(matchId) {
         if (!matNumber) return;
         
         await matchManager.startMatch(matchId, matNumber);
-        alert('Match started! Scoreboard opened in new window.');
+        // Scoreboard opens automatically in matchManager.startMatch()
         
     } catch (error) {
         console.error('Error:', error);
