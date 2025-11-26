@@ -126,6 +126,9 @@
     <!-- Tournament Progression System -->
     <script src="../public/js/tournament-progression.js"></script>
     
+    <!-- IJF Pooling System -->
+    <script src="../public/js/ijf-pooling-system.js"></script>
+    
     <!-- IJF Tournament Manager (Enhanced) -->
     <script src="../public/js/ijf-tournament-manager.js"></script>
     
@@ -246,7 +249,13 @@
             // Category filter change handler
             if (categoryFilter) {
                 categoryFilter.addEventListener('change', (e) => {
-                    filterMatchesByCategory(e.target.value);
+                    const selectedCategory = e.target.value;
+                    filterMatchesByCategory(selectedCategory);
+                    
+                    // Update bracket view if it's active
+                    if (bracketView && document.querySelector('.tab[data-tab="bracket"]').classList.contains('active')) {
+                        bracketView.renderBracket('bracketContainer', selectedCategory);
+                    }
                 });
             }
 
@@ -280,12 +289,14 @@
                     if (targetTab === 'bracket') {
                         if (!bracketView) {
                             bracketView = new BracketView();
-                            await bracketView.init();
+                            await bracketView.loadMatches();
                         } else {
                             // Refresh bracket view
                             await bracketView.loadMatches();
-                            bracketView.renderBracket();
                         }
+                        // Render with current category filter
+                        const currentCategory = categoryFilter ? categoryFilter.value : '';
+                        bracketView.renderBracket('bracketContainer', currentCategory);
                     }
                 });
             });

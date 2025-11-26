@@ -246,6 +246,30 @@ class TournamentProgression {
       const finalMatch = matches.find(m => m.matchType === 'final');
       const tournamentComplete = finalMatch && (finalMatch.status === 'completed' || finalMatch.completed);
 
+
+// ✅ AUTO ADVANCE WINNER TO NEXT MATCH
+if (match.winner && match.nextMatchId) {
+
+  const nextRef = firebase.database().ref(`tournament/matches/${categoryKey}/main`)
+    .orderByChild('id')
+    .equalTo(match.nextMatchId);
+
+  nextRef.once("value", snap => {
+    snap.forEach(s => {
+      const update = {};
+
+      if (match.winnerTo === 'A') {
+        update.playerA = match.winner;
+      } else {
+        update.playerB = match.winner;
+      }
+
+      s.ref.update(update);
+    });
+  });
+}
+
+
       return {
         total,
         completed,
@@ -304,13 +328,18 @@ class TournamentProgression {
 
   /**
    * Handle BYE advancement (when a player has a BYE, they automatically advance)
+   * CRITICAL: This must be called after draw generation to advance BYE winners
    */
   async processByes() {
     try {
+      console.log('🔄 Processing BYE matches...');
       const snapshot = await this.matchesRef.once('value');
       const data = snapshot.val();
       
-      if (!data) return;
+      if (!data) {
+        console.log('⚠️ No tournament data found');
+        return;
+      }
 
       // Handle category-based structure
       const firstKey = Object.keys(data)[0];
@@ -324,15 +353,21 @@ class TournamentProgression {
           const categoryData = data[categoryKey];
           if (!categoryData.main || !Array.isArray(categoryData.main)) continue;
           
-          let matches = categoryData.main;
+          let matches = [...categoryData.main]; // Clone array
           
-          // Find matches with BYE
-          const byeMatches = matches.filter(m => 
-            (m.playerAName === 'BYE' || m.playerBName === 'BYE') && 
-            m.status !== 'completed' && !m.completed
-          );
+          // Find matches with BYE that are not yet completed
+          const byeMatches = matches.filter(m => {
+            const hasPlayerA = m.playerA && m.playerAName && m.playerAName !== 'BYE' && m.playerAName !== 'TBD';
+            const hasPlayerB = m.playerB && m.playerBName && m.playerBName !== 'BYE' && m.playerBName !== 'TBD';
+            const hasBye = (m.playerAName === 'BYE' && hasPlayerB) || (m.playerBName === 'BYE' && hasPlayerA);
+            const notCompleted = m.status !== 'completed' && !m.completed;
+            return hasBye && notCompleted;
+          });
 
-          if (byeMatches.length === 0) continue;
+          if (byeMatches.length === 0) {
+            console.log(`   ✓ No BYE matches to process for category: ${categoryKey}`);
+            continue;
+          }
           
           console.log(`🔄 Processing ${byeMatches.length} BYE matches for category: ${categoryKey}`);
 
@@ -340,54 +375,91 @@ class TournamentProgression {
             // Determine winner (the player who is not BYE)
             let winnerId, winnerName, winnerClub, winnerSeed, winnerCountry;
             
-            if (match.playerAName === 'BYE') {
+            if (match.playerAName === 'BYE' && match.playerB) {
               winnerId = match.playerB;
               winnerName = match.playerBName;
-              winnerClub = match.playerBClub;
-              winnerSeed = match.playerBSeed;
-              winnerCountry = match.playerBCountry;
-            } else {
+              winnerClub = match.playerBClub || '';
+              winnerSeed = match.playerBSeed || null;
+              winnerCountry = match.playerBCountry || '';
+            } else if (match.playerBName === 'BYE' && match.playerA) {
               winnerId = match.playerA;
               winnerName = match.playerAName;
-              winnerClub = match.playerAClub;
-              winnerSeed = match.playerASeed;
-              winnerCountry = match.playerACountry;
+              winnerClub = match.playerAClub || '';
+              winnerSeed = match.playerASeed || null;
+              winnerCountry = match.playerACountry || '';
+            } else {
+              console.warn('⚠️ Invalid BYE match:', match.id);
+              continue;
             }
 
-            // Mark match as completed
+            if (!winnerId || !winnerName || winnerName === 'TBD') {
+              console.warn('⚠️ Cannot process BYE match - invalid winner:', match.id);
+              continue;
+            }
+
+            console.log(`   ✅ Auto-advance: ${winnerName} (BYE match ${match.id})`);
+
+            // Mark match as completed in the array
             const matchIndex = matches.findIndex(m => m.id === match.id);
-            matches[matchIndex] = {
-              ...match,
-              status: 'completed',
-              completed: true,
-              winner: winnerId,
-              byeAdvancement: true
-            };
+            if (matchIndex !== -1) {
+              matches[matchIndex] = {
+                ...matches[matchIndex],
+                status: 'completed',
+                completed: true,
+                winner: winnerId,
+                loser: null,
+                winByBye: true
+              };
+            }
 
-            console.log('✅ BYE processed:', winnerName, 'advances automatically');
-
-            // Progress to next round
-            await this.onMatchComplete(match.id, winnerId);
+            // Advance winner to next match if exists
+            if (match.nextMatchId) {
+              const nextMatchIndex = matches.findIndex(m => m.id === match.nextMatchId);
+              if (nextMatchIndex !== -1) {
+                const position = match.winnerTo || 'A';
+                const updates = {};
+                
+                if (position === 'A') {
+                  updates.playerA = winnerId;
+                  updates.playerAName = winnerName;
+                  updates.playerAClub = winnerClub;
+                  updates.playerASeed = winnerSeed;
+                  updates.playerACountry = winnerCountry;
+                } else {
+                  updates.playerB = winnerId;
+                  updates.playerBName = winnerName;
+                  updates.playerBClub = winnerClub;
+                  updates.playerBSeed = winnerSeed;
+                  updates.playerBCountry = winnerCountry;
+                }
+                
+                matches[nextMatchIndex] = { ...matches[nextMatchIndex], ...updates };
+                console.log(`   → Advanced to match ${match.nextMatchId} position ${position}`);
+              }
+            }
           }
 
           // Save updated matches for this category
           await this.matchesRef.child(categoryKey).child('main').set(matches);
-          console.log(`✅ BYE matches processed for category: ${categoryKey}`);
+          console.log(`✅ BYE matches processed and saved for category: ${categoryKey}`);
         }
       } else {
         // Handle old structure (single category or array)
         let matches = [];
         if (data.main && Array.isArray(data.main)) {
-          matches = data.main;
+          matches = [...data.main];
         } else if (Array.isArray(data)) {
-          matches = data;
+          matches = [...data];
         }
 
         // Find matches with BYE
-        const byeMatches = matches.filter(m => 
-          (m.playerAName === 'BYE' || m.playerBName === 'BYE') && 
-          m.status !== 'completed' && !m.completed
-        );
+        const byeMatches = matches.filter(m => {
+          const hasPlayerA = m.playerA && m.playerAName && m.playerAName !== 'BYE' && m.playerAName !== 'TBD';
+          const hasPlayerB = m.playerB && m.playerBName && m.playerBName !== 'BYE' && m.playerBName !== 'TBD';
+          const hasBye = (m.playerAName === 'BYE' && hasPlayerB) || (m.playerBName === 'BYE' && hasPlayerA);
+          const notCompleted = m.status !== 'completed' && !m.completed;
+          return hasBye && notCompleted;
+        });
 
         console.log('🔄 Processing', byeMatches.length, 'BYE matches');
 
@@ -395,34 +467,68 @@ class TournamentProgression {
           // Determine winner (the player who is not BYE)
           let winnerId, winnerName, winnerClub, winnerSeed, winnerCountry;
           
-          if (match.playerAName === 'BYE') {
+          if (match.playerAName === 'BYE' && match.playerB) {
             winnerId = match.playerB;
             winnerName = match.playerBName;
-            winnerClub = match.playerBClub;
-            winnerSeed = match.playerBSeed;
-            winnerCountry = match.playerBCountry;
-          } else {
+            winnerClub = match.playerBClub || '';
+            winnerSeed = match.playerBSeed || null;
+            winnerCountry = match.playerBCountry || '';
+          } else if (match.playerBName === 'BYE' && match.playerA) {
             winnerId = match.playerA;
             winnerName = match.playerAName;
-            winnerClub = match.playerAClub;
-            winnerSeed = match.playerASeed;
-            winnerCountry = match.playerACountry;
+            winnerClub = match.playerAClub || '';
+            winnerSeed = match.playerASeed || null;
+            winnerCountry = match.playerACountry || '';
+          } else {
+            console.warn('⚠️ Invalid BYE match:', match.id);
+            continue;
           }
+
+          if (!winnerId || !winnerName || winnerName === 'TBD') {
+            console.warn('⚠️ Cannot process BYE match - invalid winner:', match.id);
+            continue;
+          }
+
+          console.log(`   ✅ Auto-advance: ${winnerName}`);
 
           // Mark match as completed
           const matchIndex = matches.findIndex(m => m.id === match.id);
-          matches[matchIndex] = {
-            ...match,
-            status: 'completed',
-            completed: true,
-            winner: winnerId,
-            byeAdvancement: true
-          };
+          if (matchIndex !== -1) {
+            matches[matchIndex] = {
+              ...matches[matchIndex],
+              status: 'completed',
+              completed: true,
+              winner: winnerId,
+              loser: null,
+              winByBye: true
+            };
+          }
 
-          console.log('✅ BYE processed:', winnerName, 'advances automatically');
-
-          // Progress to next round
-          await this.onMatchComplete(match.id, winnerId);
+          // Advance to next match
+          if (match.nextMatchId) {
+            const nextMatchIndex = matches.findIndex(m => m.id === match.nextMatchId);
+            if (nextMatchIndex !== -1) {
+              const position = match.winnerTo || 'A';
+              const updates = {};
+              
+              if (position === 'A') {
+                updates.playerA = winnerId;
+                updates.playerAName = winnerName;
+                updates.playerAClub = winnerClub;
+                updates.playerASeed = winnerSeed;
+                updates.playerACountry = winnerCountry;
+              } else {
+                updates.playerB = winnerId;
+                updates.playerBName = winnerName;
+                updates.playerBClub = winnerClub;
+                updates.playerBSeed = winnerSeed;
+                updates.playerBCountry = winnerCountry;
+              }
+              
+              matches[nextMatchIndex] = { ...matches[nextMatchIndex], ...updates };
+              console.log(`   → Advanced to match ${match.nextMatchId}`);
+            }
+          }
         }
 
         // Save updated matches
@@ -437,6 +543,7 @@ class TournamentProgression {
 
     } catch (error) {
       console.error('❌ Error processing BYEs:', error);
+      throw error;
     }
   }
   
@@ -822,6 +929,47 @@ class TournamentProgression {
     
     return bronzeMatches;
   }
+
+  generateRepechage(mainMatches) {
+
+    const qfs = mainMatches.filter(m => m.round === 3);
+    const sfs = mainMatches.filter(m => m.round === 4);
+
+    if (qfs.length !== 4) return [];
+
+    const repA = [qfs[0], qfs[1]];
+    const repB = [qfs[2], qfs[3]];
+
+    const mk = (loserA, loserB, side) => ({
+      id: `REP_${side}_${Date.now()}`,
+      matchType: "repechage",
+      side,
+      playerA: loserA.id,
+      playerAName: loserA.name,
+      playerB: loserB.id,
+      playerBName: loserB.name,
+      completed: false
+    });
+
+    const A = mk(this.getMatchLoser(repA[0]), this.getMatchLoser(repA[1]), "A");
+    const B = mk(this.getMatchLoser(repB[0]), this.getMatchLoser(repB[1]), "B");
+
+    return [
+      A,
+      B,
+      {
+        id: 'BRONZE_A',
+        playerAName: 'Winner Rep A',
+        playerBName: this.getMatchLoser(sfs[0])?.name,
+      },
+      {
+        id: 'BRONZE_B',
+        playerAName: 'Winner Rep B',
+        playerBName: this.getMatchLoser(sfs[1])?.name,
+      }
+    ];
+  }
+
 }
 
 // Export for use in other scripts

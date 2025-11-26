@@ -32,14 +32,12 @@
             border-radius: 12px;
             padding: 16px;
             min-height: 400px;
-            max-height: 75vh;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
             align-items: center;
             text-align: center;
             box-shadow: var(--shadow);
-            overflow-y: auto;
         }
         
         /* Player Cards */
@@ -386,8 +384,6 @@
         width: 100%;
         box-sizing: border-box;
         padding: 4px;
-        max-height: 70vh;
-        overflow-y: auto;
         }
 
         .match-slot {
@@ -657,8 +653,14 @@
 <!-- Weight Categories Configuration -->
 <script src="../public/js/weight-categories.js"></script>
 
+<!-- IJF Pooling System -->
+<script src="../public/js/ijf-pooling-system.js"></script>
+
 <!-- Match Manager for multi-device integration -->
 <script src="../public/js/match-manager.js"></script>
+
+<!-- Tournament Progression System - REQUIRED for BYE processing -->
+<script src="../public/js/tournament-progression.js"></script>
 
 <script src="../public/js/generate-draws.js"></script>
 

@@ -17,464 +17,396 @@ let currentDrawData = null;
 
 // Tournament Draw System
 class TournamentDraw {
+
   constructor() {
     this.database = firebase.database();
     this.playersRef = this.database.ref('registrations').orderByChild('userType').equalTo('player');
     this.matchesRef = this.database.ref('tournament/matches');
-    this.players = [];
-    this.matches = [];
   }
 
-  // Load all registered players
   async loadPlayers() {
-    try {
-      const snapshot = await this.playersRef.once('value');
-      this.players = [];
-      snapshot.forEach(childSnapshot => {
-        const player = childSnapshot.val();
-        player.id = childSnapshot.key;
-        this.players.push(player);
-      });
-      return this.players;
-    } catch (error) {
-      console.error('Error loading players:', error);
-      throw error;
-    }
+    const snap = await this.playersRef.once('value');
+    const arr = [];
+    snap.forEach(s => {
+      const p = s.val();
+      p.id = s.key;
+      arr.push(p);
+    });
+    return arr;
   }
 
-  // IJF Seeding: Seed players based on ranking/seed number
-  seedPlayers(players, seeds = []) {
-    // seeds array contains player IDs in order of seeding (seed 1, seed 2, seed 3, seed 4, etc.)
-    const seededPlayers = [];
-    const unseededPlayers = [...players];
-    
-    // Remove seeded players from unseeded list
-    seeds.forEach(seedId => {
-      const index = unseededPlayers.findIndex(p => p.id === seedId);
-      if (index !== -1) {
-        unseededPlayers.splice(index, 1);
-      }
-    });
-    
-    // Shuffle unseeded players
-    const shuffledUnseeded = unseededPlayers.sort(() => Math.random() - 0.5);
-    
-    return { seeds, unseeded: shuffledUnseeded };
-  }
-  
-  // Apply IJF bracket positioning rules
-  applyIJFSeeding(players, seeds = []) {
-    const bracketSize = this.getNextPowerOf2(players.length);
-    const bracket = new Array(bracketSize).fill(null);
-    
-    // Get seeded and unseeded players
-    const seededPlayers = seeds.map(id => players.find(p => p.id === id)).filter(p => p);
-    const unseededPlayers = players.filter(p => !seeds.includes(p.id));
-    const shuffledUnseeded = unseededPlayers.sort(() => Math.random() - 0.5);
-    
-    // IJF Seeding positions for different bracket sizes
-    const seedPositions = this.getIJFSeedPositions(bracketSize);
-    
-    // Place seeded players
-    seededPlayers.forEach((player, index) => {
-      if (index < seedPositions.length) {
-        const position = seedPositions[index];
-        bracket[position] = player;
-        console.log(`✅ Seed ${index + 1} (${player.fullName}) placed at position ${position}`);
-      }
-    });
-    
-    // Fill remaining positions with unseeded players
-    let unseededIndex = 0;
-    for (let i = 0; i < bracket.length; i++) {
-      if (bracket[i] === null && unseededIndex < shuffledUnseeded.length) {
-        bracket[i] = shuffledUnseeded[unseededIndex++];
-      }
-    }
-    
-    // Debug: Log complete bracket structure
-    console.log('\n🔍 COMPLETE BRACKET POSITIONS:');
-    bracket.forEach((player, idx) => {
-      const name = player?.fullName || 'BYE';
-      const seed = player?.seed ? `[Seed ${player.seed}]` : '';
-      console.log(`Position ${idx}: ${name} ${seed}`);
-    });
-    console.log('');
-    
-    return bracket;
-  }
-  
-  // Get IJF seed positions for bracket size
-  getIJFSeedPositions(size) {
-    // IJF standard seeding positions
-    // Format: [Seed1_pos, Seed2_pos, Seed3_pos, Seed4_pos, Seed5_pos, ...]
-    const positions = {
-      4: [0, 3, 2, 1],  // Seed1=top, Seed2=bottom, Seed3=pos2, Seed4=pos1
-      8: [0, 7, 4, 3, 2, 5, 1, 6],  // Seed1=0, Seed2=7, Seed3=4, Seed4=3
-      16: [0, 15, 8, 7, 4, 11, 3, 12, 2, 13, 5, 10, 6, 9, 1, 14],
-      32: [0, 31, 16, 15, 8, 23, 7, 24, 4, 27, 11, 20, 3, 28, 12, 19,
-           2, 29, 13, 18, 5, 26, 10, 21, 6, 25, 9, 22, 1, 30, 14, 17],
-      64: [0, 63, 32, 31, 16, 47, 15, 48, 8, 55, 23, 40, 7, 56, 24, 39,
-           4, 59, 27, 36, 11, 52, 20, 43, 3, 60, 28, 35, 12, 51, 19, 44,
-           2, 61, 29, 34, 13, 50, 18, 45, 5, 58, 26, 37, 10, 53, 21, 42,
-           6, 57, 25, 38, 9, 54, 22, 41, 1, 62, 30, 33, 14, 49, 17, 46]
-    };
-    
-    return positions[size] || positions[8]; // Default to 8 if size not found
-  }
-  
-  // Get next power of 2 for bracket size
-  getNextPowerOf2(n) {
-    let power = 2;
-    while (power < n) {
-      power *= 2;
-    }
-    return power;
+  nextBracketSize(n) {
+    // IJF bracket sizes: 2, 4, 8, 16, 32, 64
+    return [2, 4, 8, 16, 32, 64].find(s => s >= n) || 64;
   }
 
-  // Generate matches based on number of players
-  async generateDraw() {
-    try {
-      console.log('Starting to generate draw...');
-      
-      // Load fresh players data
-      await this.loadPlayers();
-      
-      if (this.players.length < 2) {
-        throw new Error('Need at least 2 players to create a draw');
-      }
+  shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
 
-      console.log(`Generating draw for ${this.players.length} players`);
+  generateSlots(players) {
+    const bracketSize = this.nextBracketSize(players.length);
+    const byes = bracketSize - players.length;
+    
+    console.log(`🎯 Generating slots: ${players.length} players, ${bracketSize} bracket size, ${byes} BYEs`);
+
+    // Shuffle players
+    let shuffledPlayers = this.shuffle([...players]);
+    
+    // NEW STRATEGY: Distribute players and BYEs to ensure no BYE vs BYE
+    // Create slots array
+    let slots = new Array(bracketSize).fill(null);
+    
+    // Calculate number of matches
+    const numMatches = bracketSize / 2;
+    
+    // Distribute BYEs across matches (max 1 BYE per match)
+    if (byes >= numMatches) {
+      // Too many BYEs - this is impossible to avoid BYE vs BYE
+      console.error(`❌ IMPOSSIBLE: ${byes} BYEs for ${numMatches} matches - BYE vs BYE unavoidable`);
+      // Fall back to simple distribution
+      slots = this.shuffle([...shuffledPlayers, ...new Array(byes).fill(null)]);
+    } else {
+      // Distribute BYEs evenly across matches (max 1 per match)
+      let byePositions = [];
       
-      // Extract seed information from players
-      const seedIds = [];
-      this.players.forEach(player => {
-        if (player.seed) {
-          // Store player ID at index (seed - 1) to maintain seed order
-          seedIds[player.seed - 1] = player.id;
+      // Create list of all possible positions
+      let availablePositions = [];
+      for (let i = 0; i < bracketSize; i++) {
+        availablePositions.push(i);
+      }
+      
+      // Shuffle positions
+      availablePositions = this.shuffle(availablePositions);
+      
+      // Select BYE positions ensuring no two BYEs in same match
+      let usedMatches = new Set();
+      for (let i = 0; i < availablePositions.length && byePositions.length < byes; i++) {
+        const pos = availablePositions[i];
+        const matchIndex = Math.floor(pos / 2);
+        
+        if (!usedMatches.has(matchIndex)) {
+          byePositions.push(pos);
+          usedMatches.add(matchIndex);
         }
+      }
+      
+      // Mark BYE positions as null
+      byePositions.forEach(pos => {
+        slots[pos] = 'BYE_MARKER';
       });
       
-      // Remove undefined/null entries and get clean seed array
-      const cleanSeedIds = seedIds.filter(id => id);
+      // Fill remaining positions with players
+      let playerIndex = 0;
+      for (let i = 0; i < bracketSize; i++) {
+        if (slots[i] === null) {
+          slots[i] = shuffledPlayers[playerIndex++];
+        }
+      }
       
-      console.log('Extracted seeds:', cleanSeedIds.map((id, idx) => {
-        const player = this.players.find(p => p.id === id);
-        return `Seed ${idx + 1}: ${player?.fullName}`;
-      }));
+      // Convert BYE markers back to null
+      for (let i = 0; i < bracketSize; i++) {
+        if (slots[i] === 'BYE_MARKER') {
+          slots[i] = null;
+        }
+      }
       
-      // Generate the bracket with seeds
-      const matches = this.createBracket(this.players, cleanSeedIds);
-      
-      // Save to Firebase
-      console.log('Saving matches to Firebase...');
-      await this.matchesRef.set(matches);
-      console.log('Matches saved successfully');
-      
-      // Update local matches
-      this.matches = matches;
-      
-      return matches;
-    } catch (error) {
-      console.error('Error generating draw:', error);
-      throw error;
+      console.log(`✅ Distributed ${byes} BYEs across ${byes} different matches`);
     }
+    
+    // Debug: Show bracket structure
+    console.log('📋 Bracket structure:');
+    for (let i = 0; i < slots.length; i += 2) {
+      const playerA = slots[i]?.fullName || 'BYE';
+      const playerB = slots[i + 1]?.fullName || 'BYE';
+      const matchNum = i / 2 + 1;
+      const pool = this.assignPools(i, bracketSize);
+      console.log(`   Match ${matchNum} (Pool ${pool}): ${playerA} vs ${playerB}`);
+    }
+    
+    // Final validation
+    let byeVsByeCount = 0;
+    for (let i = 0; i < slots.length; i += 2) {
+      if (slots[i] === null && slots[i + 1] === null) {
+        byeVsByeCount++;
+        console.error(`❌ BYE vs BYE at match ${i/2 + 1} (positions ${i}-${i+1})`);
+      }
+    }
+    
+    if (byeVsByeCount === 0) {
+      console.log('✅ Slot validation passed: No BYE vs BYE matches');
+    } else {
+      console.error(`❌ VALIDATION FAILED: ${byeVsByeCount} BYE vs BYE matches still exist`);
+    }
+
+    return { slots, bracketSize, byes };
   }
 
-  // Create bracket with IJF seeding and repechage
-  createBracket(players, seeds = []) {
-    console.log('Creating IJF bracket with', players.length, 'players and', seeds.length, 'seeds');
-    
-    const allMatches = {};
-    const numPlayers = players.length;
-    
-    // Apply IJF seeding
-    const seededBracket = this.applyIJFSeeding(players, seeds);
-    
-    // Create main bracket
-    const mainBracket = this.createMainBracket(seededBracket);
-    allMatches.main = mainBracket;
-    
-    // Create empty repechage array (will be populated after semifinals complete)
-    // Note: Repechage matches are created automatically by tournament-progression.js
-    allMatches.repechage = [];
-    
-    console.log('Created complete bracket structure');
-    
-    // Log bracket structure for verification
-    console.log('\n📊 IJF BRACKET STRUCTURE (First Round):');
-    console.log('═══════════════════════════════════════');
-    const firstRound = mainBracket.filter(m => m.round === 1);
-    firstRound.forEach((match, idx) => {
-      const seedA = match.playerASeed ? `[Seed ${match.playerASeed}]` : '';
-      const seedB = match.playerBSeed ? `[Seed ${match.playerBSeed}]` : '';
-      console.log(`Match ${idx + 1}: ${match.playerAName} ${seedA} vs ${match.playerBName} ${seedB}`);
-    });
-    console.log('═══════════════════════════════════════');
-    
-    // Check for seed conflicts
-    const seedConflicts = firstRound.filter(m => 
-      m.playerASeed && m.playerBSeed && 
-      (m.playerASeed <= 2 && m.playerBSeed <= 2)
-    );
-    if (seedConflicts.length > 0) {
-      console.error('❌ SEEDING ERROR: Top 2 seeds meeting in first round!');
-      seedConflicts.forEach(m => {
-        console.error(`   ${m.playerAName} [Seed ${m.playerASeed}] vs ${m.playerBName} [Seed ${m.playerBSeed}]`);
-      });
-    }
-    console.log('');
-    
-    return allMatches;
+  assignPools(slotIndex, bracketSize) {
+    // IJF Rule: Always 4 pools (A, B, C, D)
+    // Pools are bracket quarters with fixed slot counts:
+    //   8-slot  → 2 per pool
+    //   16-slot → 4 per pool
+    //   32-slot → 8 per pool
+    //   64-slot → 16 per pool
+    const perPool = bracketSize / 4;
+    const poolIndex = Math.floor(slotIndex / perPool);
+    return ["A", "B", "C", "D"][poolIndex] || "D";
   }
-  
-  // Create main elimination bracket
-  createMainBracket(players) {
+
+  createRound1(slots, bracketSize, categoryKey) {
     const matches = [];
-    const numPlayers = players.filter(p => p !== null).length;
-    let round = 1;
     
-    // Create first round matches
-    const firstRoundMatches = [];
-    for (let i = 0; i < Math.ceil(players.length / 2); i++) {
-      const playerA = players[i * 2];
-      const playerB = players[i * 2 + 1];
+    // IJF Rule: Round-1 ALWAYS FULL - Create ALL matches
+    for (let i = 0; i < slots.length; i += 2) {
+      const A = slots[i];
+      const B = slots[i + 1];
       
-      // Skip if both players are null (empty bracket positions)
-      if (!playerA && !playerB) continue;
-      
+      // Validate no BYE vs BYE
+      if (!A && !B) {
+        console.error(`❌ CRITICAL: BYE vs BYE at match ${i/2 + 1}`);
+      }
+
       const match = {
-        id: this.generateId(),
-        round,
+        id: `M1_${i/2+1}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        round: 1,
+        pool: this.assignPools(i, bracketSize),
         matchType: 'main',
-        playerA: playerA?.id || null,
-        playerB: playerB?.id || null,
+        playerA: A?.id || null,
+        playerB: B?.id || null,
+        playerAName: A?.fullName || 'BYE',
+        playerBName: B?.fullName || 'BYE',
+        playerAClub: A?.playerInfo?.team || A?.team || '',
+        playerBClub: B?.playerInfo?.team || B?.team || '',
+        playerASeed: A?.seed || null,
+        playerBSeed: B?.seed || null,
+        playerACountry: A?.playerInfo?.country || A?.country || '',
+        playerBCountry: B?.playerInfo?.country || B?.country || '',
         winner: null,
         loser: null,
         completed: false,
+        status: 'pending',
         nextMatchId: null,
-        playerAName: playerA?.fullName || 'BYE',
-        playerBName: playerB?.fullName || 'BYE',
-        playerAClub: playerA?.playerInfo?.team || null,
-        playerBClub: playerB?.playerInfo?.team || null,
-        playerASeed: playerA?.seed || null,
-        playerBSeed: playerB?.seed || null,
-        weightCategory: playerA?.playerInfo?.weight ? `${playerA.playerInfo.weight}kg` : null,
-        repechageEligible: true // Losers can enter repechage
+        winnerTo: null,
+        category: categoryKey
       };
-      
-      // Auto-complete BYE matches
-      if (!playerB && playerA) {
-        match.winner = playerA.id;
+
+      // IJF Rule: If player faces BYE → Auto Win (show "Auto Win (BYE)")
+      // Always show BYE in opponent slot
+      if (A && !B) {
+        match.winner = A.id;
+        match.loser = null;
         match.completed = true;
-        match.playerBName = 'BYE';
-      } else if (!playerA && playerB) {
-        match.winner = playerB.id;
+        match.status = 'completed';
+        match.winByBye = true;
+        console.log(`✅ Auto-advance: ${A.fullName} (BYE in position B)`);
+      } else if (B && !A) {
+        match.winner = B.id;
+        match.loser = null;
         match.completed = true;
-        match.playerAName = 'BYE';
+        match.status = 'completed';
+        match.winByBye = true;
+        console.log(`✅ Auto-advance: ${B.fullName} (BYE in position A)`);
       }
-      
-      firstRoundMatches.push(match);
+
+      matches.push(match);
     }
     
-    matches.push(...firstRoundMatches);
+    console.log(`✅ Created ${matches.length} Round-1 matches`);
+    const byeMatches = matches.filter(m => m.winByBye);
+    console.log(`   - ${byeMatches.length} auto-advance (BYE) matches`);
+    console.log(`   - ${matches.length - byeMatches.length} regular matches`);
+    
+    return matches;
+  }
 
-    // Create subsequent rounds
-    let currentRound = firstRoundMatches;
-    while (currentRound.length > 1) {
+  linkNextRounds(matches) {
+    let round = 1;
+    let current = matches;
+    const all = [...matches];
+    
+    const totalRounds = Math.log2(matches.length) + 1;
+    console.log(`🔗 Linking rounds: ${totalRounds} total rounds`);
+
+    while (current.length > 1) {
       round++;
-      const nextRound = [];
+      const next = [];
       
-      for (let i = 0; i < Math.ceil(currentRound.length / 2); i++) {
-        const match = {
-          id: this.generateId(),
+      for (let i = 0; i < current.length; i += 2) {
+        const isFinal = (current.length === 2);
+        const isSemifinal = (current.length === 4);
+        const isQuarterfinal = (current.length === 8);
+        
+        let roundName = 'main';
+        if (isFinal) roundName = 'final';
+        else if (isSemifinal) roundName = 'semifinal';
+        else if (isQuarterfinal) roundName = 'quarterfinal';
+
+        const m = {
+          id: `R${round}_M${i/2+1}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
           round,
-          matchType: round === this.getMaxRounds(numPlayers) ? 'final' : 'main',
+          matchType: isFinal ? 'final' : 'main',
           playerA: null,
           playerB: null,
           playerAName: 'TBD',
           playerBName: 'TBD',
+          playerAClub: '',
+          playerBClub: '',
+          playerASeed: null,
+          playerBSeed: null,
+          playerACountry: '',
+          playerBCountry: '',
           winner: null,
           loser: null,
           completed: false,
+          status: 'pending',
           nextMatchId: null,
-          repechageEligible: true
+          winnerTo: null
         };
-        
-        // Link previous matches to this one
-        if (currentRound[i * 2]) {
-          currentRound[i * 2].nextMatchId = match.id;
-          currentRound[i * 2].winnerTo = 'A'; // Winner goes to position A
+
+        // Link previous matches to this match
+        if (current[i]) {
+          current[i].nextMatchId = m.id;
+          current[i].winnerTo = 'A';
+          
+          // CRITICAL: If previous match is already completed (BYE), advance winner immediately
+          if (current[i].completed && current[i].winner) {
+            m.playerA = current[i].winner;
+            m.playerAName = current[i].winner === current[i].playerA ? current[i].playerAName : current[i].playerBName;
+            m.playerAClub = current[i].winner === current[i].playerA ? current[i].playerAClub : current[i].playerBClub;
+            m.playerASeed = current[i].winner === current[i].playerA ? current[i].playerASeed : current[i].playerBSeed;
+            m.playerACountry = current[i].winner === current[i].playerA ? current[i].playerACountry : current[i].playerBCountry;
+            console.log(`   → Auto-filled position A in R${round} match ${i/2+1}: ${m.playerAName}`);
+          }
         }
-        if (currentRound[i * 2 + 1]) {
-          currentRound[i * 2 + 1].nextMatchId = match.id;
-          currentRound[i * 2 + 1].winnerTo = 'B'; // Winner goes to position B
+
+        if (current[i + 1]) {
+          current[i + 1].nextMatchId = m.id;
+          current[i + 1].winnerTo = 'B';
+          
+          // CRITICAL: If previous match is already completed (BYE), advance winner immediately
+          if (current[i + 1].completed && current[i + 1].winner) {
+            m.playerB = current[i + 1].winner;
+            m.playerBName = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerAName : current[i + 1].playerBName;
+            m.playerBClub = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerAClub : current[i + 1].playerBClub;
+            m.playerBSeed = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerASeed : current[i + 1].playerBSeed;
+            m.playerBCountry = current[i + 1].winner === current[i + 1].playerA ? current[i + 1].playerACountry : current[i + 1].playerBCountry;
+            console.log(`   → Auto-filled position B in R${round} match ${i/2+1}: ${m.playerBName}`);
+          }
         }
-        
-        nextRound.push(match);
+
+        next.push(m);
       }
       
-      matches.push(...nextRound);
-      currentRound = nextRound;
+      console.log(`   Round ${round}: ${next.length} matches`);
+      all.push(...next);
+      current = next;
     }
     
-    console.log('Created main bracket with', matches.length, 'matches');
-    return matches;
+    console.log(`✅ Linked ${all.length} total matches across ${round} rounds`);
+    
+    // Count auto-filled positions
+    const autoFilledCount = all.filter(m => 
+      m.round > 1 && (
+        (m.playerAName !== 'TBD' && m.playerA !== null) || 
+        (m.playerBName !== 'TBD' && m.playerB !== null)
+      )
+    ).length;
+    
+    if (autoFilledCount > 0) {
+      console.log(`✅ Auto-filled ${autoFilledCount} next-round positions from BYE winners`);
+    }
+    
+    return all;
   }
-  
-  // Calculate maximum rounds needed
-  getMaxRounds(numPlayers) {
-    return Math.ceil(Math.log2(numPlayers));
-  }
-  
-  // Create repechage brackets after semifinals are complete
-  createRepechageBrackets(mainMatches, finalists) {
-    const repechage = {
-      side1: [],
-      side2: [],
-      bronzeMatches: []
+
+  async generateDraw(players) {
+    if (!players || players.length < 1) {
+      throw new Error("No players passed to generator");
+    }
+
+    if (players.length === 0) throw new Error("No players");
+
+    const { slots, bracketSize, byes } = this.generateSlots(players);
+    const categoryKey = "default";
+
+    const r1 = this.createRound1(slots, bracketSize, categoryKey);
+    const main = this.linkNextRounds(r1);
+
+    const full = {
+      bracketSize,
+      byeCount: byes,
+      slots: slots.map((p, i) => ({
+        slot: i,
+        pool: this.assignPools(i, bracketSize),
+        name: p?.fullName || "BYE"
+      })),
+      main,
+      repechage: []
     };
-    
-    if (finalists.length !== 2) {
-      console.warn('Need 2 finalists to create repechage');
-      return repechage;
-    }
-    
-    // Get all losers to each finalist
-    const finalist1Losers = this.getLosersToPlayer(mainMatches, finalists[0]);
-    const finalist2Losers = this.getLosersToPlayer(mainMatches, finalists[1]);
-    
-    // Create repechage matches for side 1
-    if (finalist1Losers.length > 0) {
-      repechage.side1 = this.createRepechageRounds(finalist1Losers, 'repechage-1');
-    }
-    
-    // Create repechage matches for side 2
-    if (finalist2Losers.length > 0) {
-      repechage.side2 = this.createRepechageRounds(finalist2Losers, 'repechage-2');
-    }
-    
-    // Create bronze medal matches
-    if (repechage.side1.length > 0 && repechage.side2.length > 0) {
-      const bronze1 = {
-        id: this.generateId(),
-        round: 'bronze',
-        matchType: 'bronze',
-        playerA: null,
-        playerB: null,
-        playerAName: 'Repechage 1 Winner',
-        playerBName: 'Semifinal Loser',
-        winner: null,
-        completed: false
-      };
-      
-      const bronze2 = {
-        id: this.generateId(),
-        round: 'bronze',
-        matchType: 'bronze',
-        playerA: null,
-        playerB: null,
-        playerAName: 'Repechage 2 Winner',
-        playerBName: 'Semifinal Loser',
-        winner: null,
-        completed: false
-      };
-      
-      repechage.bronzeMatches = [bronze1, bronze2];
-    }
-    
-    return repechage;
-  }
-  
-  // Get all players who lost to a specific player
-  getLosersToPlayer(matches, playerId) {
-    const losers = [];
-    
-    // Traverse the bracket backwards from the player
-    const playerMatches = matches.filter(m => m.winner === playerId);
-    
-    playerMatches.forEach(match => {
-      const loser = match.playerA === playerId ? match.playerB : match.playerA;
-      if (loser) {
-        losers.push(loser);
-      }
-    });
-    
-    return losers;
-  }
-  
-  // Create repechage rounds
-  createRepechageRounds(players, side) {
-    const matches = [];
-    let round = 1;
-    
-    // Create matches for repechage
-    let currentPlayers = [...players];
-    
-    while (currentPlayers.length > 1) {
-      const roundMatches = [];
-      
-      for (let i = 0; i < Math.floor(currentPlayers.length / 2); i++) {
-        const match = {
-          id: this.generateId(),
-          round: `${side}-R${round}`,
-          matchType: 'repechage',
-          playerA: currentPlayers[i * 2],
-          playerB: currentPlayers[i * 2 + 1],
-          playerAName: 'TBD',
-          playerBName: 'TBD',
-          winner: null,
-          completed: false,
-          nextMatchId: null
-        };
-        
-        roundMatches.push(match);
-      }
-      
-      matches.push(...roundMatches);
-      currentPlayers = roundMatches.map(() => null); // Winners will fill next round
-      round++;
-    }
-    
-    return matches;
-  }
 
-  // Get all matches
-  async getAllMatches() {
+    // Save to Firebase
+    await this.matchesRef.child(categoryKey).set(full);
+    
+    console.log('✅ Draw saved to Firebase');
+    console.log('🔄 Processing BYE auto-advancements...');
+    
+    // CRITICAL: Process BYE matches immediately after generation
+    // This ensures players with BYE in Round-1 advance to Round-2
     try {
-      const snapshot = await this.matchesRef.once('value');
-      const matches = [];
-      
-      snapshot.forEach(childSnapshot => {
-        matches.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-      
-      return matches.sort((a, b) => a.round - b.round);
+      if (typeof TournamentProgression !== 'undefined') {
+        const progression = new TournamentProgression();
+        await progression.processByes();
+        console.log('✅ BYE processing complete');
+      } else if (window.TournamentProgression) {
+        const progression = new window.TournamentProgression();
+        await progression.processByes();
+        console.log('✅ BYE processing complete');
+      } else {
+        console.error('❌ TournamentProgression not available - BYEs not processed');
+        console.error('   Make sure tournament-progression.js is loaded before generate-draws.js');
+      }
     } catch (error) {
-      console.error('Error getting matches:', error);
-      throw error;
+      console.error('❌ Error processing BYEs:', error);
     }
+    
+    return full;   // ← REQUIRED
   }
 
-  // Update a match
-  async updateMatch(updatedMatch) {
-    try {
-      await this.matchesRef.child(updatedMatch.id).update(updatedMatch);
-      return true;
-    } catch (error) {
-      console.error('Error updating match:', error);
-      throw error;
+validateNoByeVsBye(bracket) {
+  let safety = 0;
+
+  while (safety < 100) {
+    let fixed = true;
+
+    for (let i = 0; i < bracket.length; i += 2) {
+      if (!bracket[i] && !bracket[i + 1]) {
+
+        // Find any slot holding real player in a different match
+        const swapIndex = bracket.findIndex((p, idx) => p && Math.floor(idx / 2) !== Math.floor(i / 2));
+
+        if (swapIndex !== -1) {
+          [bracket[i], bracket[swapIndex]] = [bracket[swapIndex], bracket[i]];
+          fixed = false;
+        }
+      }
     }
+
+    if (fixed) break;
+    safety++;
   }
 
-  // Helper to generate unique ID
-  generateId() {
-    return 'match_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  }
+  return bracket;
 }
+
+}
+
+window.tournamentDraw = new TournamentDraw();
 
 // Initialize the application
 
@@ -556,37 +488,37 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load players from Firebase
 function loadPlayers() {
     showLoading(true);
-    
+
     const playersRef = window.database.ref('registrations');
-    
+
     playersRef.on('value', (snapshot) => {
         players = [];
         weights.clear();
-        
+
         snapshot.forEach((childSnapshot) => {
             const player = childSnapshot.val();
             player.id = childSnapshot.key;
-            
+
             // Check if this is a player and has the required data
             if (player.userType === 'player' && player.playerInfo) {
                 players.push(player);
-                
+
                 // Add weight to weights set if it exists
                 if (player.playerInfo.weight) {
                     weights.add(player.playerInfo.weight);
                 }
             }
         });
-        
+
 //        console.log('Loaded players:', players);
         console.log('Available weights:', Array.from(weights));
-        
+
         // Update weight filter
         updateWeightFilter();
-        
+
         // Initial render
         filterAndRenderDraws();
-        
+
         showLoading(false);
     }, (error) => {
         console.error('Error loading players:', error);
@@ -599,12 +531,12 @@ function loadPlayers() {
 function updateWeightFilter() {
     const weightFilterEl = document.getElementById('drawWeightFilter');
     if (!weightFilterEl) return;
-    
+
     const currentValue = weightFilterEl.value;
-    
+
     // Clear existing options except the first one
     weightFilterEl.innerHTML = '<option value="">All Weights</option>';
-    
+
     // Convert weights to array and sort numerically
     const sortedWeights = Array.from(weights)
         .filter(weight => weight !== undefined && weight !== null && weight !== '')
@@ -614,7 +546,7 @@ function updateWeightFilter() {
             const numB = parseFloat(b);
             return numA - numB;
         });
-    
+
     // Add weight options
     sortedWeights.forEach(weight => {
         const option = document.createElement('option');
@@ -622,7 +554,7 @@ function updateWeightFilter() {
         option.textContent = `${weight} kg`;
         weightFilterEl.appendChild(option);
     });
-    
+
     // Restore previous value if it still exists
     if (currentValue && sortedWeights.includes(currentValue)) {
         weightFilterEl.value = currentValue;
@@ -638,7 +570,7 @@ function setupEventListeners() {
             filterAndRenderDraws();
         });
     }
-    
+
     // Gender filter - updates weight categories
     if (genderFilter) {
         genderFilter.addEventListener('change', () => {
@@ -646,7 +578,7 @@ function setupEventListeners() {
             filterAndRenderDraws();
         });
     }
-    
+
     // Weight filter
     if (weightFilter) {
         weightFilter.addEventListener('change', filterAndRenderDraws);
@@ -657,12 +589,12 @@ function setupEventListeners() {
 function updateWeightCategories() {
     const ageGroup = ageGroupFilter ? ageGroupFilter.value : '';
     const gender = genderFilter ? genderFilter.value : '';
-    
+
     if (!weightFilter) return;
-    
+
     // Clear current options
     weightFilter.innerHTML = '<option value="">All Weights</option>';
-    
+
     if (ageGroup && gender && window.getWeightCategories) {
         // Get categories for selected age group and gender
         const categories = window.getWeightCategories(ageGroup, gender);
@@ -688,27 +620,27 @@ function updateWeightCategories() {
 function filterAndRenderDraws() {
     const selectedGender = genderFilter ? genderFilter.value : '';
     const selectedWeight = weightFilter ? weightFilter.value : '';
-    
+
     console.log('Filtering with - Gender:', selectedGender, 'Weight:', selectedWeight);
-    
+
     // Filter players
     const filteredPlayers = players.filter(player => {
         // Skip if player doesn't have playerInfo
         if (!player.playerInfo) return false;
-        
+
         // Filter by gender
         const playerGender = player.playerInfo.gender ? player.playerInfo.gender.toLowerCase() : '';
         const matchesGender = !selectedGender || playerGender === selectedGender.toLowerCase();
-        
+
         // Filter by weight
         const playerWeight = player.playerInfo.weight ? player.playerInfo.weight.toString() : '';
         const matchesWeight = !selectedWeight || playerWeight === selectedWeight;
-        
+
         return matchesGender && matchesWeight;
     });
-    
+
     console.log('Filtered players count:', filteredPlayers.length);
-    
+
     // Render the filtered players
     renderDraws(filteredPlayers);
 }
@@ -763,13 +695,13 @@ async function animateGenerateDraw() {
     .filter(p => p.seed)
     .sort((a, b) => a.seed - b.seed)
     .map(p => p.id);
-  
+
   // Create bracket with IJF seeding FIRST (so we know the actual pairings)
-  const bracketData = tournamentDraw.createBracket(visiblePlayers, seeds);
-  
+  const bracketData = await tournamentDraw.generateDraw(visiblePlayers);
+
   // Extract first round matches to display in animation
   const firstRoundMatches = bracketData.main.filter(m => m.round === 1);
-  
+
   console.log('🎬 Animating', firstRoundMatches.length, 'first round matches');
 
   // Create placeholder match slots for first round
@@ -806,7 +738,7 @@ async function animateGenerateDraw() {
   // Animate the ACTUAL matches that will be saved
   for (let i = 0; i < firstRoundMatches.length; i++) {
     const match = firstRoundMatches[i];
-    
+
     // Find player objects from visiblePlayers
     const pA = visiblePlayers.find(p => p.id === match.playerA);
     const pB = match.playerB ? visiblePlayers.find(p => p.id === match.playerB) : null;
@@ -853,9 +785,9 @@ async function animateGenerateDraw() {
 
   // Get age group
   const selectedAgeGroup = ageGroupFilter ? ageGroupFilter.value : '';
-  const ageGroupLabel = selectedAgeGroup ? 
+  const ageGroupLabel = selectedAgeGroup ?
     ageGroupFilter.options[ageGroupFilter.selectedIndex].text : 'All Ages';
-  
+
   // Store the bracket data for saving later
   currentDrawData = {
     bracketData: bracketData,
@@ -871,12 +803,12 @@ async function animateGenerateDraw() {
     seeds: seeds,
     createdAt: Date.now()
   };
-  
+
   // Show the Save Draw button
   if (saveDrawBtn) {
     saveDrawBtn.style.display = 'inline-block';
   }
-  
+
   console.log('✅ Draw generated successfully. Click "Save Draw" to save to database.');
 }
 
@@ -962,7 +894,7 @@ function getColorForString(str) {
 // Render the player list in the left column
 function renderPlayerList(players) {
     const playersList = document.getElementById('playersList');
-    
+
     if (!players || players.length === 0) {
         playersList.innerHTML = `
             <div class="no-players">
@@ -972,7 +904,7 @@ function renderPlayerList(players) {
         `;
         return;
     }
-    
+
     // Group players by weight category
     const playersByWeight = {};
     players.forEach(player => {
@@ -982,13 +914,13 @@ function renderPlayerList(players) {
         }
         playersByWeight[weight].push(player);
     });
-    
+
     // Generate HTML for each weight category
     let html = '';
-    
+
     for (const [weight, weightPlayers] of Object.entries(playersByWeight)) {
         const weightTitle = weight === 'No Weight' ? 'No Weight Category' : `${weight} kg`;
-        
+
         html += `
             <div class="weight-category">
                 <h4>${weightTitle} (${weightPlayers.length} players)</h4>
@@ -1015,7 +947,7 @@ function renderPlayerList(players) {
             </div>
         `;
     }
-    
+
     playersList.innerHTML = html;
 }
 
@@ -1023,11 +955,11 @@ function renderPlayerList(players) {
 function renderDraws(players) {
     // First render the player list in the left column
     renderPlayerList(players);
-    
+
     // Then show the draw area in the right column
     const drawsContent = document.getElementById('drawsContent');
     if (!drawsContent) return;
-    
+
     if (!players || players.length === 0) {
         drawsContent.innerHTML = `
             <div class="no-draw">
@@ -1037,7 +969,7 @@ function renderDraws(players) {
         `;
         return;
     }
-    
+
     // Show the initial state of the draw area
     drawsContent.innerHTML = `
         <div class="no-draw">
@@ -1078,18 +1010,18 @@ async function saveDraw() {
         alert('⚠️ No draw to save. Please generate a draw first.');
         return;
     }
-    
+
     // Disable button and show loading
     saveDrawBtn.disabled = true;
     const originalText = saveDrawBtn.innerHTML;
     saveDrawBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    
+
     try {
         const { bracketData, category, players, seeds, createdAt } = currentDrawData;
-        
+
         // Create a unique key for this category
         const categoryKey = `${category.ageGroup}_${category.gender}_${category.weight}`.replace(/\./g, '_');
-        
+
         // Prepare draw data to save
         const drawToSave = {
             categoryKey: categoryKey,
@@ -1109,25 +1041,44 @@ async function saveDraw() {
             savedAt: firebase.database.ServerValue.TIMESTAMP,
             status: 'pending' // pending, in-progress, completed
         };
-        
+
         // Save to tournament/draws/{categoryKey}
         await firebase.database().ref(`tournament/draws/${categoryKey}`).set(drawToSave);
-        
+
         // Also save matches to tournament/matches/{categoryKey}
         console.log('💾 Saving matches to:', `tournament/matches/${categoryKey}`);
         console.log('💾 Bracket data:', bracketData);
         await tournamentDraw.matchesRef.child(categoryKey).set(bracketData);
-        
+
         console.log('✅ Draw saved successfully:', categoryKey);
         console.log('✅ Matches saved to tournament/matches/' + categoryKey);
         
+        // CRITICAL: Process BYE matches after saving
+        console.log('🔄 Processing BYE auto-advancements for category:', categoryKey);
+        try {
+            if (typeof TournamentProgression !== 'undefined') {
+                const progression = new TournamentProgression();
+                await progression.processByes();
+                console.log('✅ BYE processing complete for category:', categoryKey);
+            } else if (window.TournamentProgression) {
+                const progression = new window.TournamentProgression();
+                await progression.processByes();
+                console.log('✅ BYE processing complete for category:', categoryKey);
+            } else {
+                console.error('❌ TournamentProgression not available');
+                alert('⚠️ Warning: BYE matches were not auto-processed. Please reload the page.');
+            }
+        } catch (error) {
+            console.error('❌ Error processing BYEs:', error);
+        }
+
         // Show success message
-        alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}`);
-        
+        alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}\n\nBYE matches have been auto-processed.`);
+
         // Hide save button and reset
         saveDrawBtn.style.display = 'none';
         currentDrawData = null;
-        
+
     } catch (error) {
         console.error('❌ Error saving draw:', error);
         alert('❌ Failed to save draw. Please try again.');
@@ -1150,10 +1101,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bind Generate Draw button
     generateDrawBtn.addEventListener("click", animateGenerateDraw);
-    
+
     // Bind Save Draw button
     if (saveDrawBtn) {
         saveDrawBtn.addEventListener("click", saveDraw);
     }
 });
+
+
+TournamentDraw.prototype.createBracket = function() {
+  return this.generateDraw();
+};
+
 

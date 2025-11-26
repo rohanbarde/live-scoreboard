@@ -17,14 +17,39 @@ class BracketView {
         return null;
       }
 
-      // Handle both data structures: direct array or nested under 'main' and 'repechage'
-      if (Array.isArray(matchesData)) {
-        this.matches = matchesData;
+      // Handle category-based structure: { CATEGORY_KEY: {main: [...], repechage: [...]}, ... }
+      const firstKey = Object.keys(matchesData)[0];
+      const firstValue = matchesData[firstKey];
+      
+      if (firstValue && typeof firstValue === 'object' && (firstValue.main || firstValue.repechage)) {
+        console.log('📊 Loading matches from category-based structure');
+        // Flatten all categories into single arrays
+        this.matches = [];
         this.repechageMatches = [];
-      } else if (matchesData.main && Array.isArray(matchesData.main)) {
+        
+        Object.keys(matchesData).forEach(categoryKey => {
+          const categoryData = matchesData[categoryKey];
+          
+          if (categoryData.main && Array.isArray(categoryData.main)) {
+            this.matches.push(...categoryData.main.map(m => ({...m, category: categoryKey})));
+          }
+          
+          if (categoryData.repechage && Array.isArray(categoryData.repechage)) {
+            this.repechageMatches.push(...categoryData.repechage.map(m => ({...m, category: categoryKey})));
+          }
+        });
+      }
+      // Handle single category structure: { main: [...], repechage: [...] }
+      else if (matchesData.main && Array.isArray(matchesData.main)) {
         this.matches = matchesData.main;
         this.repechageMatches = matchesData.repechage || [];
-      } else {
+      }
+      // Handle direct array (legacy)
+      else if (Array.isArray(matchesData)) {
+        this.matches = matchesData;
+        this.repechageMatches = [];
+      }
+      else {
         console.log('Invalid matches data structure');
         return null;
       }
@@ -38,37 +63,17 @@ class BracketView {
   }
 
   // Group matches into pools based on bracket structure
-  groupMatchesIntoPools(matches) {
-    if (!matches || matches.length === 0) return [];
+groupMatchesIntoPools(matches) {
+  const firstRound = matches.filter(m => m.round === 1);
+  const pools = { A:[], B:[], C:[], D:[] };
 
-    // Get first round matches only
-    const firstRoundMatches = matches.filter(m => m.round === 1);
-    
-    // Calculate pool size based on total matches
-    const totalMatches = firstRoundMatches.length;
-    let poolSize = 2; // Default: 2 matches per pool
-    
-    // Determine pool size based on bracket structure
-    if (totalMatches >= 16) {
-      poolSize = 4; // 4 matches per pool for large brackets
-    } else if (totalMatches >= 8) {
-      poolSize = 2; // 2 matches per pool for medium brackets
-    } else {
-      poolSize = 2; // 2 matches per pool for small brackets
-    }
+  firstRound.forEach(m => pools[m.pool].push(m));
 
-    // Group matches into pools
-    const pools = [];
-    for (let i = 0; i < firstRoundMatches.length; i += poolSize) {
-      const poolMatches = firstRoundMatches.slice(i, i + poolSize);
-      pools.push({
-        name: String.fromCharCode(65 + pools.length), // A, B, C, D...
-        matches: poolMatches
-      });
-    }
-
-    return pools;
-  }
+  return Object.keys(pools).map(p => ({
+    name: p,
+    matches: pools[p]
+  }));
+}
 
   // Get subsequent round matches for a pool
   getPoolProgressionMatches(poolMatches, allMatches) {
@@ -90,7 +95,7 @@ class BracketView {
   }
 
   // Render the complete bracket view
-  renderBracket(containerId = 'bracketContainer') {
+  renderBracket(containerId = 'bracketContainer', categoryFilter = '') {
     const container = document.getElementById(containerId);
     if (!container) {
       console.error('Bracket container not found');
@@ -115,30 +120,99 @@ class BracketView {
       return;
     }
 
-    // Group matches into pools
-    const pools = this.groupMatchesIntoPools(this.matches);
+    // Filter matches by category if specified
+    let matchesToRender = this.matches;
+    let repechageToRender = this.repechageMatches || [];
+    
+    if (categoryFilter) {
+      matchesToRender = this.matches.filter(m => m.category === categoryFilter);
+      repechageToRender = (this.repechageMatches || []).filter(m => m.category === categoryFilter);
+      console.log(`Filtered to category ${categoryFilter}: ${matchesToRender.length} main, ${repechageToRender.length} repechage`);
+    }
+
+    if (matchesToRender.length === 0) {
+      container.innerHTML = `
+        <div class="no-draw">
+          <i class="fas fa-info-circle"></i>
+          <p>No matches found for this category.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Group matches by category for separate display
+    const categories = this.groupMatchesByCategory(matchesToRender, repechageToRender);
     
     // Build HTML
     let html = '<div class="bracket-wrapper">';
     
-    // Render pools
-    html += '<div class="pools-container">';
-    pools.forEach(pool => {
-      html += this.renderPool(pool, this.matches);
+    // Render each category separately
+    categories.forEach(category => {
+      html += this.renderCategoryBracket(category);
     });
-    html += '</div>';
-
-    // Render progression rounds (semifinals, finals)
-    html += this.renderProgressionRounds(this.matches);
-
-    // Render repechage and bronze medal matches
-    if (this.repechageMatches && this.repechageMatches.length > 0) {
-      html += this.renderRepechageSection(this.repechageMatches);
-    }
 
     html += '</div>';
 
     container.innerHTML = html;
+  }
+
+  // Group matches by category
+  groupMatchesByCategory(mainMatches, repechageMatches) {
+    const categoryMap = new Map();
+    
+    // Group main matches
+    mainMatches.forEach(match => {
+      const cat = match.category || 'default';
+      if (!categoryMap.has(cat)) {
+        categoryMap.set(cat, { category: cat, main: [], repechage: [] });
+      }
+      categoryMap.get(cat).main.push(match);
+    });
+    
+    // Group repechage matches
+    repechageMatches.forEach(match => {
+      const cat = match.category || 'default';
+      if (!categoryMap.has(cat)) {
+        categoryMap.set(cat, { category: cat, main: [], repechage: [] });
+      }
+      categoryMap.get(cat).repechage.push(match);
+    });
+    
+    return Array.from(categoryMap.values());
+  }
+
+  // Render bracket for a single category
+  renderCategoryBracket(categoryData) {
+    const { category, main, repechage } = categoryData;
+    
+    let html = `<div class="category-bracket" data-category="${category}">`;
+    
+    // Category header
+    if (category !== 'default') {
+      html += `<div class="category-header"><h2><i class="fas fa-trophy"></i> ${category.replace(/_/g, ' ')}</h2></div>`;
+    }
+    
+    // Group matches into pools
+    const pools = this.groupMatchesIntoPools(main);
+    
+    // Render pools
+    html += '<div class="pools-container">';
+    pools.forEach(pool => {
+      html += this.renderPool(pool, main);
+    });
+    html += '</div>';
+
+    // Render progression rounds (semifinals, finals)
+    html += this.renderProgressionRounds(main);
+
+    // Render repechage and bronze medal matches
+    if (repechage && repechage.length > 0) {
+      html += this.renderRepechageSection(repechage);
+    }
+
+    html += '</div>';
+    
+    return html;
   }
 
   // Render a single pool
