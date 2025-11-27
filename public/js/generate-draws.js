@@ -716,32 +716,95 @@ async function animateGenerateDraw() {
   // Create bracket with IJF seeding FIRST (so we know the actual pairings)
   const bracketData = await tournamentDraw.generateDraw(visiblePlayers);
 
-  // Extract first round matches to display in animation
-  const firstRoundMatches = bracketData.main.filter(m => m.round === 1);
+  // Get all matches grouped by round
+  const matchesByRound = {};
+  bracketData.main.forEach(match => {
+    if (!matchesByRound[match.round]) {
+      matchesByRound[match.round] = [];
+    }
+    matchesByRound[match.round].push(match);
+  });
 
-  console.log('🎬 Animating', firstRoundMatches.length, 'first round matches');
+  const maxRound = Math.max(...Object.keys(matchesByRound).map(Number));
+  
+  console.log('🎬 Creating bracket with', maxRound, 'rounds');
 
-  // Create placeholder match slots for first round
-  const matchSlots = [];
-  for (let i = 0; i < firstRoundMatches.length; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'match-slot';
-    slot.dataset.slotIndex = i;
-    slot.innerHTML = `
-      <div class="slot-left">
-        <div class="slot-name"></div>
-      </div>
-      <div class="vs-label">V/S</div>
-      <div class="slot-right">
-        <div class="slot-name"></div>
-      </div>
-    `;
+  // Determine round names
+  const getRoundName = (round, maxRound) => {
+    if (round === maxRound) return 'Final';
+    if (round === maxRound - 1) return 'Semi-Finals';
+    if (round === maxRound - 2) return 'Quarter-Finals';
+    if (round === 2) return 'Round 2';
+    return `Round ${round}`;
+  };
 
-    bracket.appendChild(slot);
-    matchSlots.push(slot);
+  // Create rounds
+  const allMatchSlots = [];
+  
+  for (let round = 1; round <= maxRound; round++) {
+    const roundMatches = matchesByRound[round] || [];
+    const roundDiv = document.createElement('div');
+    roundDiv.className = 'bracket-round';
+    roundDiv.dataset.round = round;
+    
+    // Add round header
+    const header = document.createElement('div');
+    header.className = 'bracket-round-header';
+    header.textContent = getRoundName(round, maxRound);
+    roundDiv.appendChild(header);
+    
+    // Create match slots for this round
+    let lastPool = null;
+    
+    for (let i = 0; i < roundMatches.length; i++) {
+      const match = roundMatches[i];
+      const slot = document.createElement('div');
+      slot.className = 'match-slot';
+      slot.dataset.slotIndex = i;
+      slot.dataset.round = round;
+      slot.dataset.pool = match.pool || 'A';
+      
+      // Add pairing classes for bracket lines
+      if (i % 2 === 0) {
+        slot.classList.add('pair-top', 'has-pair');
+      } else {
+        slot.classList.add('pair-bottom', 'has-pair');
+      }
+      
+      // Add pool label to first match of each pool (only in round 1)
+      if (round === 1 && match.pool !== lastPool && i % 2 === 0) {
+        slot.classList.add('pool-label');
+        slot.dataset.poolName = `Pool ${match.pool}`;
+        lastPool = match.pool;
+      }
+      
+      // Mark as empty slot for rounds > 1 (will be filled during animation)
+      if (round > 1) {
+        slot.classList.add('empty-slot');
+      }
+      
+      slot.innerHTML = `
+        <div class="slot-left">
+          <div class="slot-name"></div>
+        </div>
+        <div class="vs-label">V/S</div>
+        <div class="slot-right">
+          <div class="slot-name"></div>
+        </div>
+      `;
+
+      roundDiv.appendChild(slot);
+      allMatchSlots.push({ slot, round, match });
+    }
+    
+    bracket.appendChild(roundDiv);
   }
 
   drawsContent.appendChild(bracket);
+
+  // Get first round matches for animation
+  const firstRoundMatches = matchesByRound[1] || [];
+  const matchSlots = allMatchSlots.filter(m => m.round === 1).map(m => m.slot);
 
   // allow CSS insertion then reveal
   await new Promise(r => requestAnimationFrame(r));
@@ -799,6 +862,27 @@ async function animateGenerateDraw() {
   // remove shuffle overlay after completion
   shuffle.classList.remove('visible');
   setTimeout(() => shuffle.remove(), 300);
+
+  // Fill empty slots in later rounds with placeholder text
+  for (let round = 2; round <= maxRound; round++) {
+    const roundSlots = allMatchSlots.filter(m => m.round === round);
+    roundSlots.forEach(({ slot }) => {
+      const slotLeftEl = slot.querySelector('.slot-left .slot-name');
+      const slotRightEl = slot.querySelector('.slot-right .slot-name');
+      
+      slotLeftEl.innerHTML = `
+        <div class="draw-player-card">
+          <div class="draw-player-name">Winner TBD</div>
+        </div>
+      `;
+      
+      slotRightEl.innerHTML = `
+        <div class="draw-player-card">
+          <div class="draw-player-name">Winner TBD</div>
+        </div>
+      `;
+    });
+  }
 
   // Get age group
   const selectedAgeGroup = ageGroupFilter ? ageGroupFilter.value : '';
@@ -867,11 +951,19 @@ function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
       clone.style.opacity = '0';
       setTimeout(() => {
         clone.remove();
+        // Format name with team abbreviation in brackets
+        const team = pData.playerInfo?.team || '';
+        const teamAbbr = team ? team.substring(0, Math.min(3, team.length)).toUpperCase() : '';
+        const fullName = pData.fullName || 'N/A';
+        const nameParts = fullName.split(',').map(p => p.trim());
+        const formattedName = nameParts.length > 1 
+          ? `${nameParts[0]}, ${nameParts[1].split(' ')[0]}`
+          : fullName;
+        
         // set the target text (animated slot content)
         targetNameEl.innerHTML = `
           <div class="draw-player-card">
-            <div class="draw-player-name">${pData.fullName || 'N/A'}</div>
-            <div class="draw-player-club">${pData.playerInfo?.team || ''}</div>
+            <div class="draw-player-name">${teamAbbr ? `[${teamAbbr}] ` : ''}${formattedName}</div>
           </div>
         `;
 
@@ -944,14 +1036,14 @@ function renderPlayerList(players) {
                 <div class="players-grid">
                     ${weightPlayers.map(player => `
                         <div class="player-card" data-player-id="${player.id}" style="position: relative;">
-                            ${player.seed ? `<div style="position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; box-shadow: 0 2px 8px rgba(255,215,0,0.4); border: 2px solid white; z-index: 1;">
+                            ${player.seed ? `<div style="position: absolute; top: -6px; right: -6px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; box-shadow: 0 2px 6px rgba(255,215,0,0.4); border: 2px solid white; z-index: 1;">
                                 ${player.seed}
                             </div>` : ''}
                             <div class="player-avatar" style="background: ${getColorForString(player.fullName || '')}">
                                 ${getInitials(player.fullName || '')}
                             </div>
                             <div class="player-info">
-                                <h4>${player.fullName || 'N/A'}${player.seed ? ' <i class="fas fa-trophy" style="color: #ffd700; font-size: 12px;"></i>' : ''}</h4>
+                                <h4>${player.fullName || 'N/A'}${player.seed ? ' <i class="fas fa-trophy" style="color: #ffd700; font-size: 10px;"></i>' : ''}</h4>
                                 <div class="player-details">
                                     ${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : ''}
                                     ${player.playerInfo?.team ? ' • ' + player.playerInfo.team : ''}
