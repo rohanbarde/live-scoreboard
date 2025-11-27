@@ -55,8 +55,15 @@ class TournamentDraw {
     
     console.log(`🎯 Generating slots: ${players.length} players, ${bracketSize} bracket size, ${byes} BYEs`);
 
-    // Shuffle players
-    let shuffledPlayers = this.shuffle([...players]);
+    // Separate seeded and unseeded players
+    const seededPlayers = players.filter(p => p.seed).sort((a, b) => a.seed - b.seed);
+    const unseededPlayers = players.filter(p => !p.seed);
+    
+    console.log(`🏆 Seeded players: ${seededPlayers.length}`, seededPlayers.map(p => `${p.fullName} (Seed ${p.seed})`));
+    console.log(`👥 Unseeded players: ${unseededPlayers.length}`);
+    
+    // Shuffle only unseeded players
+    let shuffledUnseeded = this.shuffle([...unseededPlayers]);
     
     // NEW STRATEGY: Distribute players and BYEs to ensure no BYE vs BYE
     // Create slots array
@@ -70,18 +77,38 @@ class TournamentDraw {
       // Too many BYEs - this is impossible to avoid BYE vs BYE
       console.error(`❌ IMPOSSIBLE: ${byes} BYEs for ${numMatches} matches - BYE vs BYE unavoidable`);
       // Fall back to simple distribution
-      slots = this.shuffle([...shuffledPlayers, ...new Array(byes).fill(null)]);
+      const allPlayers = [...seededPlayers, ...shuffledUnseeded];
+      slots = this.shuffle([...allPlayers, ...new Array(byes).fill(null)]);
     } else {
-      // Distribute BYEs evenly across matches (max 1 per match)
-      let byePositions = [];
+      // SEEDING STRATEGY: Place seeded players in different pools to avoid Round 1 matchups
+      // Standard seeding positions for 8-player bracket:
+      // Seed 1 → Position 0 (Pool A, Match 1)
+      // Seed 2 → Position 7 (Pool D, Match 4) - opposite end
+      // Seed 3 → Position 2 (Pool A, Match 2) or Position 4 (Pool B, Match 3)
+      // Seed 4 → Position 5 (Pool C, Match 3) or Position 6 (Pool D, Match 4)
       
-      // Create list of all possible positions
-      let availablePositions = [];
-      for (let i = 0; i < bracketSize; i++) {
-        availablePositions.push(i);
+      const seedPositions = [0, 7, 2, 5, 4, 3, 6, 1]; // Standard seeding pattern
+      
+      // Place seeded players
+      for (let i = 0; i < seededPlayers.length && i < seedPositions.length; i++) {
+        const pos = seedPositions[i];
+        if (pos < bracketSize) {
+          slots[pos] = seededPlayers[i];
+          console.log(`🏆 Placed Seed ${seededPlayers[i].seed} (${seededPlayers[i].fullName}) at position ${pos}`);
+        }
       }
       
-      // Shuffle positions
+      // Distribute BYEs evenly across matches (max 1 per match)
+      let byePositions = [];
+      let availablePositions = [];
+      
+      for (let i = 0; i < bracketSize; i++) {
+        if (slots[i] === null) {
+          availablePositions.push(i);
+        }
+      }
+      
+      // Shuffle available positions
       availablePositions = this.shuffle(availablePositions);
       
       // Select BYE positions ensuring no two BYEs in same match
@@ -96,16 +123,16 @@ class TournamentDraw {
         }
       }
       
-      // Mark BYE positions as null
+      // Mark BYE positions
       byePositions.forEach(pos => {
         slots[pos] = 'BYE_MARKER';
       });
       
-      // Fill remaining positions with players
-      let playerIndex = 0;
+      // Fill remaining positions with unseeded players
+      let unseededIndex = 0;
       for (let i = 0; i < bracketSize; i++) {
         if (slots[i] === null) {
-          slots[i] = shuffledPlayers[playerIndex++];
+          slots[i] = shuffledUnseeded[unseededIndex++];
         }
       }
       
@@ -117,6 +144,7 @@ class TournamentDraw {
       }
       
       console.log(`✅ Distributed ${byes} BYEs across ${byes} different matches`);
+      console.log(`✅ Seeded players placed strategically to avoid Round 1 matchups`);
     }
     
     // Debug: Show bracket structure
@@ -131,17 +159,33 @@ class TournamentDraw {
     
     // Final validation
     let byeVsByeCount = 0;
+    let seedVsSeedCount = 0;
     for (let i = 0; i < slots.length; i += 2) {
-      if (slots[i] === null && slots[i + 1] === null) {
+      const playerA = slots[i];
+      const playerB = slots[i + 1];
+      
+      // Check BYE vs BYE
+      if (playerA === null && playerB === null) {
         byeVsByeCount++;
         console.error(`❌ BYE vs BYE at match ${i/2 + 1} (positions ${i}-${i+1})`);
       }
+      
+      // Check Seed vs Seed
+      if (playerA?.seed && playerB?.seed) {
+        seedVsSeedCount++;
+        console.error(`❌ Seed ${playerA.seed} (${playerA.fullName}) vs Seed ${playerB.seed} (${playerB.fullName}) at match ${i/2 + 1}`);
+      }
     }
     
-    if (byeVsByeCount === 0) {
-      console.log('✅ Slot validation passed: No BYE vs BYE matches');
+    if (byeVsByeCount === 0 && seedVsSeedCount === 0) {
+      console.log('✅ Slot validation passed: No BYE vs BYE matches, No Seed vs Seed matches');
     } else {
-      console.error(`❌ VALIDATION FAILED: ${byeVsByeCount} BYE vs BYE matches still exist`);
+      if (byeVsByeCount > 0) {
+        console.error(`❌ VALIDATION FAILED: ${byeVsByeCount} BYE vs BYE matches exist`);
+      }
+      if (seedVsSeedCount > 0) {
+        console.error(`❌ VALIDATION FAILED: ${seedVsSeedCount} Seed vs Seed matches exist`);
+      }
     }
 
     return { slots, bracketSize, byes };
@@ -1181,8 +1225,8 @@ async function saveDraw() {
             console.error('❌ Error processing BYEs:', error);
         }
 
-        // Show success message
-        alert(`✅ Draw saved successfully!\n\nCategory: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}\nPlayers: ${players.length}\nSeeds: ${seeds.length}\n\nBYE matches have been auto-processed.`);
+        // Log success message (no alert)
+        console.log(`✅ Draw saved successfully! Category: ${category.ageGroupLabel} - ${category.genderLabel} - ${category.weightLabel}, Players: ${players.length}, Seeds: ${seeds.length}, BYE matches auto-processed.`);
 
         // Hide save button and reset
         saveDrawBtn.style.display = 'none';

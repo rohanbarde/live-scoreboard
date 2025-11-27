@@ -368,18 +368,17 @@ groupMatchesIntoPools(matches) {
     // Get repechage matches (excluding bronze)
     const repechageOnly = (repechageMatches || []).filter(m => m.matchType === 'repechage' || (m.isRepechage && m.matchType !== 'bronze'));
     
-    // Find the highest round number in repechage
-    const maxRepechageRound = repechageOnly.length > 0 
-      ? Math.max(...repechageOnly.map(m => m.round || 1))
-      : 0;
-    
-    // Get repechage finals (last round before bronze)
-    const repechageFinals = repechageOnly.filter(m => m.round === maxRepechageRound);
-    
     console.log('📊 Results calculation:', {
+      totalRepechageMatches: (repechageMatches || []).length,
       repechageOnly: repechageOnly.length,
-      maxRepechageRound,
-      repechageFinals: repechageFinals.length
+      bronzeMatches: bronzeMatches.length,
+      repechageData: repechageOnly.map(m => ({
+        id: m.id,
+        playerA: m.playerAName,
+        playerB: m.playerBName,
+        winner: m.winner === m.playerA ? m.playerAName : (m.winner === m.playerB ? m.playerBName : 'No winner'),
+        completed: m.completed
+      }))
     });
     
     if (!finalMatch || !finalMatch.winner) {
@@ -418,9 +417,9 @@ groupMatchesIntoPools(matches) {
         };
       });
 
-    // 7th - Repechage final losers
-    const seventhPlace = repechageFinals
-      .filter(m => m.winner)
+    // 7th - Repechage losers (losers of repechage matches who didn't make it to bronze)
+    const seventhPlace = repechageOnly
+      .filter(m => m.winner && m.completed)
       .map(m => {
         const isPlayerA = m.winner === m.playerA;
         return {
@@ -428,10 +427,17 @@ groupMatchesIntoPools(matches) {
           club: isPlayerA ? m.playerBClub : m.playerAClub
         };
       });
+    
+    console.log('📊 7th place candidates:', {
+      repechageOnly: repechageOnly.length,
+      completedRepechage: repechageOnly.filter(m => m.completed).length,
+      seventhPlace: seventhPlace.length,
+      seventhPlaceData: seventhPlace.map(p => p.name)
+    });
 
     let html = `
       <div class="results-box">
-        <h3><i class="fas fa-trophy"></i> IJF Tournament Results</h3>
+        <h3><i class="fas fa-trophy"></i> Tournament Results</h3>
         <div class="results-grid">
           <div class="result-item gold">
             <div class="result-position">🥇 1st Place - Gold Medal</div>

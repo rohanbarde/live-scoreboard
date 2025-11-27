@@ -489,7 +489,7 @@ function renderMatchRow(match, rowNumber, hideActions = false) {
                        fighterAName !== 'Winner of match' && fighterBName !== 'Winner of match';
     
     if (canLock && hasPlayers && !isCompleted) {
-        actionButtons = `<button class="btn btn-sm btn-primary" onclick="lockAndStartMatch('${match.id}')"><i class="fas fa-lock"></i> Lock & Start</button>`;
+        actionButtons = `<button class="btn btn-sm btn-primary" id="lockBtn_${match.id}" onclick="lockAndStartMatch('${match.id}')"><i class="fas fa-lock"></i> Lock & Start</button>`;
     } else if (isOwnedByThisDevice && status === 'locked') {
         actionButtons = `
             <button class="btn btn-sm btn-success" onclick="startMatch('${match.id}')"><i class="fas fa-play"></i> Start</button>
@@ -757,9 +757,22 @@ function renderDevicesModal(devices) {
  * Lock and start match
  */
 async function lockAndStartMatch(matchId) {
+    // Prevent double-click by disabling button
+    const lockBtn = document.getElementById(`lockBtn_${matchId}`);
+    if (lockBtn && lockBtn.disabled) {
+        console.log('⚠️ Button already clicked, ignoring duplicate click');
+        return;
+    }
+    
     try {
         console.log('🎯 lockAndStartMatch called with matchId:', matchId);
         console.log('🎯 matchId type:', typeof matchId);
+        
+        // Disable button and show loading
+        if (lockBtn) {
+            lockBtn.disabled = true;
+            lockBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Locking...';
+        }
         
         // Get match data to check if mat number is already assigned
         const matchRef = await matchManager.getMatchRef(matchId);
@@ -768,10 +781,15 @@ async function lockAndStartMatch(matchId) {
         
         let matNumber = matchData.matNumber;
         
-        // If no mat number assigned, prompt for it
-        if (!matNumber) {
-            matNumber = prompt('Enter Mat Number:', '1');
-            if (!matNumber) return;
+        // MANDATORY: Mat number must be assigned before locking
+        if (!matNumber || matNumber.toString().trim() === '') {
+            alert('⚠️ Please enter a Mat Number before locking the match.');
+            // Re-enable button
+            if (lockBtn) {
+                lockBtn.disabled = false;
+                lockBtn.innerHTML = '<i class="fas fa-lock"></i> Lock & Start';
+            }
+            return;
         }
         
         // Lock the match with mat number
@@ -783,10 +801,16 @@ async function lockAndStartMatch(matchId) {
         await matchManager.startMatch(matchId, matNumber);
         
         // Scoreboard opens automatically in matchManager.startMatch()
+        // Button will be replaced by match status update
         
     } catch (error) {
         console.error('Error:', error);
         alert('Error: ' + error.message);
+        // Re-enable button on error
+        if (lockBtn) {
+            lockBtn.disabled = false;
+            lockBtn.innerHTML = '<i class="fas fa-lock"></i> Lock & Start';
+        }
     }
 }
 
