@@ -82,6 +82,7 @@
                             <th>Gender</th>
                             <th>Contact</th>
                             <th>Edit</th>
+                            <th>Delete</th>
                         </tr>
                     </thead>
                     <tbody id="playersTableBody">
@@ -104,8 +105,16 @@
             <form id="editPlayerForm">
               <input type="hidden" id="editPlayerId">
               <div class="mb-2">
-                <label for="editFullName" class="form-label">Name</label>
-                <input type="text" class="form-control" id="editFullName" required>
+                <label for="editFirstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="editFirstName" required>
+              </div>
+              <div class="mb-2">
+                <label for="editMiddleName" class="form-label">Middle Name (Optional)</label>
+                <input type="text" class="form-control" id="editMiddleName">
+              </div>
+              <div class="mb-2">
+                <label for="editLastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="editLastName" required>
               </div>
               <div class="mb-2">
                 <label for="editEmail" class="form-label">Email</label>
@@ -132,8 +141,13 @@
                 </select>
               </div>
               <div class="mb-2">
-                <label for="editPhotoBase64" class="form-label">Photo (Base64)</label>
-                <textarea class="form-control" id="editPhotoBase64" rows="2"></textarea>
+                <label for="editPhoto" class="form-label">Upload New Photo</label>
+                <input type="file" class="form-control" id="editPhoto" accept="image/*">
+                <small class="text-muted">Leave empty to keep current photo</small>
+                <div id="editPhotoPreviewContainer" style="margin-top: 10px;">
+                  <img id="editPhotoPreview" alt="Current Photo" style="display:none; width:100px; height:100px; border-radius:8px; object-fit:cover;">
+                </div>
+                <input type="hidden" id="editPhotoBase64">
               </div>
             </form>
           </div>

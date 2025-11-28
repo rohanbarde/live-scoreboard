@@ -1078,14 +1078,21 @@ function renderPlayerList(players) {
             <div class="weight-category">
                 <h4>${weightTitle} (${weightPlayers.length} players)</h4>
                 <div class="players-grid">
-                    ${weightPlayers.map(player => `
+                    ${weightPlayers.map(player => {
+                        // Generate photo HTML
+                        let photoHtml = '';
+                        if (player.photoBase64) {
+                            photoHtml = `<img src="data:image/jpeg;base64,${player.photoBase64}" alt="${player.fullName || 'Player'}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">`;
+                        } else {
+                            photoHtml = `<div class="player-avatar" style="background: ${getColorForString(player.fullName || '')}">${getInitials(player.fullName || '')}</div>`;
+                        }
+                        
+                        return `
                         <div class="player-card" data-player-id="${player.id}" style="position: relative;">
                             ${player.seed ? `<div style="position: absolute; top: -6px; right: -6px; background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; box-shadow: 0 2px 6px rgba(255,215,0,0.4); border: 2px solid white; z-index: 1;">
                                 ${player.seed}
                             </div>` : ''}
-                            <div class="player-avatar" style="background: ${getColorForString(player.fullName || '')}">
-                                ${getInitials(player.fullName || '')}
-                            </div>
+                            ${photoHtml}
                             <div class="player-info">
                                 <h4>${player.fullName || 'N/A'}${player.seed ? ' <i class="fas fa-trophy" style="color: #ffd700; font-size: 10px;"></i>' : ''}</h4>
                                 <div class="player-details">
@@ -1095,7 +1102,8 @@ function renderPlayerList(players) {
                                 </div>
                             </div>
                         </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;

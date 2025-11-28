@@ -122,9 +122,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
+      // Get name fields
+      const firstName = document.getElementById('firstName').value.trim();
+      const middleName = document.getElementById('middleName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      
+      // Construct full name
+      const fullName = middleName 
+        ? `${firstName} ${middleName} ${lastName}`
+        : `${firstName} ${lastName}`;
+      
       // Common data
       const userData = {
-        fullName: document.getElementById('fullName').value.trim(),
+        firstName,
+        middleName,
+        lastName,
+        fullName,
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         userType,
