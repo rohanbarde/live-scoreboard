@@ -56,15 +56,21 @@ async function loadTournament() {
  * Display tournament information
  */
 function displayTournamentInfo() {
-    document.getElementById('tournamentName').textContent = currentTournament.name;
-    
+    const nameElement = document.getElementById('tournamentName');
     const metaContainer = document.getElementById('tournamentMeta');
-    metaContainer.innerHTML = `
-        <span><i class="fas fa-calendar"></i> ${formatDate(currentTournament.date)}</span>
-        <span><i class="fas fa-map-marker-alt"></i> ${currentTournament.location}</span>
-        ${currentTournament.host ? `<span><i class="fas fa-building"></i> ${currentTournament.host}</span>` : ''}
-        <span><i class="fas fa-list"></i> ${currentTournament.categories.length} Categories</span>
-    `;
+    
+    if (nameElement) {
+        nameElement.textContent = currentTournament.name || 'Tournament';
+    }
+    
+    if (metaContainer) {
+        metaContainer.innerHTML = `
+            <span><i class="fas fa-calendar"></i> ${formatDate(currentTournament.date)}</span>
+            <span><i class="fas fa-map-marker-alt"></i> ${currentTournament.location || 'TBD'}</span>
+            ${currentTournament.host ? `<span><i class="fas fa-building"></i> ${currentTournament.host}</span>` : ''}
+            <span><i class="fas fa-list"></i> ${currentTournament.categories ? currentTournament.categories.length : 0} Categories</span>
+        `;
+    }
 }
 
 /**
@@ -130,9 +136,13 @@ function updateStats() {
     const male = tournamentPlayers.filter(p => p.playerInfo?.gender === 'male').length;
     const female = tournamentPlayers.filter(p => p.playerInfo?.gender === 'female').length;
     
-    document.getElementById('totalPlayers').textContent = total;
-    document.getElementById('maleCount').textContent = male;
-    document.getElementById('femaleCount').textContent = female;
+    const totalElement = document.getElementById('totalPlayers');
+    const maleElement = document.getElementById('maleCount');
+    const femaleElement = document.getElementById('femaleCount');
+    
+    if (totalElement) totalElement.textContent = total;
+    if (maleElement) maleElement.textContent = male;
+    if (femaleElement) femaleElement.textContent = female;
 }
 
 /**
@@ -419,6 +429,19 @@ function resetForm() {
 function goToImportPlayers() {
     sessionStorage.setItem('currentTournament', tournamentId);
     window.location.href = `/views/import-players.html?tournamentId=${tournamentId}`;
+}
+
+/**
+ * Navigate to generate draws page
+ */
+function goToGenerateDraws() {
+    if (tournamentId) {
+        sessionStorage.setItem('currentTournament', tournamentId);
+        sessionStorage.setItem('filterByTournament', 'true');
+        window.location.href = `/views/generate-draws.html?tournamentId=${tournamentId}`;
+    } else {
+        alert('No tournament selected');
+    }
 }
 
 /**

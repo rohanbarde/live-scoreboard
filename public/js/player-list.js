@@ -396,8 +396,8 @@ function renderPlayers() {
         const editBtn = `<button class='btn btn-sm btn-outline-primary' onclick='editPlayer("${player.id}")'>Edit</button>`;
         // Delete button
         const deleteBtn = `<button class='btn btn-sm btn-outline-danger' onclick='deletePlayer("${player.id}")' style='background-color: #dc3545; color: white;'>Delete</button>`;
-        // Show registration ID (prioritize playerId format MJA/2025/XXX, then registrationId, then database ID)
-        const regId = player.playerId || player.registrationId || player.id || 'N/A';
+        // Show registration ID (prioritize registrationId format MJA/2025/XXX, then database ID)
+        const regId = player.registrationId || player.id || 'N/A';
         return `
             <tr>
                 <td>${index + 1}</td>
@@ -475,11 +475,24 @@ window.clearTournamentFilter = clearTournamentFilter;
 
 // Delete player logic
 window.deletePlayer = function(playerId) {
+    console.log('Delete player called for:', playerId);
+    
+    if (!database) {
+        console.error('Database not initialized');
+        alert('Database not initialized. Please refresh the page.');
+        return;
+    }
+    
     const player = players.find(p => p.id === playerId);
-    if (!player) return alert('Player not found');
+    if (!player) {
+        console.error('Player not found:', playerId);
+        return alert('Player not found');
+    }
     
     const confirmDelete = confirm(`Are you sure you want to delete ${player.fullName}? This action cannot be undone.`);
     if (!confirmDelete) return;
+    
+    console.log('Deleting player:', player.fullName);
     
     // Delete from both registrations and users nodes in Firebase
     const updates = {};
@@ -488,6 +501,7 @@ window.deletePlayer = function(playerId) {
     
     database.ref().update(updates)
         .then(() => {
+            console.log('Player deleted successfully');
             alert('Player deleted successfully');
             loadPlayers(); // Reload the player list
         })

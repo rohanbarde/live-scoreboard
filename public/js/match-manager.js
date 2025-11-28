@@ -534,7 +534,7 @@
 
                 // Handle both old and new match formats
                 // Use firstName + lastName if available, otherwise fallback to fullName
-                const fighterAName = (match.fighterA?.firstName && match.fighterA?.lastName) 
+                const fighterAName = (match.fighterA?.firstName && match.fighterA?.lastName)
                     ? `${match.fighterA.firstName} ${match.fighterA.lastName}`
                     : (match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'Fighter A');
                 const fighterBName = (match.fighterB?.firstName && match.fighterB?.lastName)
@@ -542,6 +542,8 @@
                     : (match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'Fighter B');
                 const fighterAClub = match.fighterA?.team || match.playerAClub || '';
                 const fighterBClub = match.fighterB?.team || match.playerBClub || '';
+                const fighterAPhoto = match.fighterA?.photoBase64 || match.playerAPhoto || '';
+                const fighterBPhoto = match.fighterB?.photoBase64 || match.playerBPhoto || '';
                 const weightCategory = match.weightCategory || match.weight || match.category || '';
                 const matchNumber = match.matchNumber || match.round || '';
                 const matNumber = match.matNumber || match.mat || '';
@@ -557,6 +559,19 @@
                     matchNumber: matchNumber,
                     matNumber: matNumber
                 });
+                
+                // Add tournament ID if available
+                if (this.tournamentId) {
+                    params.set('tournamentId', this.tournamentId);
+                }
+                
+                // Add photos if available (don't add to URL if too large, let it load from DB)
+                if (fighterAPhoto && fighterAPhoto.length < 50000) {
+                    params.set('fighterAPhoto', fighterAPhoto);
+                }
+                if (fighterBPhoto && fighterBPhoto.length < 50000) {
+                    params.set('fighterBPhoto', fighterBPhoto);
+                }
 
                 const scoreboardUrl = `/views/scoreboard.html?${params.toString()}`;
                 

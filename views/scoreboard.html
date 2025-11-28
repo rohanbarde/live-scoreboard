@@ -488,15 +488,31 @@ function autoFillPlayerInfo() {
         if (nameAInput && params.fighterAName) {
             nameAInput.value = params.fighterAName;
             console.log('Set Fighter A name:', params.fighterAName);
-            // Load photo for Fighter A
-            loadPlayerPhoto(params.fighterAName, 'A');
+            // Load photo for Fighter A (check if photo passed directly)
+            if (params.fighterAPhoto) {
+                const imgA = document.getElementById('photoA');
+                if (imgA) {
+                    imgA.src = params.fighterAPhoto.startsWith('data:') ? params.fighterAPhoto : `data:image/png;base64,${params.fighterAPhoto}`;
+                    console.log('Set Fighter A photo from params');
+                }
+            } else {
+                loadPlayerPhoto(params.fighterAName, 'A');
+            }
         }
         
         if (nameBInput && params.fighterBName) {
             nameBInput.value = params.fighterBName;
             console.log('Set Fighter B name:', params.fighterBName);
-            // Load photo for Fighter B
-            loadPlayerPhoto(params.fighterBName, 'B');
+            // Load photo for Fighter B (check if photo passed directly)
+            if (params.fighterBPhoto) {
+                const imgB = document.getElementById('photoB');
+                if (imgB) {
+                    imgB.src = params.fighterBPhoto.startsWith('data:') ? params.fighterBPhoto : `data:image/png;base64,${params.fighterBPhoto}`;
+                    console.log('Set Fighter B photo from params');
+                }
+            } else {
+                loadPlayerPhoto(params.fighterBName, 'B');
+            }
         }
         
         // Set clubs/teams

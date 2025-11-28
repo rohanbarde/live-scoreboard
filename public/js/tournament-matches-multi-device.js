@@ -6,8 +6,10 @@ let matchManager;
 let currentMatches = [];
 let currentDevices = [];
 
-// Get tournament context from parent window or URL
-const urlParams = new URLSearchParams(window.location.search);
+// Get tournament context from parent window or URL (check if urlParams already exists)
+if (typeof urlParams === 'undefined') {
+    var urlParams = new URLSearchParams(window.location.search);
+}
 const currentTournamentId = urlParams.get('tournamentId') || 
                             sessionStorage.getItem('currentTournament') ||
                             (window.parent && window.parent.currentTournamentId);
