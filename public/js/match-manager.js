@@ -521,13 +521,18 @@
                 if (!match) return;
 
                 // Handle both old and new match formats
-                const fighterAName = match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'Fighter A';
-                const fighterBName = match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'Fighter B';
-                const fighterAClub = match.fighterA?.team || match.playerAClub || 'N/A';
-                const fighterBClub = match.fighterB?.team || match.playerBClub || 'N/A';
-                const weightCategory = match.weight || match.weightCategory || match.category || 'N/A';
-                const matchNumber = match.matchNumber || match.round || '1';
-                const matNumber = match.matNumber || match.mat || '1';
+                // Use firstName + lastName if available, otherwise fallback to fullName
+                const fighterAName = (match.fighterA?.firstName && match.fighterA?.lastName) 
+                    ? `${match.fighterA.firstName} ${match.fighterA.lastName}`
+                    : (match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'Fighter A');
+                const fighterBName = (match.fighterB?.firstName && match.fighterB?.lastName)
+                    ? `${match.fighterB.firstName} ${match.fighterB.lastName}`
+                    : (match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'Fighter B');
+                const fighterAClub = match.fighterA?.team || match.playerAClub || '';
+                const fighterBClub = match.fighterB?.team || match.playerBClub || '';
+                const weightCategory = match.weightCategory || match.weight || match.category || '';
+                const matchNumber = match.matchNumber || match.round || '';
+                const matNumber = match.matNumber || match.mat || '';
 
                 // Build scoreboard URL with match data
                 const params = new URLSearchParams({
@@ -538,7 +543,7 @@
                     fighterBClub: fighterBClub,
                     weightCategory: weightCategory,
                     matchNumber: matchNumber,
-                    mat: matNumber
+                    matNumber: matNumber
                 });
 
                 const scoreboardUrl = `/views/scoreboard.html?${params.toString()}`;

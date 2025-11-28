@@ -206,6 +206,10 @@ class TournamentDraw {
   createRound1(slots, bracketSize, categoryKey) {
     const matches = [];
     
+    // Extract weight from categoryKey if available
+    const weightMatch = categoryKey.match(/_(\d+)$/);
+    const weightCategory = weightMatch ? `${weightMatch[1]} kg` : '';
+    
     // IJF Rule: Round-1 ALWAYS FULL - Create ALL matches
     for (let i = 0; i < slots.length; i += 2) {
       const A = slots[i];
@@ -223,14 +227,16 @@ class TournamentDraw {
         matchType: 'main',
         playerA: A?.id || null,
         playerB: B?.id || null,
-        playerAName: A?.fullName || 'BYE',
-        playerBName: B?.fullName || 'BYE',
+        playerAName: A ? (A.firstName && A.lastName ? `${A.firstName} ${A.lastName}` : A.fullName) : 'BYE',
+        playerBName: B ? (B.firstName && B.lastName ? `${B.firstName} ${B.lastName}` : B.fullName) : 'BYE',
         playerAClub: A?.playerInfo?.team || A?.team || '',
         playerBClub: B?.playerInfo?.team || B?.team || '',
         playerASeed: A?.seed || null,
         playerBSeed: B?.seed || null,
         playerACountry: A?.playerInfo?.country || A?.country || '',
         playerBCountry: B?.playerInfo?.country || B?.country || '',
+        weightCategory: weightCategory || (A?.playerInfo?.weight ? `${A.playerInfo.weight} kg` : ''),
+        matNumber: '', // Will be set before match starts
         winner: null,
         loser: null,
         completed: false,
@@ -291,6 +297,9 @@ class TournamentDraw {
         else if (isSemifinal) roundName = 'semifinal';
         else if (isQuarterfinal) roundName = 'quarterfinal';
 
+        // Get weight category from first match in current round
+        const weightCategory = current[0]?.weightCategory || '';
+        
         const m = {
           id: `R${round}_M${i/2+1}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
           round,
@@ -305,6 +314,8 @@ class TournamentDraw {
           playerBSeed: null,
           playerACountry: '',
           playerBCountry: '',
+          weightCategory: weightCategory,
+          matNumber: '', // Will be set before match starts
           winner: null,
           loser: null,
           completed: false,
@@ -831,7 +842,9 @@ async function animateGenerateDraw() {
         <div class="slot-left">
           <div class="slot-name"></div>
         </div>
-        <div class="vs-label">V/S</div>
+        <div class="vs-label" style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7em; font-weight: 600; color: #666; padding: 0 8px;">
+          <span>vs</span>
+        </div>
         <div class="slot-right">
           <div class="slot-name"></div>
         </div>
@@ -907,26 +920,8 @@ async function animateGenerateDraw() {
   shuffle.classList.remove('visible');
   setTimeout(() => shuffle.remove(), 300);
 
-  // Fill empty slots in later rounds with placeholder text
-  for (let round = 2; round <= maxRound; round++) {
-    const roundSlots = allMatchSlots.filter(m => m.round === round);
-    roundSlots.forEach(({ slot }) => {
-      const slotLeftEl = slot.querySelector('.slot-left .slot-name');
-      const slotRightEl = slot.querySelector('.slot-right .slot-name');
-      
-      slotLeftEl.innerHTML = `
-        <div class="draw-player-card">
-          <div class="draw-player-name">Winner TBD</div>
-        </div>
-      `;
-      
-      slotRightEl.innerHTML = `
-        <div class="draw-player-card">
-          <div class="draw-player-name">Winner TBD</div>
-        </div>
-      `;
-    });
-  }
+  // Leave empty slots in later rounds blank (they will be filled as matches complete)
+  // No need to show "Winner TBD" - empty slots are self-explanatory
 
   // Get age group
   const selectedAgeGroup = ageGroupFilter ? ageGroupFilter.value : '';
@@ -976,7 +971,7 @@ function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
     clone.style.opacity = '1';
     clone.innerHTML = `
       <div class="avatar" style="background:${getColorForString(pData.fullName || '')}">${getInitials(pData.fullName || '')}</div>
-      <div style="font-weight:700">${pData.fullName || 'N/A'}</div>
+      <div style="font-weight:700">${getDisplayName(pData)}</div>
     `;
     document.body.appendChild(clone);
 
@@ -998,16 +993,12 @@ function animatePlayerToSlot(sourceEl, targetNameEl, pData) {
         // Format name with team abbreviation in brackets
         const team = pData.playerInfo?.team || '';
         const teamAbbr = team ? team.substring(0, Math.min(3, team.length)).toUpperCase() : '';
-        const fullName = pData.fullName || 'N/A';
-        const nameParts = fullName.split(',').map(p => p.trim());
-        const formattedName = nameParts.length > 1 
-          ? `${nameParts[0]}, ${nameParts[1].split(' ')[0]}`
-          : fullName;
+        const displayName = getDisplayName(pData);
         
         // set the target text (animated slot content)
         targetNameEl.innerHTML = `
           <div class="draw-player-card">
-            <div class="draw-player-name">${teamAbbr ? `[${teamAbbr}] ` : ''}${formattedName}</div>
+            <div class="draw-player-name">${teamAbbr ? `[${teamAbbr}] ` : ''}${displayName}</div>
           </div>
         `;
 
@@ -1033,6 +1024,15 @@ function getInitials(name) {
       .join('')
       .toUpperCase()
       .substring(0, 2);
+}
+
+/* Helper function to get display name (firstName + lastName only) */
+function getDisplayName(player) {
+  if (!player) return 'N/A';
+  if (player.firstName && player.lastName) {
+    return `${player.firstName} ${player.lastName}`;
+  }
+  return player.fullName || 'N/A';
 }
 
 /* quick deterministic-ish avatar color by string */
@@ -1094,7 +1094,7 @@ function renderPlayerList(players) {
                             </div>` : ''}
                             ${photoHtml}
                             <div class="player-info">
-                                <h4>${player.fullName || 'N/A'}${player.seed ? ' <i class="fas fa-trophy" style="color: #ffd700; font-size: 10px;"></i>' : ''}</h4>
+                                <h4>${getDisplayName(player)}${player.seed ? ' <i class="fas fa-trophy" style="color: #ffd700; font-size: 10px;"></i>' : ''}</h4>
                                 <div class="player-details">
                                     ${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : ''}
                                     ${player.playerInfo?.team ? ' • ' + player.playerInfo.team : ''}

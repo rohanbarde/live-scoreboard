@@ -380,7 +380,44 @@ function getUrlParams() {
     };
 }
 
-// Function to load player photo from Firebase
+// Cache for player photos to avoid repeated Firebase queries
+const photoCache = {};
+let photoCacheInitialized = false;
+
+// Preload all player photos into cache on page load
+function preloadAllPhotos() {
+    if (photoCacheInitialized) return;
+    photoCacheInitialized = true;
+    
+    console.log('🖼️ Preloading all player photos...');
+    
+    firebase.database().ref('registrations').orderByChild('userType').equalTo('player').once('value')
+        .then(snapshot => {
+            let loadedCount = 0;
+            snapshot.forEach(childSnapshot => {
+                const playerData = childSnapshot.val();
+                if (playerData.photoBase64 && playerData.photoBase64.length > 50) {
+                    const photoSrc = `data:image/png;base64,${playerData.photoBase64}`;
+                    // Cache by fullName
+                    if (playerData.fullName) {
+                        photoCache[playerData.fullName] = photoSrc;
+                        loadedCount++;
+                    }
+                    // Also cache by firstName + lastName for new format
+                    if (playerData.firstName && playerData.lastName) {
+                        const displayName = `${playerData.firstName} ${playerData.lastName}`;
+                        photoCache[displayName] = photoSrc;
+                    }
+                }
+            });
+            console.log(`✓ Preloaded ${loadedCount} player photos into cache`);
+        })
+        .catch(error => {
+            console.error('Error preloading photos:', error);
+        });
+}
+
+// Function to load player photo from Firebase with caching
 function loadPlayerPhoto(playerName, side) {
     const img = document.getElementById(`photo${side}`);
     const container = document.getElementById(`photoContainer${side}`);
@@ -389,6 +426,13 @@ function loadPlayerPhoto(playerName, side) {
 
     // Ensure container is visible
     container.style.display = "block";
+
+    // Check cache first
+    if (photoCache[playerName]) {
+        img.src = photoCache[playerName];
+        console.log("Photo loaded from cache for:", playerName);
+        return;
+    }
 
     // Query using correct path + field
     firebase.database()
@@ -407,7 +451,10 @@ function loadPlayerPhoto(playerName, side) {
 
                 // PHOTO is stored directly as: photoBase64
                 if (data.photoBase64 && data.photoBase64.length > 50) {
-                    img.src = `data:image/png;base64,${data.photoBase64}`;
+                    const photoSrc = `data:image/png;base64,${data.photoBase64}`;
+                    img.src = photoSrc;
+                    // Cache the photo
+                    photoCache[playerName] = photoSrc;
                     console.log("Photo loaded for:", playerName);
                 } else {
                     console.warn("Player has no photoBase64:", playerName);
@@ -416,6 +463,11 @@ function loadPlayerPhoto(playerName, side) {
         })
         .catch(err => console.error("Photo loading error:", err));
 }
+
+// Initialize photo preloading when page loads
+setTimeout(() => {
+    preloadAllPhotos();
+}, 1500);
 
 
 // Function to auto-fill player information
@@ -431,6 +483,7 @@ function autoFillPlayerInfo() {
         const clubBInput = document.getElementById('clubB');
         const weightCategoryInput = document.getElementById('weightCategory');
         const matchNumberInput = document.getElementById('matchNumber');
+        const matNumberInput = document.getElementById('matNumber');
         
         if (nameAInput && params.fighterAName) {
             nameAInput.value = params.fighterAName;
@@ -447,26 +500,39 @@ function autoFillPlayerInfo() {
         }
         
         // Set clubs/teams
-        if (clubAInput && params.fighterAClub && params.fighterAClub !== 'N/A') {
+        if (clubAInput && params.fighterAClub && params.fighterAClub !== 'N/A' && params.fighterAClub !== '') {
             clubAInput.value = params.fighterAClub;
             console.log('Set Fighter A club:', params.fighterAClub);
         }
         
-        if (clubBInput && params.fighterBClub && params.fighterBClub !== 'N/A') {
+        if (clubBInput && params.fighterBClub && params.fighterBClub !== 'N/A' && params.fighterBClub !== '') {
             clubBInput.value = params.fighterBClub;
             console.log('Set Fighter B club:', params.fighterBClub);
         }
         
         // Set weight category and match info
-        if (weightCategoryInput && params.weightCategory && params.weightCategory !== 'N/A') {
+        if (weightCategoryInput && params.weightCategory && params.weightCategory !== 'N/A' && params.weightCategory !== '') {
             weightCategoryInput.value = params.weightCategory;
             console.log('Set weight category:', params.weightCategory);
         }
         
-        if (matchNumberInput && params.matchNumber) {
+        if (matchNumberInput && params.matchNumber && params.matchNumber !== '') {
             matchNumberInput.value = params.matchNumber;
             console.log('Set match number:', params.matchNumber);
         }
+        
+        if (matNumberInput && params.matNumber && params.matNumber !== '') {
+            matNumberInput.value = params.matNumber;
+            console.log('Set mat number:', params.matNumber);
+        }
+        
+        // Trigger a UI refresh to sync data to Firebase immediately
+        setTimeout(() => {
+            if (typeof window.refreshUI === 'function') {
+                window.refreshUI();
+                console.log('✅ Triggered initial Firebase sync after autofill');
+            }
+        }, 500);
         
         // Add a log entry
         if (params.fighterAName || params.fighterBName) {
