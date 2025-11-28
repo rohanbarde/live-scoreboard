@@ -13,7 +13,7 @@
         /* Layout */
         .draws-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 0.8fr 1.2fr;
             gap: 25px;
             margin-top: 20px;
             width: 100%;
@@ -38,35 +38,37 @@
             align-items: center;
             text-align: center;
             box-shadow: var(--shadow);
+            overflow-x: visible;
+            overflow-y: auto;
         }
         
         /* Player Cards */
         .players-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
             margin-top: 15px;
         }
         
         .player-card {
             background: white;
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 6px;
+            padding: 8px 10px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             transition: transform 0.2s, box-shadow 0.2s;
         }
         
         .player-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
         }
         
         .player-avatar {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: var(--primary-color);
             color: white;
@@ -74,7 +76,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
             flex-shrink: 0;
         }
         
@@ -85,14 +87,14 @@
         
         .player-info h4 {
             margin: 0;
-            font-size: 14px;
+            font-size: 12px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         
         .player-details {
-            font-size: 12px;
+            font-size: 10px;
             color: #6c757d;
             margin-top: 2px;
         }
@@ -188,28 +190,28 @@
             padding-bottom: 8px;
             border-bottom: 1px solid var(--border-color);
         }
-        .players-grid {
+        .weight-category .players-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 5px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
         }
-        .player-card {
+        .weight-category .player-card {
             background: var(--light-gray);
             border-radius: 6px;
-            padding: 15px;
+            padding: 8px 10px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             transition: var(--transition);
-            border-left: 4px solid var(--primary-color);
+            border-left: 3px solid var(--primary-color);
         }
-        .player-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        .weight-category .player-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-        .player-avatar {
-            width: 40px;
-            height: 40px;
+        .weight-category .player-avatar {
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: var(--primary-color);
             color: white;
@@ -217,17 +219,25 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 12px;
         }
-        .player-info h4 {
+        .weight-category .player-info h4 {
             margin: 0;
-            font-size: 15px;
+            font-size: 12px;
             color: var(--text-color);
         }
-        .player-details {
-            font-size: 13px;
+        .weight-category .player-details {
+            font-size: 10px;
             color: #666;
-            margin-top: 3px;
+            margin-top: 2px;
+        }
+        .weight-category h4 {
+            font-size: 13px;
+            color: var(--primary-color);
+            margin: 12px 0 8px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
         }
         .no-players {
             text-align: center;
@@ -246,47 +256,6 @@
             .filter-select {
                 width: 100%;
             }
-        }
-        .draw-player-card {
-            background: white;
-            border-radius: 8px;
-            padding: 8px 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-            min-width: 0;
-            width: 100%;
-            max-width: 100%;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            border-left: 4px solid var(--primary-color);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .draw-player-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        }
-
-        .draw-player-name {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--text-color);
-            margin: 0;
-            line-height: 1.3;
-            word-break: break-word;
-        }
-
-        .draw-player-club {
-            font-size: 11px;
-            color: #6c757d;
-            opacity: 0.85;
-            line-height: 1.3;
-            margin: 0;
-            word-break: break-word;
         }
 
         .match-container {
@@ -379,11 +348,37 @@
 
         #animatedBracket {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
+        flex-direction: row;
+        gap: 30px;
         width: 100%;
         box-sizing: border-box;
-        padding: 4px;
+        padding: 4px 20px;
+        position: relative;
+        overflow-x: auto;
+        overflow-y: visible;
+        align-items: flex-start;
+        }
+        
+        .bracket-round {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 180px;
+            max-width: 220px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .bracket-round-header {
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 12px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
         }
 
         .match-slot {
@@ -391,14 +386,181 @@
             flex-direction: row !important;
             justify-content: center !important;
             align-items: stretch !important;
-            gap: 8px !important;
+            gap: 6px !important;
             width: 100%;
             box-sizing: border-box;
-            padding: 3px 0;
+            padding: 2px 0;
             opacity: 1;
             transform: none !important;
             position: relative !important;
-            min-height: 60px;
+            min-height: 50px;
+        }
+        
+        .match-slot.empty-slot {
+            min-height: 50px;
+            opacity: 0.6;
+        }
+        
+        .match-slot.empty-slot .draw-player-card {
+            background: #f8fafc !important;
+            border-left-color: #cbd5e1 !important;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Bracket connector lines - horizontal line from match */
+        .match-slot::after {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            width: 30px;
+            height: 2px;
+            background: #94a3b8;
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+
+        /* Vertical connector for pairs of matches */
+        .match-slot.pair-top::before {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            width: 2px;
+            background: #94a3b8;
+            z-index: 0;
+        }
+
+        .match-slot.pair-bottom::before {
+            content: '';
+            position: absolute;
+            right: -30px;
+            bottom: 50%;
+            width: 2px;
+            background: #94a3b8;
+            z-index: 0;
+        }
+
+        /* Calculate vertical line heights based on match positions */
+        .match-slot.pair-top::before {
+            height: calc(50% + 28px);
+        }
+
+        .match-slot.pair-bottom::before {
+            height: calc(50% + 28px);
+        }
+        
+        /* Adjust spacing for later rounds */
+        .bracket-round:not(:first-child) .match-slot {
+            margin-bottom: 8px;
+        }
+        
+        .bracket-round:nth-child(3) .match-slot {
+            margin-bottom: 60px;
+        }
+        
+        .bracket-round:nth-child(4) .match-slot {
+            margin-bottom: 140px;
+        }
+        
+        .bracket-round:nth-child(5) .match-slot {
+            margin-bottom: 0;
+        }
+
+        /* Rounded corner connectors */
+        .match-slot.pair-top .bracket-corner,
+        .match-slot.pair-bottom .bracket-corner {
+            position: absolute;
+            right: -35px;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #94a3b8;
+            border-left: none;
+            border-bottom: none;
+            z-index: 1;
+        }
+
+        .match-slot.pair-top .bracket-corner {
+            bottom: -3px;
+            border-radius: 0 0 12px 0;
+            border-top: none;
+            border-right: 3px solid #94a3b8;
+            border-bottom: 3px solid #94a3b8;
+        }
+
+        .match-slot.pair-bottom .bracket-corner {
+            top: -3px;
+            border-radius: 0 12px 0 0;
+            border-bottom: none;
+            border-right: 3px solid #94a3b8;
+            border-top: 3px solid #94a3b8;
+        }
+
+        /* Pool grouping visual separator with spacing - only for round 1 */
+        .bracket-round[data-round="1"] .match-slot[data-pool="A"] {
+            margin-bottom: 2px;
+        }
+        
+        .bracket-round[data-round="1"] .match-slot[data-pool="B"] {
+            margin-bottom: 2px;
+        }
+        
+        .bracket-round[data-round="1"] .match-slot[data-pool="C"] {
+            margin-bottom: 2px;
+        }
+        
+        /* Pool labels using a data attribute approach */
+        .match-slot.pool-label {
+            margin-top: 8px;
+        }
+        
+        .match-slot.pool-label .vs-label::before {
+            content: attr(data-pool-name);
+            position: absolute;
+            left: -55px;
+            top: -8px;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        
+        .match-slot[data-pool="A"].pool-label .vs-label::before {
+            color: #4f46e5;
+            background: #e3e8ff;
+        }
+        
+        .match-slot[data-pool="B"].pool-label .vs-label::before {
+            color: #16a34a;
+            background: #dcfce7;
+        }
+        
+        .match-slot[data-pool="C"].pool-label .vs-label::before {
+            color: #dc2626;
+            background: #fecdd3;
+        }
+        
+        .match-slot[data-pool="D"].pool-label .vs-label::before {
+            color: #ca8a04;
+            background: #fef9c3;
+        }
+        
+        /* Pool separators - only in round 1 */
+        .bracket-round[data-round="1"] .match-slot[data-pool="A"]:last-of-type {
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .bracket-round[data-round="1"] .match-slot[data-pool="B"]:last-of-type {
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .bracket-round[data-round="1"] .match-slot[data-pool="C"]:last-of-type {
+            margin-bottom: 16px;
+            position: relative;
         }
 
         .match-slot .slot-left,
@@ -445,12 +607,12 @@
             flex: 0 0 auto;
             margin: 0;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 9px;
             color: var(--primary-color);
             background: #f0f4ff;
-            padding: 6px 10px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 4px 6px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -498,10 +660,27 @@
             .match-slot .slot-left,
             .match-slot .slot-right {
                 width: 100%;
+                max-width: 100%;
             }
 
             #animatedBracket .draw-player-card {
                 max-width: 100%;
+            }
+            
+            /* Hide bracket lines on mobile for cleaner view */
+            .match-slot::after,
+            .match-slot::before {
+                display: none;
+            }
+            
+            #animatedBracket {
+                padding: 4px;
+            }
+            
+            .match-slot.pool-label .vs-label::before {
+                position: static;
+                display: block;
+                margin-bottom: 8px;
             }
         }
         #animatedBracket .slot-name {
@@ -516,6 +695,60 @@
             border: none !important;
         }
 
+        /* Pool-based coloring for match slots */
+        .match-slot[data-pool="A"] .draw-player-card {
+            background: linear-gradient(135deg, #e3e8ff 0%, #c7d2fe 100%);
+            border-left-color: #4f46e5;
+        }
+
+        .match-slot[data-pool="B"] .draw-player-card {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-left-color: #16a34a;
+        }
+
+        .match-slot[data-pool="C"] .draw-player-card {
+            background: linear-gradient(135deg, #fecdd3 0%, #fda4af 100%);
+            border-left-color: #dc2626;
+        }
+
+        .match-slot[data-pool="D"] .draw-player-card {
+            background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+            border-left-color: #ca8a04;
+        }
+
+        /* Adjust draw player card for better visibility */
+        .draw-player-card {
+            background: white;
+            border-radius: 5px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 1px;
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+            text-align: left;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 3px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .draw-player-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .draw-player-name {
+            font-weight: 600;
+            font-size: 10px;
+            color: #1f2937;
+            margin: 0;
+            line-height: 1.3;
+            word-break: break-word;
+        }
 
     </style>
 </head>
@@ -567,7 +800,7 @@
                 <i class="fas fa-trophy"></i> Manage Seeds
             </button>
             <button id="generateDrawBtn" class="btn btn-primary">
-                <i class="fas fa-random"></i> Generate IJF Draw
+                <i class="fas fa-random"></i> Generate Draw
             </button>
             <button id="saveDrawBtn" class="btn btn-primary" style="background: #28a745; border-color: #28a745; display: none;">
                 <i class="fas fa-save"></i> Save Draw
@@ -828,8 +1061,7 @@
                 }
             });
             
-            console.log('Seeds saved:', playerSeeds);
-            alert(`✅ Seeds saved successfully! ${Object.keys(playerSeeds).length} players seeded.`);
+            console.log('✅ Seeds saved successfully:', playerSeeds, `${Object.keys(playerSeeds).length} players seeded.`);
             seedingModal.style.display = "none";
             
             // Update player list display to show seeds

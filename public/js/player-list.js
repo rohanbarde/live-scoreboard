@@ -109,6 +109,23 @@ function setupEventListeners() {
     if (printButton) {
         printButton.addEventListener('click', handlePrint);
     }
+    
+    // Photo preview on file selection in edit modal
+    const editPhotoInput = document.getElementById('editPhoto');
+    const editPhotoPreview = document.getElementById('editPhotoPreview');
+    if (editPhotoInput && editPhotoPreview) {
+        editPhotoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    editPhotoPreview.src = ev.target.result;
+                    editPhotoPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 }
 
 // Handle print functionality
@@ -307,7 +324,7 @@ function renderPlayers() {
     if (filteredPlayers.length === 0) {
         playersTableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4">
+                <td colspan="10" class="text-center py-4">
                     <i class="fas fa-users-slash" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
                     <p>No players found matching your criteria</p>
                 </td>
@@ -326,6 +343,8 @@ function renderPlayers() {
         }
         // Edit button
         const editBtn = `<button class='btn btn-sm btn-outline-primary' onclick='editPlayer("${player.id}")'>Edit</button>`;
+        // Delete button
+        const deleteBtn = `<button class='btn btn-sm btn-outline-danger' onclick='deletePlayer("${player.id}")' style='background-color: #dc3545; color: white;'>Delete</button>`;
         // Show player ID if present (supports all formats like MJA/MH12-OSH-000002 or MJA/2025/XX)
         const regId = player.playerId || '';
         return `
@@ -346,6 +365,7 @@ function renderPlayers() {
                 <td>${player.playerInfo?.gender ? player.playerInfo.gender.charAt(0).toUpperCase() + player.playerInfo.gender.slice(1) : 'N/A'}</td>
                 <td>${player.phone || 'N/A'}</td>
                 <td>${editBtn}</td>
+                <td>${deleteBtn}</td>
             </tr>
         `;
     }).join('');
@@ -399,18 +419,63 @@ function debounce(func, wait) {
     };
 }
 
+// Delete player logic
+window.deletePlayer = function(playerId) {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return alert('Player not found');
+    
+    const confirmDelete = confirm(`Are you sure you want to delete ${player.fullName}? This action cannot be undone.`);
+    if (!confirmDelete) return;
+    
+    // Delete from both registrations and users nodes in Firebase
+    const updates = {};
+    updates[`/registrations/${playerId}`] = null;
+    updates[`/users/${playerId}`] = null;
+    
+    database.ref().update(updates)
+        .then(() => {
+            alert('Player deleted successfully');
+            loadPlayers(); // Reload the player list
+        })
+        .catch(err => {
+            console.error('Delete failed:', err);
+            alert('Failed to delete player: ' + err.message);
+        });
+};
+
 // Edit player logic
 window.editPlayer = function(playerId) {
     const player = players.find(p => p.id === playerId);
     if (!player) return alert('Player not found');
     document.getElementById('editPlayerId').value = player.id;
-    document.getElementById('editFullName').value = player.fullName || '';
+    
+    // Split name fields
+    document.getElementById('editFirstName').value = player.firstName || '';
+    document.getElementById('editMiddleName').value = player.middleName || '';
+    document.getElementById('editLastName').value = player.lastName || '';
+    
     document.getElementById('editEmail').value = player.email || '';
     document.getElementById('editPhone').value = player.phone || '';
     document.getElementById('editTeam').value = player.playerInfo?.team || '';
     document.getElementById('editWeight').value = player.playerInfo?.weight || '';
     document.getElementById('editGender').value = player.playerInfo?.gender || '';
     document.getElementById('editPhotoBase64').value = player.photoBase64 || '';
+    
+    // Show current photo preview if exists
+    const editPhotoPreview = document.getElementById('editPhotoPreview');
+    const editPhotoInput = document.getElementById('editPhoto');
+    if (player.photoBase64) {
+        editPhotoPreview.src = `data:image/jpeg;base64,${player.photoBase64}`;
+        editPhotoPreview.style.display = 'block';
+    } else {
+        editPhotoPreview.style.display = 'none';
+    }
+    
+    // Clear file input
+    if (editPhotoInput) {
+        editPhotoInput.value = '';
+    }
+    
     const modal = new bootstrap.Modal(document.getElementById('editPlayerModal'));
     modal.show();
 };
@@ -418,27 +483,70 @@ window.editPlayer = function(playerId) {
 // Save edit
 const saveEditBtn = document.getElementById('saveEditPlayerBtn');
 if (saveEditBtn) {
-    saveEditBtn.onclick = function() {
+    saveEditBtn.onclick = async function() {
         const playerId = document.getElementById('editPlayerId').value;
         const player = players.find(p => p.id === playerId);
         if (!player) return alert('Player not found');
-        player.fullName = document.getElementById('editFullName').value;
-        player.email = document.getElementById('editEmail').value;
-        player.phone = document.getElementById('editPhone').value;
-        if (!player.playerInfo) player.playerInfo = {};
-        player.playerInfo.team = document.getElementById('editTeam').value;
-        player.playerInfo.weight = document.getElementById('editWeight').value;
-        player.playerInfo.gender = document.getElementById('editGender').value;
-        player.photoBase64 = document.getElementById('editPhotoBase64').value;
-        const updates = {};
-        updates[`/registrations/${playerId}`] = player;
-        updates[`/users/${playerId}`] = player;
-        database.ref().update(updates)
-          .then(() => {
+        
+        // Disable button during save
+        saveEditBtn.disabled = true;
+        saveEditBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        try {
+            // Get name fields
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const middleName = document.getElementById('editMiddleName').value.trim();
+            const lastName = document.getElementById('editLastName').value.trim();
+            
+            // Construct full name
+            const fullName = middleName 
+                ? `${firstName} ${middleName} ${lastName}`
+                : `${firstName} ${lastName}`;
+            
+            player.firstName = firstName;
+            player.middleName = middleName;
+            player.lastName = lastName;
+            player.fullName = fullName;
+            player.email = document.getElementById('editEmail').value;
+            player.phone = document.getElementById('editPhone').value;
+            if (!player.playerInfo) player.playerInfo = {};
+            player.playerInfo.team = document.getElementById('editTeam').value;
+            player.playerInfo.weight = document.getElementById('editWeight').value;
+            player.playerInfo.gender = document.getElementById('editGender').value;
+            
+            // Handle photo upload
+            const editPhotoInput = document.getElementById('editPhoto');
+            if (editPhotoInput && editPhotoInput.files && editPhotoInput.files[0]) {
+                // New photo uploaded - convert to base64
+                const photoFile = editPhotoInput.files[0];
+                const photoBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const result = reader.result;
+                        resolve(result.split(',')[1]); // remove data:image prefix
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(photoFile);
+                });
+                player.photoBase64 = photoBase64;
+            } else {
+                // Keep existing photo
+                player.photoBase64 = document.getElementById('editPhotoBase64').value;
+            }
+            
+            const updates = {};
+            updates[`/registrations/${playerId}`] = player;
+            updates[`/users/${playerId}`] = player;
+            
+            await database.ref().update(updates);
             bootstrap.Modal.getInstance(document.getElementById('editPlayerModal')).hide();
             loadPlayers();
-          })
-          .catch(err => alert('Update failed: ' + err.message));
+        } catch (err) {
+            alert('Update failed: ' + err.message);
+        } finally {
+            saveEditBtn.disabled = false;
+            saveEditBtn.innerHTML = 'Save';
+        }
     };
 }
 

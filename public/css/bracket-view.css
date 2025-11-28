@@ -10,11 +10,145 @@
   align-items: flex-start;
 }
 
+/* Multi-round bracket layout */
+.bracket-rounds-container {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 20px;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+  align-items: flex-start;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+  max-width: 250px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.bracket-round[data-round="1"] {
+  padding-left: 60px;
+  padding-right: 160px;
+}
+
+.bracket-round:not([data-round="1"]) {
+  padding-right: 160px;
+}
+
+.bracket-round-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 12px;
+  padding: 6px 75px;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+/* Match slot for multi-round view - vertical stacked */
+.bracket-round .match-slot {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  opacity: 1;
+  transform: none !important;
+  position: relative !important;
+  min-height: 85px;
+  gap: 6px;
+}
+
+/* Match number badge - centered between players */
+.match-number-badge-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  color: #1f2937;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border: 2px solid #e5e7eb;
+  z-index: 3;
+}
+
+/* Winner info display (shown to the right of all matches) */
+.match-winner-info {
+  position: absolute;
+  right: -155px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 6px 10px;
+  min-width: 140px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.winner-name-display {
+  font-weight: 600;
+  font-size: 10px;
+  color: #1f2937;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.match-result-display {
+  font-size: 8px;
+  color: #6c757d;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+
+.bracket-round .match-slot.empty-slot {
+  min-height: 50px;
+  opacity: 0.6;
+}
+
+.bracket-round .match-slot.empty-slot .bracket-player-card {
+  background: #f8fafc !important;
+  border-left-color: #cbd5e1 !important;
+  color: #94a3b8;
+  font-style: italic;
+}
+
 /* Pools Container */
 .pools-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 20px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+/* Pool container for multi-round layout */
+.pools-container.multi-round {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
   flex-wrap: nowrap;
   align-items: flex-start;
 }
@@ -22,11 +156,19 @@
 /* Pool Section */
 .pool-section {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  min-width: 320px;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  min-width: 280px;
+  max-width: 320px;
   border: 2px solid #e0e0e0;
+}
+
+/* Pool section for multi-round layout */
+.bracket-round .pool-section {
+  min-width: 180px;
+  max-width: 220px;
+  padding: 8px;
 }
 
 .pool-header {
@@ -45,6 +187,11 @@
   gap: 10px;
 }
 
+.bracket-round .pool-header h3 {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
 .pool-header h3::before {
   content: '';
   width: 8px;
@@ -60,14 +207,196 @@
   gap: 15px;
 }
 
+/* Bracket Player Card for multi-round view */
+.bracket-player-card {
+  background: white;
+  border-radius: 5px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-width: 140px;
+  width: 100%;
+  min-height: 32px;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-left: 3px solid var(--primary-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden;
+}
+
+.bracket-player-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.bracket-player-card.winner {
+  border-left-color: #06d6a0;
+  background: linear-gradient(135deg, #d4f4e8, #ffffff);
+  font-weight: 600;
+}
+
+.bracket-player-name {
+  font-weight: 600;
+  font-size: 9px;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.bracket-player-club {
+  font-size: 8px;
+  color: #6c757d;
+  margin-top: 1px;
+}
+
+/* VS Label for vertical layout */
+.vs-label-vertical {
+  flex: 0 0 auto;
+  margin: 2px 0;
+  font-weight: 700;
+  font-size: 8px;
+  color: var(--primary-color);
+  background: #f0f4ff;
+  padding: 2px 8px;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  white-space: nowrap;
+  min-height: 18px;
+}
+
+/* Bracket connector lines */
+.bracket-round .match-slot::after {
+  content: '';
+  position: absolute;
+  right: -190px;
+  top: 50%;
+  width: 30px;
+  height: 2px;
+  background: #94a3b8;
+  z-index: 0;
+  transform: translateY(-50%);
+}
+
+.bracket-round .match-slot.pair-top::before {
+  content: '';
+  position: absolute;
+  right: -140px;
+  top: 50%;
+  width: 2px;
+  background: #94a3b8;
+  z-index: 0;
+  height: calc(50% + 45px);
+}
+
+.bracket-round .match-slot.pair-bottom::before {
+  content: '';
+  position: absolute;
+  right: -140px;
+  bottom: 50%;
+  width: 2px;
+  background: #94a3b8;
+  z-index: 0;
+  height: calc(50% + 45px);
+}
+
+/* Adjust spacing for later rounds to match screenshot structure */
+
+/* Round 2 - Each match centered between pairs of Round 1 matches */
+.bracket-round[data-round="2"] {
+  padding-top: 167px;
+}
+
+.bracket-round[data-round="2"] .match-slot {
+  margin-bottom: 78px;
+}
+
+/* Round 3 (Quarter-Finals) - Each match centered between pairs of Round 2 matches */
+.bracket-round[data-round="3"] {
+  padding-top: 315px;
+}
+
+.bracket-round[data-round="3"] .match-slot {
+  margin-bottom: 235px;
+}
+
+/* Round 4 (Semi-Finals) - Each match centered between pairs of Round 3 matches */
+.bracket-round[data-round="4"] {
+  padding-top: 530px;
+}
+
+.bracket-round[data-round="4"] .match-slot {
+  margin-bottom: 580px;
+}
+
+/* Round 5 (Final) - Centered between pairs of Round 4 matches */
+.bracket-round[data-round="5"] {
+  padding-top: 880px;
+}
+
+.bracket-round[data-round="5"] .match-slot {
+  margin-bottom: 0;
+}
+
+/* Adjust match slot spacing in Round 1 */
+.bracket-round[data-round="1"] .match-slot {
+  margin-bottom: 6px;
+}
+
+/* Hide connector lines on last round */
+.bracket-round:last-child .match-slot::after,
+.bracket-round:last-child .match-slot::before {
+  display: none;
+}
+
+/* Pool-based coloring for Round 1 */
+.bracket-round[data-round="1"] .match-slot[data-pool="A"] .bracket-player-card {
+  background: linear-gradient(135deg, #e3e8ff 0%, #c7d2fe 100%);
+  border-left-color: #4f46e5;
+}
+
+.bracket-round[data-round="1"] .match-slot[data-pool="B"] .bracket-player-card {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-left-color: #16a34a;
+}
+
+.bracket-round[data-round="1"] .match-slot[data-pool="C"] .bracket-player-card {
+  background: linear-gradient(135deg, #fecdd3 0%, #fda4af 100%);
+  border-left-color: #dc2626;
+}
+
+.bracket-round[data-round="1"] .match-slot[data-pool="D"] .bracket-player-card {
+  background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+  border-left-color: #ca8a04;
+}
+
+/* Pool separators in Round 1 */
+.bracket-round[data-round="1"] .match-slot[data-pool="A"]:last-of-type,
+.bracket-round[data-round="1"] .match-slot[data-pool="B"]:last-of-type,
+.bracket-round[data-round="1"] .match-slot[data-pool="C"]:last-of-type {
+  margin-bottom: 16px;
+}
+
 /* Bracket Match */
 .bracket-match {
   background: #f8f9fa;
-  border-radius: 10px;
-  padding: 15px;
-  border-left: 4px solid var(--primary-color);
+  border-radius: 6px;
+  padding: 10px;
+  border-left: 3px solid var(--primary-color);
   position: relative;
   transition: all 0.3s ease;
+  font-size: 13px;
 }
 
 .bracket-match:hover {
@@ -91,19 +420,19 @@
 
 .match-number {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 6px;
+  right: 6px;
   background: var(--primary-color);
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
-  box-shadow: 0 2px 6px rgba(67, 97, 238, 0.3);
+  font-size: 12px;
+  box-shadow: 0 2px 4px rgba(67, 97, 238, 0.3);
 }
 
 .match-players {
@@ -114,8 +443,8 @@
 
 .match-player {
   background: white;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 8px;
+  border-radius: 6px;
   border: 2px solid transparent;
   transition: all 0.3s ease;
 }
@@ -129,8 +458,9 @@
 .player-name {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .player-name span:first-of-type {
@@ -138,9 +468,10 @@
 }
 
 .player-club {
-  font-size: 12px;
+  font-size: 11px;
   color: #6c757d;
   font-weight: 400;
+  margin-top: 2px;
 }
 
 .seed-badge {
@@ -642,6 +973,275 @@
   font-size: 1rem;
 }
 
+/* Results Box */
+.results-box {
+  background: linear-gradient(135deg, #fff9e6, #ffffff);
+  border: 3px solid #ffd700;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 30px;
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
+}
+
+.results-box h3 {
+  color: #d4af37;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.result-item {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.result-item.gold {
+  border-left-color: #ffd700;
+}
+
+.result-item.silver {
+  border-left-color: #c0c0c0;
+}
+
+.result-item.bronze {
+  border-left-color: #cd7f32;
+}
+
+.result-item.fifth {
+  border-left-color: #4a90e2;
+}
+
+.result-item.seventh {
+  border-left-color: #95a5a6;
+}
+
+.result-position {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.result-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2b2d42;
+  margin-bottom: 4px;
+}
+
+.result-club {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+/* Print styles - fit all brackets on single page */
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 0.3cm;
+  }
+  
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  
+  .bracket-wrapper {
+    page-break-inside: avoid;
+    transform: scale(0.55);
+    transform-origin: top left;
+    width: 181.818%; /* 100% / 0.55 */
+    margin: 0;
+    padding: 0;
+  }
+  
+  .category-bracket {
+    page-break-inside: avoid;
+    margin-bottom: 5px;
+  }
+  
+  .pools-container {
+    gap: 8px;
+  }
+  
+  .pool-section {
+    padding: 6px;
+    min-width: 200px;
+    max-width: 250px;
+  }
+  
+  .pool-header h3 {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+  
+  .bracket-match {
+    font-size: 6px;
+    padding: 3px;
+    min-height: 30px;
+    margin-bottom: 3px;
+  }
+  
+  .player-name {
+    font-size: 7px;
+    margin-bottom: 1px;
+  }
+  
+  .player-club {
+    font-size: 5px;
+  }
+  
+  .match-number {
+    font-size: 5px;
+    padding: 1px 3px;
+  }
+  
+  .seed-badge {
+    font-size: 5px;
+    padding: 1px 3px;
+  }
+  
+  .category-header h2 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  
+  .category-header .badge {
+    font-size: 8px !important;
+    padding: 2px 6px;
+  }
+  
+  .finals-section {
+    gap: 8px;
+  }
+  
+  .round-column h3 {
+    font-size: 10px;
+  }
+  
+  .results-box {
+    font-size: 8px;
+    padding: 8px;
+    margin-top: 10px;
+  }
+  
+  .results-box h3 {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  
+  .results-grid {
+    gap: 6px;
+  }
+  
+  .result-item {
+    padding: 6px;
+  }
+  
+  .result-name {
+    font-size: 9px;
+  }
+  
+  .result-position {
+    font-size: 7px;
+  }
+  
+  .result-club {
+    font-size: 6px;
+  }
+  
+  /* Hide non-essential elements when printing */
+  button,
+  .btn,
+  .print-bracket-btn,
+  nav,
+  .navbar,
+  header,
+  .tabs,
+  .tab,
+  .form-select,
+  .form-control,
+  #deviceInfo,
+  .alert,
+  .no-draw,
+  input,
+  select {
+    display: none !important;
+  }
+  
+  /* Show only bracket content */
+  #bracketView {
+    display: block !important;
+  }
+  
+  #listView {
+    display: none !important;
+  }
+}
+
+/* Print Button */
+.print-bracket-btn {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.print-bracket-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(67, 97, 238, 0.4);
+}
+
+.print-bracket-btn i {
+  margin-right: 8px;
+}
+
+/* Print Styles */
+@media print {
+  .print-bracket-btn {
+    display: none;
+  }
+  
+  .bracket-wrapper {
+    overflow-x: visible;
+  }
+  
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .repechage-container {
@@ -651,5 +1251,12 @@
   .repechage-column,
   .bronze-column {
     max-width: 100%;
+  }
+  
+  .print-bracket-btn {
+    top: 80px;
+    right: 10px;
+    padding: 10px 16px;
+    font-size: 0.9rem;
   }
 }

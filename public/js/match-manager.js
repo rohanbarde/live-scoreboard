@@ -258,9 +258,12 @@
         /**
          * Try to lock a match
          */
-        async lockMatch(matchId) {
+        async lockMatch(matchId, matNumber = null) {
             try {
                 console.log('🔒 Attempting to lock match:', matchId);
+                if (matNumber) {
+                    console.log('📍 Mat Number:', matNumber);
+                }
                 
                 // Check Firebase connection first
                 const connectedRef = firebase.database().ref('.info/connected');
@@ -335,13 +338,20 @@
                     throw new Error('Match is already locked by another device');
                 }
 
-                // Update match status
-                await matchRef.update({
+                // Update match status with mat number
+                const updateData = {
                     status: 'locked',
                     deviceId: DEVICE_ID,
                     deviceName: DEVICE_NAME,
                     lockedAt: firebase.database.ServerValue.TIMESTAMP
-                });
+                };
+                
+                // Add mat number if provided
+                if (matNumber) {
+                    updateData.matNumber = matNumber;
+                }
+                
+                await matchRef.update(updateData);
 
                 // Update device current match
                 await this.devicesRef.child(DEVICE_ID).update({
@@ -515,8 +525,9 @@
                 const fighterBName = match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'Fighter B';
                 const fighterAClub = match.fighterA?.team || match.playerAClub || 'N/A';
                 const fighterBClub = match.fighterB?.team || match.playerBClub || 'N/A';
-                const weightCategory = match.weight || match.weightCategory || 'N/A';
+                const weightCategory = match.weight || match.weightCategory || match.category || 'N/A';
                 const matchNumber = match.matchNumber || match.round || '1';
+                const matNumber = match.matNumber || match.mat || '1';
 
                 // Build scoreboard URL with match data
                 const params = new URLSearchParams({
@@ -527,7 +538,7 @@
                     fighterBClub: fighterBClub,
                     weightCategory: weightCategory,
                     matchNumber: matchNumber,
-                    mat: match.mat || ''
+                    mat: matNumber
                 });
 
                 const scoreboardUrl = `/views/scoreboard.html?${params.toString()}`;
