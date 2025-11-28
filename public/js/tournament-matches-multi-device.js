@@ -496,7 +496,13 @@ function renderMatchRow(match, rowNumber, hideActions = false) {
             <button class="btn btn-sm btn-outline-danger" onclick="unlockMatch('${match.id}')"><i class="fas fa-unlock"></i></button>
         `;
     } else if (isOwnedByThisDevice && status === 'in_progress') {
-        actionButtons = `<button class="btn btn-sm btn-info" onclick="openMatchScoreboard('${match.id}')"><i class="fas fa-external-link-alt"></i> Open</button>`;
+        actionButtons = `
+            <button class="btn btn-sm btn-info" onclick="openMatchScoreboard('${match.id}')"><i class="fas fa-external-link-alt"></i> Open</button>
+            <button class="btn btn-sm btn-warning" onclick="resetMatch('${match.id}')" title="Reset to pending"><i class="fas fa-redo"></i> Reset</button>
+        `;
+    } else if (status === 'in_progress' && !isOwnedByThisDevice) {
+        // Allow admin to reset stuck matches from other devices
+        actionButtons = `<button class="btn btn-sm btn-warning" onclick="resetMatch('${match.id}')" title="Reset stuck match"><i class="fas fa-redo"></i> Reset</button>`;
     }
     
     // Use actual match number from data
@@ -883,6 +889,49 @@ async function deleteDevice(deviceId, deviceName) {
 }
 
 /**
+ * Reset a stuck match back to pending status
+ */
+async function resetMatch(matchId) {
+    if (!confirm('Are you sure you want to reset this match to pending status?\n\nThis will unlock the match and clear its in-progress state.')) {
+        return;
+    }
+    
+    try {
+        const matchRef = await matchManager.getMatchRef(matchId);
+        if (!matchRef) {
+            throw new Error('Match not found');
+        }
+        
+        // Reset match to pending status
+        await matchRef.update({
+            status: 'pending',
+            deviceId: null,
+            startTime: null
+        });
+        
+        // Remove lock if exists
+        await firebase.database().ref(`tournament/locks/${matchId}`).remove();
+        
+        // Clear device current match if it's this match
+        const devices = await matchManager.getDevices();
+        for (const device of devices) {
+            if (device.currentMatch === matchId) {
+                await firebase.database().ref(`tournament/devices/${device.id}`).update({
+                    currentMatch: null
+                });
+            }
+        }
+        
+        console.log(`✅ Match ${matchId} reset to pending`);
+        alert('Match has been reset to pending status');
+        
+    } catch (error) {
+        console.error('❌ Error resetting match:', error);
+        alert('Error resetting match: ' + error.message);
+    }
+}
+
+/**
  * Update mat number for a match
  */
 async function updateMatNumber(matchId, matNumber) {
@@ -926,6 +975,7 @@ window.changeDeviceName = changeDeviceName;
 window.lockAndStartMatch = lockAndStartMatch;
 window.startMatch = startMatch;
 window.unlockMatch = unlockMatch;
+window.resetMatch = resetMatch;
 window.openMatchScoreboard = openMatchScoreboard;
 window.showDevicesModal = showDevicesModal;
 window.closeDevicesModal = closeDevicesModal;

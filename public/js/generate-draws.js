@@ -842,7 +842,9 @@ async function animateGenerateDraw() {
         <div class="slot-left">
           <div class="slot-name"></div>
         </div>
-        <div class="vs-label">V/S</div>
+        <div class="vs-label" style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7em; font-weight: 600; color: #666; padding: 0 8px;">
+          <span>vs</span>
+        </div>
         <div class="slot-right">
           <div class="slot-name"></div>
         </div>
@@ -918,26 +920,8 @@ async function animateGenerateDraw() {
   shuffle.classList.remove('visible');
   setTimeout(() => shuffle.remove(), 300);
 
-  // Fill empty slots in later rounds with placeholder text
-  for (let round = 2; round <= maxRound; round++) {
-    const roundSlots = allMatchSlots.filter(m => m.round === round);
-    roundSlots.forEach(({ slot }) => {
-      const slotLeftEl = slot.querySelector('.slot-left .slot-name');
-      const slotRightEl = slot.querySelector('.slot-right .slot-name');
-      
-      slotLeftEl.innerHTML = `
-        <div class="draw-player-card">
-          <div class="draw-player-name">Winner TBD</div>
-        </div>
-      `;
-      
-      slotRightEl.innerHTML = `
-        <div class="draw-player-card">
-          <div class="draw-player-name">Winner TBD</div>
-        </div>
-      `;
-    });
-  }
+  // Leave empty slots in later rounds blank (they will be filled as matches complete)
+  // No need to show "Winner TBD" - empty slots are self-explanatory
 
   // Get age group
   const selectedAgeGroup = ageGroupFilter ? ageGroupFilter.value : '';

@@ -217,9 +217,17 @@ try {
         const weightCategoryEl = document.getElementById('weightCategory');
         if (weightCategoryEl) {
             // Priority: data.weightCategory > data.fighterA.weight
-            const weight = data.weightCategory || data.fighterA?.weight || '';
-            const mat = data.matNumber ? ` • Mat ${data.matNumber}` : '';
-            weightCategoryEl.textContent = weight + mat;
+            const weight = (data.weightCategory && data.weightCategory.trim() !== '') 
+                ? data.weightCategory.trim() 
+                : ((data.fighterA?.weight && data.fighterA.weight.trim() !== '') ? data.fighterA.weight.trim() : '');
+            const mat = (data.matNumber && data.matNumber.trim() !== '') ? ` • Mat ${data.matNumber.trim()}` : '';
+            
+            // Only show if we have actual data
+            if (weight || mat) {
+                weightCategoryEl.textContent = weight + mat;
+            } else {
+                weightCategoryEl.textContent = '';
+            }
         }
     }, (error) => {
         updateStatus(`Firebase read error: ${error.message}`, true);

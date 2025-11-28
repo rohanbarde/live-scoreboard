@@ -483,6 +483,7 @@ function autoFillPlayerInfo() {
         const clubBInput = document.getElementById('clubB');
         const weightCategoryInput = document.getElementById('weightCategory');
         const matchNumberInput = document.getElementById('matchNumber');
+        const matNumberInput = document.getElementById('matNumber');
         
         if (nameAInput && params.fighterAName) {
             nameAInput.value = params.fighterAName;
@@ -499,26 +500,39 @@ function autoFillPlayerInfo() {
         }
         
         // Set clubs/teams
-        if (clubAInput && params.fighterAClub && params.fighterAClub !== 'N/A') {
+        if (clubAInput && params.fighterAClub && params.fighterAClub !== 'N/A' && params.fighterAClub !== '') {
             clubAInput.value = params.fighterAClub;
             console.log('Set Fighter A club:', params.fighterAClub);
         }
         
-        if (clubBInput && params.fighterBClub && params.fighterBClub !== 'N/A') {
+        if (clubBInput && params.fighterBClub && params.fighterBClub !== 'N/A' && params.fighterBClub !== '') {
             clubBInput.value = params.fighterBClub;
             console.log('Set Fighter B club:', params.fighterBClub);
         }
         
         // Set weight category and match info
-        if (weightCategoryInput && params.weightCategory && params.weightCategory !== 'N/A') {
+        if (weightCategoryInput && params.weightCategory && params.weightCategory !== 'N/A' && params.weightCategory !== '') {
             weightCategoryInput.value = params.weightCategory;
             console.log('Set weight category:', params.weightCategory);
         }
         
-        if (matchNumberInput && params.matchNumber) {
+        if (matchNumberInput && params.matchNumber && params.matchNumber !== '') {
             matchNumberInput.value = params.matchNumber;
             console.log('Set match number:', params.matchNumber);
         }
+        
+        if (matNumberInput && params.matNumber && params.matNumber !== '') {
+            matNumberInput.value = params.matNumber;
+            console.log('Set mat number:', params.matNumber);
+        }
+        
+        // Trigger a UI refresh to sync data to Firebase immediately
+        setTimeout(() => {
+            if (typeof window.refreshUI === 'function') {
+                window.refreshUI();
+                console.log('✅ Triggered initial Firebase sync after autofill');
+            }
+        }, 500);
         
         // Add a log entry
         if (params.fighterAName || params.fighterBName) {

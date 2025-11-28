@@ -158,8 +158,25 @@ function updateFirebase() {
   // Get weight category from input field
   const weightCategoryInput = document.getElementById('weightCategory');
   const matNumberInput = document.getElementById('matNumber');
-  const weightCategory = weightCategoryInput?.value || weightCategoryFromUrl || match.fighterA.weight || match.fighterB.weight || '';
-  const matNumber = matNumberInput?.value || matNumberFromUrl || match.matNumber || '';
+  
+  // Priority: input field > URL param > match object (but skip if empty)
+  let weightCategory = '';
+  if (weightCategoryInput?.value && weightCategoryInput.value.trim() !== '') {
+    weightCategory = weightCategoryInput.value.trim();
+  } else if (weightCategoryFromUrl && weightCategoryFromUrl.trim() !== '') {
+    weightCategory = weightCategoryFromUrl.trim();
+  } else if (match.fighterA.weight && match.fighterA.weight.trim() !== '') {
+    weightCategory = match.fighterA.weight.trim();
+  } else if (match.fighterB.weight && match.fighterB.weight.trim() !== '') {
+    weightCategory = match.fighterB.weight.trim();
+  }
+  
+  let matNumber = '';
+  if (matNumberInput?.value && matNumberInput.value.trim() !== '') {
+    matNumber = matNumberInput.value.trim();
+  } else if (matNumberFromUrl && matNumberFromUrl.trim() !== '') {
+    matNumber = matNumberFromUrl.trim();
+  }
   
   // Prepare score data
   const scoreData = {
@@ -1585,4 +1602,5 @@ function stopHoldTimer() {
     window.startHoldBlue = startHoldBlue;
     window.stopHoldTimer = stopHoldTimer;
     window.undoSpecificScore = undoSpecificScore;
+    window.refreshUI = refreshUI; // Expose for external triggers
     window.match = match; // Expose match object for Firebase sync
