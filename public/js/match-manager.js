@@ -24,13 +24,25 @@
      * Match Manager Class
      */
     class MatchManager {
-        constructor() {
+        constructor(tournamentId = null) {
             this.db = firebase.database();
-            this.matchesRef = this.db.ref('tournament/matches');
-            this.locksRef = this.db.ref('tournament/locks');
-            this.devicesRef = this.db.ref('tournament/devices');
+            this.tournamentId = tournamentId;
+            
+            // Use tournament-specific paths if tournament ID is provided
+            if (tournamentId) {
+                this.matchesRef = this.db.ref(`tournaments/${tournamentId}/matches`);
+                this.locksRef = this.db.ref(`tournaments/${tournamentId}/locks`);
+                this.devicesRef = this.db.ref(`tournaments/${tournamentId}/devices`);
+            } else {
+                this.matchesRef = this.db.ref('tournament/matches');
+                this.locksRef = this.db.ref('tournament/locks');
+                this.devicesRef = this.db.ref('tournament/devices');
+            }
+            
             this.currentMatchId = null;
             this.heartbeatInterval = null;
+            
+            console.log('🏆 MatchManager initialized with tournament:', tournamentId || 'global');
             
             this.initializeDevice();
         }

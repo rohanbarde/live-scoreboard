@@ -143,13 +143,24 @@
     <script src="../public/js/bracket-view.js"></script>
     
     <script>
+        // Get tournament context
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentTournamentId = urlParams.get('tournamentId') || sessionStorage.getItem('currentTournament');
+        
+        console.log('🏆 Tournament Matches - Tournament Context:', currentTournamentId);
+        
         // Load saved categories from tournament/draws
         async function loadCategories() {
             const categoryFilter = document.getElementById('categoryFilter');
             if (!categoryFilter) return;
             
             try {
-                const drawsRef = firebase.database().ref('tournament/draws');
+                // Load from tournament-specific path if tournament ID exists
+                const drawsPath = currentTournamentId 
+                    ? `tournaments/${currentTournamentId}/draws`
+                    : 'tournament/draws';
+                
+                const drawsRef = firebase.database().ref(drawsPath);
                 const snapshot = await drawsRef.once('value');
                 
                 if (!snapshot.exists()) {
@@ -310,7 +321,7 @@
                     // Initialize bracket view when bracket tab is clicked
                     if (targetTab === 'bracket') {
                         if (!bracketView) {
-                            bracketView = new BracketView();
+                            bracketView = new BracketView(currentTournamentId);
                             await bracketView.loadMatches();
                         } else {
                             // Refresh bracket view

@@ -4,6 +4,13 @@ let players = [];
 let filteredPlayers = [];
 let teams = new Set();
 let weights = new Set();
+let currentTournamentId = null;
+let filterByTournament = false;
+
+// Check for tournament context
+const urlParams = new URLSearchParams(window.location.search);
+currentTournamentId = urlParams.get('tournamentId') || sessionStorage.getItem('currentTournament');
+filterByTournament = sessionStorage.getItem('filterByTournament') === 'true';
 
 // DOM Elements
 const playersTableBody = document.getElementById('playersTableBody');
@@ -27,6 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         database = firebase.database();
         
+        // Display tournament context if filtering
+        if (filterByTournament && currentTournamentId) {
+            displayTournamentBanner();
+        }
+        
         // Load players
         loadPlayers();
         
@@ -38,11 +50,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Display tournament banner
+async function displayTournamentBanner() {
+    try {
+        const snapshot = await database.ref(`tournaments/${currentTournamentId}`).once('value');
+        const tournament = snapshot.val();
+        
+        if (tournament) {
+            const header = document.querySelector('.header');
+            if (header) {
+                const banner = document.createElement('div');
+                banner.style.cssText = 'background: #dbeafe; padding: 10px 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3b82f6;';
+                banner.innerHTML = `
+                    <strong style="color: #1e40af;">
+                        <i class="fas fa-trophy"></i> Showing players for: ${tournament.name}
+                    </strong>
+                `;
+                header.insertAdjacentElement('afterend', banner);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading tournament banner:', error);
+    }
+}
+
+// Clear tournament filter
+function clearTournamentFilter() {
+    sessionStorage.removeItem('filterByTournament');
+    sessionStorage.removeItem('currentTournament');
+    window.location.href = '/views/player-list.html';
+}
+
 // Load players from Firebase
 function loadPlayers() {
     showLoading(true);
     
-    const playersRef = database.ref('registrations').orderByChild('userType').equalTo('player');
+    let playersRef;
+    
+    // If filtering by tournament, load from tournament_registrations
+    if (filterByTournament && currentTournamentId) {
+        console.log('Loading players for tournament:', currentTournamentId);
+        playersRef = database.ref(`tournament_registrations/${currentTournamentId}`);
+    } else {
+        playersRef = database.ref('registrations').orderByChild('userType').equalTo('player');
+    }
     
     playersRef.on('value', (snapshot) => {
         players = [];
@@ -345,8 +396,8 @@ function renderPlayers() {
         const editBtn = `<button class='btn btn-sm btn-outline-primary' onclick='editPlayer("${player.id}")'>Edit</button>`;
         // Delete button
         const deleteBtn = `<button class='btn btn-sm btn-outline-danger' onclick='deletePlayer("${player.id}")' style='background-color: #dc3545; color: white;'>Delete</button>`;
-        // Show player ID if present (supports all formats like MJA/MH12-OSH-000002 or MJA/2025/XX)
-        const regId = player.playerId || '';
+        // Show registration ID (prioritize playerId format MJA/2025/XXX, then registrationId, then database ID)
+        const regId = player.playerId || player.registrationId || player.id || 'N/A';
         return `
             <tr>
                 <td>${index + 1}</td>
@@ -418,6 +469,9 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(context, args), wait);
     };
 }
+
+// Expose clearTournamentFilter globally
+window.clearTournamentFilter = clearTournamentFilter;
 
 // Delete player logic
 window.deletePlayer = function(playerId) {

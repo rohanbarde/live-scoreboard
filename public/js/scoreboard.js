@@ -1201,7 +1201,7 @@ function endMatch() {
     w.document.write(`<tr><td>${it.t}</td><td>${it.actor}</td><td>${it.action}</td><td>${it.info}</td></tr>`);
   });
   w.document.write('</tbody></table>');
-  w.document.write('<footer style="margin-top:36px;font-size:1.09rem;text-align:center;color:#222;opacity:0.82;letter-spacing:1px;padding:8px 0;">MAHAJUDO &copy; BLACKTROUNCE STUDIO</footer>');
+  w.document.write('<footer style="margin-top:36px;font-size:1.09rem;text-align:center;color:#222;opacity:0.82;letter-spacing:1px;padding:8px 0;"> &copy; BLACKTROUNCE STUDIO</footer>');
   w.document.write('</body></html>');
   w.document.close();
 setTimeout(() => {
