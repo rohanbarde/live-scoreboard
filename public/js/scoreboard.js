@@ -136,10 +136,82 @@
   // Save to local storage
   saveMatch();
 
-  // Trigger Firebase update if available
-  if (typeof updateFirebase === 'function') {
-    updateFirebase();
+  // Trigger Firebase update
+  updateFirebase();
+}
+
+// Firebase sync function - syncs scoreboard data to Firebase in real-time
+function updateFirebase() {
+  // Get matchId from URL if available
+  const urlParams = new URLSearchParams(window.location.search);
+  const matchId = urlParams.get('matchId');
+  
+  if (!matchId) {
+    // No matchId, skip Firebase sync
+    return;
   }
+  
+  // Get weight category and mat number from URL or match object
+  const weightCategoryFromUrl = urlParams.get('weightCategory') || '';
+  const matNumberFromUrl = urlParams.get('matNumber') || '';
+  
+  // Get weight category from input field
+  const weightCategoryInput = document.getElementById('weightCategory');
+  const matNumberInput = document.getElementById('matNumber');
+  const weightCategory = weightCategoryInput?.value || weightCategoryFromUrl || match.fighterA.weight || match.fighterB.weight || '';
+  const matNumber = matNumberInput?.value || matNumberFromUrl || match.matNumber || '';
+  
+  // Prepare score data
+  const scoreData = {
+    fighterA: {
+      name: match.fighterA.name || '',
+      club: match.fighterA.club || '',
+      weight: weightCategory,
+      ippon: match.fighterA.ippon || 0,
+      waza: match.fighterA.waza || 0,
+      yuko: match.fighterA.yuko || 0,
+      shido: match.fighterA.shido || 0,
+      redCard: match.fighterA.redCard || false
+    },
+    fighterB: {
+      name: match.fighterB.name || '',
+      club: match.fighterB.club || '',
+      weight: weightCategory,
+      ippon: match.fighterB.ippon || 0,
+      waza: match.fighterB.waza || 0,
+      yuko: match.fighterB.yuko || 0,
+      shido: match.fighterB.shido || 0,
+      redCard: match.fighterB.redCard || false
+    },
+    timer: formatTimeFromSec(match.remainingSec),
+    timerRunning: match.running,
+    goldenScore: match.goldenScoreActive,
+    matchInfo: `Match ${match.matchNumber || ''} - Mat ${matNumber}`,
+    weightCategory: weightCategory,
+    matNumber: matNumber,
+    holdTimer: {
+      active: match.holdTimer.active,
+      player: match.holdTimer.player,
+      elapsedSec: match.holdTimer.elapsedSec || 0,
+      type: match.holdTimer.type
+    },
+    lastUpdate: Date.now()
+  };
+  
+  // Update Firebase
+  if (typeof firebase !== 'undefined' && firebase.database) {
+    firebase.database().ref(`matches/${matchId}/scoreData`).set(scoreData)
+      .catch(error => console.error('Firebase sync error:', error));
+  }
+}
+
+// Helper function to format time from seconds
+function formatTimeFromSec(sec) {
+  const absSeconds = Math.abs(sec);
+  const mins = Math.floor(absSeconds / 60);
+  const secs = absSeconds % 60;
+  const sign = sec < 0 ? '+' : '';
+  return `${sign}${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
 /* render small card indicators */

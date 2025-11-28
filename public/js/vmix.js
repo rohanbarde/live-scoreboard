@@ -54,12 +54,56 @@ connectedRef.on("value", function(snap) {
     updateStatus(status);
 });
 
-// Function to load player photo from Firebase
+// Cache for player photos to avoid repeated Firebase queries
+const photoCache = {};
+let photoCacheInitialized = false;
+
+// Preload all player photos into cache on page load
+function preloadAllPhotos() {
+    if (photoCacheInitialized) return;
+    photoCacheInitialized = true;
+    
+    console.log('🖼️ Preloading all player photos...');
+    
+    database.ref('registrations').orderByChild('userType').equalTo('player').once('value')
+        .then(snapshot => {
+            let loadedCount = 0;
+            snapshot.forEach(childSnapshot => {
+                const playerData = childSnapshot.val();
+                if (playerData.photoBase64 && playerData.photoBase64.length > 50) {
+                    const photoSrc = `data:image/png;base64,${playerData.photoBase64}`;
+                    // Cache by fullName
+                    if (playerData.fullName) {
+                        photoCache[playerData.fullName] = photoSrc;
+                        loadedCount++;
+                    }
+                    // Also cache by firstName + lastName for new format
+                    if (playerData.firstName && playerData.lastName) {
+                        const displayName = `${playerData.firstName} ${playerData.lastName}`;
+                        photoCache[displayName] = photoSrc;
+                    }
+                }
+            });
+            console.log(`✓ Preloaded ${loadedCount} player photos into cache`);
+        })
+        .catch(error => {
+            console.error('Error preloading photos:', error);
+        });
+}
+
+// Function to load player photo from Firebase with caching
 function loadPlayerPhoto(playerName, side) {
     const photoImg = document.getElementById(`photo${side}`);
     
     if (!photoImg || !playerName) {
         console.log(`No photo element or player name for side ${side}`);
+        return;
+    }
+    
+    // Check cache first
+    if (photoCache[playerName]) {
+        photoImg.src = photoCache[playerName];
+        console.log(`✓ Photo loaded from cache for ${playerName}`);
         return;
     }
     
@@ -72,7 +116,10 @@ function loadPlayerPhoto(playerName, side) {
                 snapshot.forEach(childSnapshot => {
                     const playerData = childSnapshot.val();
                     if (playerData.photoBase64 && playerData.photoBase64.length > 50) {
-                        photoImg.src = `data:image/png;base64,${playerData.photoBase64}`;
+                        const photoSrc = `data:image/png;base64,${playerData.photoBase64}`;
+                        photoImg.src = photoSrc;
+                        // Cache the photo
+                        photoCache[playerName] = photoSrc;
                         console.log(`✓ Photo loaded successfully for ${playerName}`);
                     } else {
                         console.warn(`Player ${playerName} has no photoBase64 data`);
@@ -86,6 +133,11 @@ function loadPlayerPhoto(playerName, side) {
             console.error(`Error loading photo for ${playerName}:`, error);
         });
 }
+
+// Initialize photo preloading when Firebase is ready
+setTimeout(() => {
+    preloadAllPhotos();
+}, 1500);
 
 // Get matchId from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
@@ -161,14 +213,13 @@ try {
             document.getElementById('matchInfo').textContent = data.matchInfo;
         }
 
-        // Update weight category if available
-        if (data.weightCategory) {
-            document.getElementById('weightCategory').textContent = data.weightCategory;
-        }
-
-        // Update weight category if available
-        if (data.fighterA?.weight) {
-            document.getElementById('weightCategory').textContent = data.fighterA.weight;
+        // Update weight category and mat number
+        const weightCategoryEl = document.getElementById('weightCategory');
+        if (weightCategoryEl) {
+            // Priority: data.weightCategory > data.fighterA.weight
+            const weight = data.weightCategory || data.fighterA?.weight || '';
+            const mat = data.matNumber ? ` • Mat ${data.matNumber}` : '';
+            weightCategoryEl.textContent = weight + mat;
         }
     }, (error) => {
         updateStatus(`Firebase read error: ${error.message}`, true);
