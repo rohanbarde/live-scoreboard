@@ -58,16 +58,143 @@ connectedRef.on("value", function(snap) {
 const photoCache = {};
 let photoCacheInitialized = false;
 
-// Preload all player photos into cache on page load
+// Cache for player district data
+const districtCache = {};
+
+// Map district names to flag image files (with multiple variations)
+const districtFlagMap = {
+    // Akola variations
+    'akola': 'Akola.jpg',
+    'akola district': 'Akola.jpg',
+    'akola judo': 'Akola.jpg',
+    
+    // Amaravati variations
+    'amaravati': 'Amaravati.jpg',
+    'amravati': 'Amaravati.jpg',
+    'amaravati district': 'Amaravati.jpg',
+    'amravati district': 'Amaravati.jpg',
+    
+    // Ch.Sambhajinagar (Aurangabad) variations
+    'ch.sambhajinagar': 'Ch.Sambhajinagar.jpg',
+    'ch sambhajinagar': 'Ch.Sambhajinagar.jpg',
+    'sambhajinagar': 'Ch.Sambhajinagar.jpg',
+    'aurangabad': 'Ch.Sambhajinagar.jpg',
+    'aurangabad district': 'Ch.Sambhajinagar.jpg',
+    
+    // Dhule variations
+    'dhule': 'Dhule.jpg',
+    'dhule district': 'Dhule.jpg',
+    'dhule judo': 'Dhule.jpg',
+    
+    // Gondia variations
+    'gondia': 'Gondia.jpg',
+    'gondia district': 'Gondia.jpg',
+    'gondia judo': 'Gondia.jpg',
+    
+    // Jalgaon variations
+    'jalgaon': 'Jalgaon.jpg',
+    'jalgaon district': 'Jalgaon.jpg',
+    'jalgaon judo': 'Jalgaon.jpg',
+    
+    // Kolhapur variations
+    'kolhapur': 'Kolhapur.png',
+    'kolhapur district': 'Kolhapur.png',
+    'kolhapur judo': 'Kolhapur.png',
+    
+    // Latur variations
+    'latur': 'Latur.jpg',
+    'latur district': 'Latur.jpg',
+    'latur judo': 'Latur.jpg',
+    
+    // Mumbai variations
+    'mumbai': 'Mumbai.jpg',
+    'mumbai district': 'Mumbai.jpg',
+    'mumbai judo': 'Mumbai.jpg',
+    'mumbai city': 'Mumbai.jpg',
+    'greater mumbai': 'Mumbai.jpg',
+    
+    // Nagpur variations
+    'nagpur': 'Nagpur.jpg',
+    'nagpur district': 'Nagpur.jpg',
+    'nagpur judo': 'Nagpur.jpg',
+    'nagpur city': 'Nagpur.jpg',
+    
+    // Nanded variations
+    'nanded': 'Nanded.jpg',
+    'nanded district': 'Nanded.jpg',
+    'nanded judo': 'Nanded.jpg',
+    
+    // Nandurbar variations
+    'nandurbar': 'Nandurbar.jpg',
+    'nandurbar district': 'Nandurbar.jpg',
+    'nandurbar judo': 'Nandurbar.jpg',
+    
+    // Nashik variations
+    'nashik': 'Nashik.jpg',
+    'nashik district': 'Nashik.jpg',
+    'nashik judo': 'Nashik.jpg',
+    'nasik': 'Nashik.jpg',
+    
+    // Sangli variations
+    'sangli': 'Sangli.jpg',
+    'sangli district': 'Sangli.jpg',
+    'sangli judo': 'Sangli.jpg',
+    
+    // Satara variations
+    'satara': 'Satara.jpg',
+    'satara district': 'Satara.jpg',
+    'satara judo': 'Satara.jpg',
+    
+    // Sindhudurg variations
+    'sindhudurg': 'Sindhudurg.jpg',
+    'sindhudurg district': 'Sindhudurg.jpg',
+    'sindhudurg judo': 'Sindhudurg.jpg',
+    
+    // Solapur variations
+    'solapur': 'Solapur.jpg',
+    'solapur district': 'Solapur.jpg',
+    'solapur judo': 'Solapur.jpg',
+    'sholapur': 'Solapur.jpg',
+    
+    // Thane variations
+    'thane': 'Thane.jpg',
+    'thane district': 'Thane.jpg',
+    'thane judo': 'Thane.jpg',
+    'thane city': 'Thane.jpg',
+    
+    // Yeotmal/Yavatmal variations
+    'yeotmal': 'Yeotmal.jpg',
+    'yavatmal': 'Yeotmal.jpg',
+    'yeotmal district': 'Yeotmal.jpg',
+    'yavatmal district': 'Yeotmal.jpg',
+    'yeotmal judo': 'Yeotmal.jpg',
+    'yavatmal judo': 'Yeotmal.jpg',
+    
+    // Special organizations
+    'pdja': 'PDJA.jpg',
+    'pune district judo association': 'PDJA.jpg',
+    'pune district': 'PDJA.jpg',
+    'pune': 'PDJA.jpg',
+    
+    'krida prabhodhini': 'Krida Prabhodhini.jpg',
+    'krida': 'Krida Prabhodhini.jpg',
+    
+    'maharashtra': 'Maharashtra.png',
+    'maharashtra judo': 'Maharashtra.png'
+};
+
+// Preload all player photos and district data into cache on page load
 function preloadAllPhotos() {
     if (photoCacheInitialized) return;
     photoCacheInitialized = true;
     
-    console.log('🖼️ Preloading all player photos...');
+    console.log('🖼️ Preloading all player photos and district data...');
     
     database.ref('registrations').orderByChild('userType').equalTo('player').once('value')
         .then(snapshot => {
             let loadedCount = 0;
+            const uniqueTeams = new Set();
+            
             snapshot.forEach(childSnapshot => {
                 const playerData = childSnapshot.val();
                 if (playerData.photoBase64 && playerData.photoBase64.length > 50) {
@@ -83,31 +210,115 @@ function preloadAllPhotos() {
                         photoCache[displayName] = photoSrc;
                     }
                 }
+                // Cache district/team data
+                const playerName = playerData.fullName || `${playerData.firstName || ''} ${playerData.lastName || ''}`.trim();
+                if (playerName) {
+                    districtCache[playerName] = {
+                        team: playerData.team || '',
+                        district: playerData.team || '' // team field contains district name
+                    };
+                    
+                    // Collect unique team names for debugging
+                    if (playerData.team && playerData.team.trim()) {
+                        uniqueTeams.add(playerData.team.trim());
+                    }
+                }
             });
-            console.log(`✓ Preloaded ${loadedCount} player photos into cache`);
+            
+            console.log(`✓ Preloaded ${loadedCount} player photos and district data into cache`);
+            
+            // Log all unique team names found in database
+            if (uniqueTeams.size > 0) {
+                console.log('📋 Unique team/district names in database:');
+                Array.from(uniqueTeams).sort().forEach(team => {
+                    const normalized = team.toLowerCase().trim();
+                    const hasMatch = districtFlagMap[normalized] !== undefined;
+                    const matchIcon = hasMatch ? '✓' : '⚠️';
+                    console.log(`  ${matchIcon} "${team}" (normalized: "${normalized}")`);
+                });
+            } else {
+                console.warn('⚠️ No team/district data found in any player registrations!');
+            }
         })
         .catch(error => {
             console.error('Error preloading photos:', error);
         });
 }
 
-// Function to load player photo from Firebase with caching
-function loadPlayerPhoto(playerName, side) {
+// Function to get district flag path from team/district name
+function getDistrictFlagPath(teamName) {
+    // Default fallback to Maharashtra flag
+    const defaultFlag = '/public/assets/Maharashtra.png';
+    
+    if (!teamName) {
+        console.log('⚠️ No team name provided, using Maharashtra flag');
+        return defaultFlag;
+    }
+    
+    const normalizedTeam = teamName.toLowerCase().trim();
+    console.log(`🔍 Looking for flag for team: "${teamName}" (normalized: "${normalizedTeam}")`);
+    
+    const flagFile = districtFlagMap[normalizedTeam];
+    
+    if (flagFile) {
+        console.log(`✓ Exact match found: ${flagFile}`);
+        return `/public/assets/${flagFile}`;
+    }
+    
+    // Try partial match
+    for (const [key, file] of Object.entries(districtFlagMap)) {
+        if (normalizedTeam.includes(key) || key.includes(normalizedTeam)) {
+            console.log(`✓ Partial match found: "${key}" → ${file}`);
+            return `/public/assets/${file}`;
+        }
+    }
+    
+    // Return Maharashtra flag as fallback
+    console.log(`⚠️ No match found for "${teamName}", using Maharashtra flag`);
+    return defaultFlag;
+}
+
+// Function to load player photo and district flag from Firebase with caching
+function loadPlayerPhoto(playerName, side, skipFlagUpdate = false) {
     const photoImg = document.getElementById(`photo${side}`);
+    const flagImg = document.getElementById(`flag${side}`);
     
     if (!photoImg || !playerName) {
         console.log(`No photo element or player name for side ${side}`);
         return;
     }
     
-    // Check cache first
+    // Check cache first for photo
     if (photoCache[playerName]) {
         photoImg.src = photoCache[playerName];
         console.log(`✓ Photo loaded from cache for ${playerName}`);
-        return;
+        
+        // If we should skip flag update (already set from match data) and photo is cached, return early
+        if (skipFlagUpdate) {
+            console.log(`⏭️ Skipping flag update for ${playerName} (already set from match data)`);
+            return;
+        }
     }
     
-    console.log(`Loading photo for ${playerName} on side ${side}`);
+    // Only update flag if not skipping and we have cached data
+    if (!skipFlagUpdate && flagImg && districtCache[playerName]) {
+        const flagPath = getDistrictFlagPath(districtCache[playerName].district);
+        flagImg.src = flagPath;
+        flagImg.style.width = '3vw';
+        flagImg.style.height = 'auto';
+        flagImg.style.maxHeight = '2.5vw';
+        flagImg.style.objectFit = 'contain';
+        flagImg.style.borderRadius = '0.2vw';
+        flagImg.style.boxShadow = '0 0.1vw 0.3vw rgba(0,0,0,0.3)';
+        console.log(`✓ District flag loaded from cache for ${playerName}: ${districtCache[playerName].district || 'Maharashtra (default)'}`);
+        
+        // If we have cached photo, we can return early
+        if (photoCache[playerName]) {
+            return;
+        }
+    }
+    
+    console.log(`Loading photo and district data for ${playerName} on side ${side}`);
     
     // Query Firebase for player data using correct path and field
     database.ref('registrations').orderByChild('fullName').equalTo(playerName).once('value')
@@ -115,6 +326,8 @@ function loadPlayerPhoto(playerName, side) {
             if (snapshot.exists()) {
                 snapshot.forEach(childSnapshot => {
                     const playerData = childSnapshot.val();
+                    
+                    // Load photo
                     if (playerData.photoBase64 && playerData.photoBase64.length > 50) {
                         const photoSrc = `data:image/png;base64,${playerData.photoBase64}`;
                         photoImg.src = photoSrc;
@@ -123,6 +336,35 @@ function loadPlayerPhoto(playerName, side) {
                         console.log(`✓ Photo loaded successfully for ${playerName}`);
                     } else {
                         console.warn(`Player ${playerName} has no photoBase64 data`);
+                    }
+                    
+                    // Load district flag only if not skipping (not already set from match data)
+                    if (!skipFlagUpdate && flagImg) {
+                        const flagPath = getDistrictFlagPath(playerData.team || '');
+                        flagImg.src = flagPath;
+                        flagImg.style.width = '3vw';
+                        flagImg.style.height = 'auto';
+                        flagImg.style.maxHeight = '2.5vw';
+                        flagImg.style.objectFit = 'contain';
+                        flagImg.style.borderRadius = '0.2vw';
+                        flagImg.style.boxShadow = '0 0.1vw 0.3vw rgba(0,0,0,0.3)';
+                        console.log(`✓ District flag loaded from database for ${playerName}: ${playerData.team || 'Maharashtra (default)'}`);
+                        
+                        // Cache district data
+                        districtCache[playerName] = {
+                            team: playerData.team || '',
+                            district: playerData.team || ''
+                        };
+                    } else if (skipFlagUpdate) {
+                        console.log(`⏭️ Skipping flag update from database for ${playerName} (already set from match data)`);
+                        
+                        // Still cache the district data for future reference (but don't overwrite existing cache)
+                        if (!districtCache[playerName]) {
+                            districtCache[playerName] = {
+                                team: playerData.team || '',
+                                district: playerData.team || ''
+                            };
+                        }
                     }
                 });
             } else {
@@ -175,9 +417,27 @@ try {
             document.getElementById('fighterAName').textContent = fighterA.name || 'Fighter A';
             document.getElementById('fighterAClub').textContent = fighterA.club || 'Team A';
             
-            // Load player photo
+            // Update district flag if club/team data is available
+            if (fighterA.club) {
+                const flagImg = document.getElementById('flagA');
+                if (flagImg) {
+                    const flagPath = getDistrictFlagPath(fighterA.club);
+                    flagImg.src = flagPath;
+                    console.log(`✓ Fighter A flag updated from Firebase match data: ${fighterA.club}`);
+                    
+                    // Cache this team data to prevent loadPlayerPhoto from overwriting
+                    if (fighterA.name) {
+                        districtCache[fighterA.name] = {
+                            team: fighterA.club,
+                            district: fighterA.club
+                        };
+                    }
+                }
+            }
+            
+            // Load player photo (will skip flag update since we already set it)
             if (fighterA.name) {
-                loadPlayerPhoto(fighterA.name, 'A');
+                loadPlayerPhoto(fighterA.name, 'A', true); // Pass true to skip flag update
             }
             
             // Update score indicators
@@ -192,9 +452,27 @@ try {
             document.getElementById('fighterBName').textContent = fighterB.name || 'Fighter B';
             document.getElementById('fighterBClub').textContent = fighterB.club || 'Team B';
             
-            // Load player photo
+            // Update district flag if club/team data is available
+            if (fighterB.club) {
+                const flagImg = document.getElementById('flagB');
+                if (flagImg) {
+                    const flagPath = getDistrictFlagPath(fighterB.club);
+                    flagImg.src = flagPath;
+                    console.log(`✓ Fighter B flag updated from Firebase match data: ${fighterB.club}`);
+                    
+                    // Cache this team data to prevent loadPlayerPhoto from overwriting
+                    if (fighterB.name) {
+                        districtCache[fighterB.name] = {
+                            team: fighterB.club,
+                            district: fighterB.club
+                        };
+                    }
+                }
+            }
+            
+            // Load player photo (will skip flag update since we already set it)
             if (fighterB.name) {
-                loadPlayerPhoto(fighterB.name, 'B');
+                loadPlayerPhoto(fighterB.name, 'B', true); // Pass true to skip flag update
             }
             
             // Update score indicators
