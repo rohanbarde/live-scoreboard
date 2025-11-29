@@ -5,6 +5,14 @@ const database = firebase.database();
 const registrationsRef = database.ref('registrations');
 const usersRef = database.ref('users');
 
+// Get tournament context from parent window or URL
+const urlParams = new URLSearchParams(window.location.search);
+const currentTournamentId = urlParams.get('tournamentId') || 
+                            sessionStorage.getItem('currentTournament') ||
+                            (window.parent && window.parent !== window && sessionStorage.getItem('currentTournament'));
+
+console.log('🏆 Tournament context for registration:', currentTournamentId);
+
 // Connection check
 database.ref('.info/connected').on('value', (snapshot) => {
   console.log('Firebase connection:', snapshot.val() ? 'connected' : 'disconnected');
@@ -163,8 +171,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Player data
       if (userType === 'player') {
+        const dobInput = document.getElementById('dob');
+        userData.dob = dobInput ? dobInput.value.trim() : '';
+        
+        // Get weight value (can be string like "100+" or number)
+        const weightValue = document.getElementById('weight').value.trim();
+        
         userData.playerInfo = {
-          weight: parseFloat(document.getElementById('weight').value.trim()),
+          weight: weightValue, // Store as-is (handles both numbers and "100+", "78+" etc)
           team: document.getElementById('team').value.trim(),
           gender: document.getElementById('gender').value,
         };
@@ -190,6 +204,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
       await database.ref().update(updates);
       console.log('✅ Player registration saved:', userId);
+      
+      // If tournament context exists and user is a player, register for tournament
+      if (currentTournamentId && userType === 'player') {
+        const tournamentRegId = `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const tournamentRegistration = {
+          playerId: userId,
+          tournamentId: currentTournamentId,
+          registrationId: playerId,
+          firstName,
+          middleName,
+          lastName,
+          fullName,
+          dob: userData.dob,
+          email: userData.email,
+          phone: userData.phone,
+          userType: 'player',
+          playerInfo: userData.playerInfo,
+          photoBase64: photoBase64,
+          registeredAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        
+        await database.ref(`tournament_registrations/${currentTournamentId}/${tournamentRegId}`).set(tournamentRegistration);
+        console.log('✅ Player registered to tournament:', currentTournamentId);
+      }
 
       // Reset form
       const selectedType = document.getElementById('userType').value;

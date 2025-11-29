@@ -24,13 +24,25 @@
      * Match Manager Class
      */
     class MatchManager {
-        constructor() {
+        constructor(tournamentId = null) {
             this.db = firebase.database();
-            this.matchesRef = this.db.ref('tournament/matches');
-            this.locksRef = this.db.ref('tournament/locks');
-            this.devicesRef = this.db.ref('tournament/devices');
+            this.tournamentId = tournamentId;
+            
+            // Use tournament-specific paths if tournament ID is provided
+            if (tournamentId) {
+                this.matchesRef = this.db.ref(`tournaments/${tournamentId}/matches`);
+                this.locksRef = this.db.ref(`tournaments/${tournamentId}/locks`);
+                this.devicesRef = this.db.ref(`tournaments/${tournamentId}/devices`);
+            } else {
+                this.matchesRef = this.db.ref('tournament/matches');
+                this.locksRef = this.db.ref('tournament/locks');
+                this.devicesRef = this.db.ref('tournament/devices');
+            }
+            
             this.currentMatchId = null;
             this.heartbeatInterval = null;
+            
+            console.log('🏆 MatchManager initialized with tournament:', tournamentId || 'global');
             
             this.initializeDevice();
         }
@@ -522,7 +534,7 @@
 
                 // Handle both old and new match formats
                 // Use firstName + lastName if available, otherwise fallback to fullName
-                const fighterAName = (match.fighterA?.firstName && match.fighterA?.lastName) 
+                const fighterAName = (match.fighterA?.firstName && match.fighterA?.lastName)
                     ? `${match.fighterA.firstName} ${match.fighterA.lastName}`
                     : (match.fighterA?.fullName || match.fighterA?.name || match.playerAName || 'Fighter A');
                 const fighterBName = (match.fighterB?.firstName && match.fighterB?.lastName)
@@ -530,6 +542,8 @@
                     : (match.fighterB?.fullName || match.fighterB?.name || match.playerBName || 'Fighter B');
                 const fighterAClub = match.fighterA?.team || match.playerAClub || '';
                 const fighterBClub = match.fighterB?.team || match.playerBClub || '';
+                const fighterAPhoto = match.fighterA?.photoBase64 || match.playerAPhoto || '';
+                const fighterBPhoto = match.fighterB?.photoBase64 || match.playerBPhoto || '';
                 const weightCategory = match.weightCategory || match.weight || match.category || '';
                 const matchNumber = match.matchNumber || match.round || '';
                 const matNumber = match.matNumber || match.mat || '';
@@ -545,6 +559,19 @@
                     matchNumber: matchNumber,
                     matNumber: matNumber
                 });
+                
+                // Add tournament ID if available
+                if (this.tournamentId) {
+                    params.set('tournamentId', this.tournamentId);
+                }
+                
+                // Add photos if available (don't add to URL if too large, let it load from DB)
+                if (fighterAPhoto && fighterAPhoto.length < 50000) {
+                    params.set('fighterAPhoto', fighterAPhoto);
+                }
+                if (fighterBPhoto && fighterBPhoto.length < 50000) {
+                    params.set('fighterBPhoto', fighterBPhoto);
+                }
 
                 const scoreboardUrl = `/views/scoreboard.html?${params.toString()}`;
                 

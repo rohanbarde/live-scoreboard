@@ -6,6 +6,16 @@ let matchManager;
 let currentMatches = [];
 let currentDevices = [];
 
+// Get tournament context from parent window or URL (check if urlParams already exists)
+if (typeof urlParams === 'undefined') {
+    var urlParams = new URLSearchParams(window.location.search);
+}
+const currentTournamentId = urlParams.get('tournamentId') || 
+                            sessionStorage.getItem('currentTournament') ||
+                            (window.parent && window.parent.currentTournamentId);
+
+console.log('🏆 Tournament context for matches:', currentTournamentId);
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎯 Initializing Tournament Matches Multi-Device...');
@@ -16,8 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Initialize Match Manager
-    matchManager = new MatchManager();
+    // Initialize Match Manager with tournament context
+    matchManager = new MatchManager(currentTournamentId);
     
     // Show device setup modal on first load
     if (!localStorage.getItem('deviceName')) {

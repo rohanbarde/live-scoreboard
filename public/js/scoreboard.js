@@ -629,9 +629,10 @@ async function completeMatchInTournament(winningSide) {
     try {
         console.log('🔧 VERSION 3.1 - Enhanced category-based search');
 
-        // Get matchId from URL
+        // Get matchId and tournamentId from URL
         const urlParams = new URLSearchParams(window.location.search);
         const matchId = urlParams.get('matchId');
+        const tournamentId = urlParams.get('tournamentId');
 
         if (!matchId) {
             console.warn('No matchId in URL - cannot complete tournament match');
@@ -639,9 +640,11 @@ async function completeMatchInTournament(winningSide) {
         }
 
         console.log('🏆 Completing tournament match:', matchId, 'Winner side:', winningSide);
+        console.log('🏆 Tournament ID:', tournamentId);
 
-        // Get all matches
-        const matchesRef = window.database.ref('tournament/matches');
+        // Get all matches - use tournament-specific path if available
+        const matchesPath = tournamentId ? `tournaments/${tournamentId}/matches` : 'tournament/matches';
+        const matchesRef = window.database.ref(matchesPath);
         const snapshot = await matchesRef.once('value');
         const data = snapshot.val();
 
@@ -1201,7 +1204,7 @@ function endMatch() {
     w.document.write(`<tr><td>${it.t}</td><td>${it.actor}</td><td>${it.action}</td><td>${it.info}</td></tr>`);
   });
   w.document.write('</tbody></table>');
-  w.document.write('<footer style="margin-top:36px;font-size:1.09rem;text-align:center;color:#222;opacity:0.82;letter-spacing:1px;padding:8px 0;">MAHAJUDO &copy; BLACKTROUNCE STUDIO</footer>');
+  w.document.write('<footer style="margin-top:36px;font-size:1.09rem;text-align:center;color:#222;opacity:0.82;letter-spacing:1px;padding:8px 0;"> &copy; BLACKTROUNCE STUDIO</footer>');
   w.document.write('</body></html>');
   w.document.close();
 setTimeout(() => {
