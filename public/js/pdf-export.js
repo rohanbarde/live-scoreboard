@@ -104,15 +104,19 @@ class TournamentPDFExporter {
         const bracketRounds = container.querySelector('.bracket-rounds-container');
         
         if (bracketRounds) {
-            // Capture the bracket as image
+            // Capture the bracket as image with optimized settings
             const canvas = await html2canvas(bracketRounds, {
-                scale: 2,
+                scale: 1,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                removeContainer: true,
+                imageTimeout: 0,
+                allowTaint: false
             });
 
-            const imgData = canvas.toDataURL('image/png');
+            // Use JPEG with compression for much smaller file size
+            const imgData = canvas.toDataURL('image/jpeg', 0.7);
             
             // Calculate dimensions to fit on page
             const imgWidth = canvas.width;
@@ -133,7 +137,8 @@ class TournamentPDFExporter {
             const x = (pageWidth - finalWidth) / 2;
             const y = 28;
             
-            pdf.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
+            // Use JPEG format to match compressed image data
+            pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
         } else {
             pdf.setFontSize(10);
             pdf.text('No bracket data available', pageWidth / 2, pageHeight / 2, { align: 'center' });
