@@ -6,8 +6,6 @@
     <title>Import Players from Excel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="icon" href="../public/assets/JudoIcon.png" type="image/png">
-
     <style>
         body {
             padding: 20px;
@@ -209,12 +207,6 @@
         const selectedFileDiv = document.getElementById('selectedFile');
         const fileNameSpan = document.getElementById('fileName');
         
-        // Get tournament context from URL or session storage
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentTournamentId = urlParams.get('tournamentId') || sessionStorage.getItem('currentTournament');
-        
-        console.log('Tournament context:', currentTournamentId);
-        
         // File selection handler
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -306,92 +298,30 @@
                             }
                         }
                         
-                        // Format DOB to YYYY-MM-DD
+                        // Format DOB
                         let dob = '';
                         if (player.DOB) {
-                            dob = formatDateToISO(player.DOB);
+                            dob = formatDate(player.DOB);
                         }
                         
-                        // Split name into parts
-                        const nameParts = player.Name.trim().split(' ');
-                        const firstName = nameParts[0] || '';
-                        const lastName = nameParts[nameParts.length - 1] || '';
-                        const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+                        // Prepare player data
+                        const playerData = {
+                            fullName: player.Name.trim(),
+                            userType: 'player',
+                            playerId: player.Code.trim(),
+                            playerInfo: {
+                                weight: weight,
+                                team: player.District || 'N/A',
+                                gender: gender,
+                                dob: dob
+                            },
+                            createdAt: firebase.database.ServerValue.TIMESTAMP
+                        };
                         
-                        // Check if player exists by name and DOB
-                        const existingPlayer = await findPlayerByNameAndDOB(firstName, lastName, dob);
-                        
-                        let playerId;
-                        let registrationId;
-                        
-                        if (existingPlayer) {
-                            // Use existing player
-                            playerId = existingPlayer.id;
-                            registrationId = existingPlayer.registrationId || await generateRegistrationId();
-                            
-                            if (!existingPlayer.registrationId) {
-                                await window.database.ref(`registrations/${playerId}/registrationId`).set(registrationId);
-                                await window.database.ref(`users/${playerId}/registrationId`).set(registrationId);
-                            }
-                            
-                            console.log(`ℹ️ Using existing player: ${player.Name} (${registrationId})`);
-                        } else {
-                            // Create new player
-                            playerId = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                            registrationId = await generateRegistrationId();
-                            
-                            // Prepare player data
-                            const playerData = {
-                                firstName: firstName,
-                                middleName: middleName,
-                                lastName: lastName,
-                                fullName: player.Name.trim(),
-                                dob: dob,
-                                registrationId: registrationId,
-                                userType: 'player',
-                                playerInfo: {
-                                    weight: weight,
-                                    team: player.District || 'N/A',
-                                    gender: gender
-                                },
-                                photoBase64: '',
-                                createdAt: firebase.database.ServerValue.TIMESTAMP
-                            };
-                            
-                            // Save to registrations and users
-                            await window.database.ref(`registrations/${playerId}`).set(playerData);
-                            await window.database.ref(`users/${playerId}`).set(playerData);
-                            
-                            console.log(`✅ Created new player: ${player.Name} (${registrationId})`);
-                        }
-                        
-                        // If tournament context exists, register player for tournament
-                        if (currentTournamentId) {
-                            const tournamentRegId = `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                            const tournamentRegistration = {
-                                playerId: playerId,
-                                tournamentId: currentTournamentId,
-                                registrationId: registrationId,
-                                firstName: firstName,
-                                middleName: middleName,
-                                lastName: lastName,
-                                fullName: player.Name.trim(),
-                                dob: dob,
-                                userType: 'player',
-                                playerInfo: {
-                                    weight: weight,
-                                    team: player.District || 'N/A',
-                                    gender: gender
-                                },
-                                photoBase64: '',
-                                registeredAt: firebase.database.ServerValue.TIMESTAMP
-                            };
-                            
-                            await window.database.ref(`tournament_registrations/${currentTournamentId}/${tournamentRegId}`).set(tournamentRegistration);
-                        }
-                        
+                        // Save to Firebase
+                        await window.database.ref('registrations').push(playerData);
                         successCount++;
-                        console.log(`✅ Imported: ${player.Name} (${registrationId})`);
+                        console.log(`✅ Imported: ${player.Name} (${player.Code})`);
                         
                     } catch (error) {
                         console.error(`❌ Error importing ${player.Name || 'player'}:`, error);
@@ -456,24 +386,16 @@
             }
         }
         
-        function formatDateToISO(dateValue) {
+        function formatDate(dateValue) {
             try {
                 // Handle Excel date serial number
                 if (typeof dateValue === 'number') {
                     const date = XLSX.SSF.parse_date_code(dateValue);
-                    return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+                    return `${String(date.d).padStart(2, '0')}.${String(date.m).padStart(2, '0')}.${date.y}`;
                 }
                 
-                // Handle string date - try to convert to YYYY-MM-DD
+                // Handle string date
                 if (typeof dateValue === 'string') {
-                    // Try parsing various formats
-                    const parsed = new Date(dateValue);
-                    if (!isNaN(parsed.getTime())) {
-                        const year = parsed.getFullYear();
-                        const month = String(parsed.getMonth() + 1).padStart(2, '0');
-                        const day = String(parsed.getDate()).padStart(2, '0');
-                        return `${year}-${month}-${day}`;
-                    }
                     return dateValue;
                 }
                 
@@ -481,53 +403,6 @@
             } catch (error) {
                 console.error('Error formatting date:', error);
                 return '';
-            }
-        }
-        
-        async function findPlayerByNameAndDOB(firstName, lastName, dob) {
-            if (!firstName || !lastName || !dob) return null;
-            
-            try {
-                const snapshot = await window.database.ref('registrations').once('value');
-                let foundPlayer = null;
-                
-                snapshot.forEach(child => {
-                    const player = child.val();
-                    const playerFirstName = player.firstName?.toLowerCase().trim();
-                    const playerLastName = player.lastName?.toLowerCase().trim();
-                    const playerDob = player.dob;
-                    
-                    if (playerFirstName === firstName.toLowerCase().trim() &&
-                        playerLastName === lastName.toLowerCase().trim() &&
-                        playerDob === dob) {
-                        foundPlayer = { id: child.key, ...player };
-                    }
-                });
-                
-                return foundPlayer;
-            } catch (error) {
-                console.error('Error finding player:', error);
-                return null;
-            }
-        }
-        
-        async function generateRegistrationId() {
-            try {
-                const snapshot = await window.database.ref('registrations').once('value');
-                let maxNum = 0;
-                
-                snapshot.forEach(child => {
-                    const p = child.val();
-                    if (p.registrationId && /^MJA\/2025\/(\d+)$/.test(p.registrationId)) {
-                        const num = parseInt(p.registrationId.split('/').pop(), 10);
-                        if (num > maxNum) maxNum = num;
-                    }
-                });
-                
-                return `MJA/2025/${String(maxNum + 1).padStart(3, '0')}`;
-            } catch (error) {
-                console.error('Error generating registration ID:', error);
-                return `MJA/2025/${Date.now()}`;
             }
         }
         

@@ -16,11 +16,11 @@ function loginUser() {
         const intendedDestination = sessionStorage.getItem('intendedDestination');
         sessionStorage.removeItem('intendedDestination');
         
-        // Redirect to intended page or default to tournament dashboard
+        // Redirect to intended page or default to player registration
         if (intendedDestination && !intendedDestination.includes('log-in')) {
             window.location.replace(intendedDestination);
         } else {
-            window.location.replace("/views/tournament-dashboard.html");
+            window.location.replace("/player-registration.html");
         }
     })
     .catch((error) => {
@@ -77,7 +77,7 @@ firebase.auth().onAuthStateChanged(user => {
                 
                 // Add a link to go to dashboard or logout
                 const linkSpan = document.createElement('span');
-                linkSpan.innerHTML = '<a href="/views/tournament-dashboard.html" style="color: #007bff;">Go to Dashboard</a> or <a href="#" onclick="firebase.auth().signOut(); return false;" style="color: #dc3545;">Logout</a>';
+                linkSpan.innerHTML = '<a href="/player-registration.html" style="color: #007bff;">Go to Dashboard</a> or <a href="#" onclick="firebase.auth().signOut(); return false;" style="color: #dc3545;">Logout</a>';
                 errorMsg.appendChild(linkSpan);
             }
         }

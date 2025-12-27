@@ -3,11 +3,6 @@ let database;
 let players = [];
 let weights = new Set();
 let tournamentDraw;
-let currentTournamentId = null;
-
-// Check for tournament context
-const urlParams = new URLSearchParams(window.location.search);
-currentTournamentId = urlParams.get('tournamentId') || sessionStorage.getItem('currentTournament');
 
 // DOM Elements
 const ageGroupFilter = document.getElementById('ageGroupFilter');
@@ -23,42 +18,20 @@ let currentDrawData = null;
 // Tournament Draw System
 class TournamentDraw {
 
-  constructor(tournamentId = null) {
+  constructor() {
     this.database = firebase.database();
-    this.tournamentId = tournamentId;
-    
-    // If tournament ID is provided, load players from tournament registrations
-    if (this.tournamentId) {
-      this.playersRef = this.database.ref(`tournament_registrations/${this.tournamentId}`);
-    } else {
-      // Fallback to all players
-      this.playersRef = this.database.ref('registrations').orderByChild('userType').equalTo('player');
-    }
-    
+    this.playersRef = this.database.ref('registrations').orderByChild('userType').equalTo('player');
     this.matchesRef = this.database.ref('tournament/matches');
   }
 
   async loadPlayers() {
     const snap = await this.playersRef.once('value');
     const arr = [];
-    
-    if (this.tournamentId) {
-      // Loading from tournament registrations
-      snap.forEach(s => {
-        const p = s.val();
-        p.id = p.playerId || s.key; // Use playerId if available
-        arr.push(p);
-      });
-    } else {
-      // Loading from all registrations
-      snap.forEach(s => {
-        const p = s.val();
-        p.id = s.key;
-        arr.push(p);
-      });
-    }
-    
-    console.log(`Loaded ${arr.length} players${this.tournamentId ? ' for tournament ' + this.tournamentId : ''}`);
+    snap.forEach(s => {
+      const p = s.val();
+      p.id = s.key;
+      arr.push(p);
+    });
     return arr;
   }
 
@@ -488,7 +461,7 @@ validateNoByeVsBye(bracket) {
 
 }
 
-window.tournamentDraw = new TournamentDraw(currentTournamentId);
+window.tournamentDraw = new TournamentDraw();
 
 // Initialize the application
 
@@ -571,15 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadPlayers() {
     showLoading(true);
 
-    // Use tournament-specific path if tournament ID exists
-    let playersRef;
-    if (currentTournamentId) {
-        playersRef = window.database.ref(`tournament_registrations/${currentTournamentId}`);
-        console.log('🏆 Loading players for tournament:', currentTournamentId);
-    } else {
-        playersRef = window.database.ref('registrations');
-        console.log('📋 Loading all players');
-    }
+    const playersRef = window.database.ref('registrations');
 
     playersRef.on('value', (snapshot) => {
         players = [];
@@ -587,13 +552,7 @@ function loadPlayers() {
 
         snapshot.forEach((childSnapshot) => {
             const player = childSnapshot.val();
-            
-            // For tournament registrations, use playerId; for all registrations, use key
-            if (currentTournamentId) {
-                player.id = player.playerId || childSnapshot.key;
-            } else {
-                player.id = childSnapshot.key;
-            }
+            player.id = childSnapshot.key;
 
             // Check if this is a player and has the required data
             if (player.userType === 'player' && player.playerInfo) {
@@ -606,7 +565,7 @@ function loadPlayers() {
             }
         });
 
-        console.log(`✅ Loaded ${players.length} players${currentTournamentId ? ' for tournament' : ''}`);
+//        console.log('Loaded players:', players);
         console.log('Available weights:', Array.from(weights));
 
         // Update weight filter
@@ -1206,56 +1165,6 @@ function showError(message) {
 }
 
 
-/**
- * Navigate to tournament matches with context
- */
-function goToTournamentMatches() {
-    if (currentTournamentId) {
-        sessionStorage.setItem('currentTournament', currentTournamentId);
-        window.open(`/views/tournament-matches.html?tournamentId=${currentTournamentId}`, '_blank');
-    } else {
-        window.open('/views/tournament-matches.html', '_blank');
-    }
-}
-
-// Make function available globally
-window.goToTournamentMatches = goToTournamentMatches;
-
-/**
- * Display tournament context in UI
- */
-async function displayTournamentContext() {
-    if (!currentTournamentId) return;
-    
-    try {
-        const snapshot = await firebase.database().ref(`tournaments/${currentTournamentId}`).once('value');
-        const tournament = snapshot.val();
-        
-        if (tournament) {
-            // Find or create a tournament info banner
-            const header = document.querySelector('.header') || document.querySelector('h1')?.parentElement;
-            if (header) {
-                const banner = document.createElement('div');
-                banner.style.cssText = 'background: #dbeafe; padding: 10px 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3b82f6;';
-                banner.innerHTML = `
-                    <strong style="color: #1e40af;">
-                        <i class="fas fa-trophy"></i> Tournament: ${tournament.name}
-                    </strong>
-                    <span style="color: #666; margin-left: 15px;">
-                        <i class="fas fa-calendar"></i> ${tournament.date}
-                    </span>
-                    <span style="color: #666; margin-left: 15px;">
-                        <i class="fas fa-map-marker-alt"></i> ${tournament.location}
-                    </span>
-                `;
-                header.insertAdjacentElement('afterend', banner);
-            }
-        }
-    } catch (error) {
-        console.error('Error loading tournament context:', error);
-    }
-}
-
 // Save draw to database
 async function saveDraw() {
     if (!currentDrawData) {
@@ -1277,7 +1186,6 @@ async function saveDraw() {
         // Prepare draw data to save
         const drawToSave = {
             categoryKey: categoryKey,
-            tournamentId: currentTournamentId, // Add tournament ID
             category: {
                 ageGroup: category.ageGroup,
                 gender: category.gender,
@@ -1295,21 +1203,13 @@ async function saveDraw() {
             status: 'pending' // pending, in-progress, completed
         };
 
-        // Save to tournament-specific path if tournament ID exists
-        const drawPath = currentTournamentId 
-            ? `tournaments/${currentTournamentId}/draws/${categoryKey}`
-            : `tournament/draws/${categoryKey}`;
-        
-        await firebase.database().ref(drawPath).set(drawToSave);
+        // Save to tournament/draws/{categoryKey}
+        await firebase.database().ref(`tournament/draws/${categoryKey}`).set(drawToSave);
 
-        // Also save matches to tournament-specific path
-        const matchesPath = currentTournamentId
-            ? `tournaments/${currentTournamentId}/matches/${categoryKey}`
-            : `tournament/matches/${categoryKey}`;
-        
-        console.log('💾 Saving matches to:', matchesPath);
+        // Also save matches to tournament/matches/{categoryKey}
+        console.log('💾 Saving matches to:', `tournament/matches/${categoryKey}`);
         console.log('💾 Bracket data:', bracketData);
-        await firebase.database().ref(matchesPath).set(bracketData);
+        await tournamentDraw.matchesRef.child(categoryKey).set(bracketData);
 
         console.log('✅ Draw saved successfully:', categoryKey);
         console.log('✅ Matches saved to tournament/matches/' + categoryKey);
@@ -1351,15 +1251,8 @@ async function saveDraw() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize TournamentDraw system with tournament context
-    tournamentDraw = new TournamentDraw(currentTournamentId);
-    
-    // Display tournament context if available
-    if (currentTournamentId) {
-        console.log('🏆 Generate Draws - Tournament Context:', currentTournamentId);
-        // Optionally display tournament name in UI
-        displayTournamentContext();
-    }
+    // Initialize TournamentDraw system
+    tournamentDraw = new TournamentDraw();
 
     // Load player list
     loadPlayers();

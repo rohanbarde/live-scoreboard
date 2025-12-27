@@ -1,18 +1,9 @@
 // Bracket View Renderer for Tournament Matches
 class BracketView {
-  constructor(tournamentId = null) {
+  constructor() {
     this.database = firebase.database();
-    this.tournamentId = tournamentId;
-    
-    // Use tournament-specific path if tournament ID is provided
-    if (tournamentId) {
-      this.matchesRef = this.database.ref(`tournaments/${tournamentId}/matches`);
-    } else {
-      this.matchesRef = this.database.ref('tournament/matches');
-    }
-    
+    this.matchesRef = this.database.ref('tournament/matches');
     this.matches = [];
-    console.log('🏆 BracketView initialized with tournament:', tournamentId || 'global');
   }
 
   // Load matches from Firebase
