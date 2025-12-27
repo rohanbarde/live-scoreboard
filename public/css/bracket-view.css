@@ -1052,8 +1052,8 @@
 /* Print styles - fit all brackets on single page */
 @media print {
   @page {
-    size: A3 landscape;
-    margin: 0.3cm;
+    size: A4 landscape;
+    margin: 10mm;
   }
   
   * {
@@ -1069,11 +1069,15 @@
   
   .bracket-wrapper {
     page-break-inside: avoid;
-    transform: scale(0.55);
+    transform: scale(0.65);
     transform-origin: top left;
-    width: 181.818%; /* 100% / 0.55 */
+    width: 153.846%; /* 100% / 0.65 */
     margin: 0;
     padding: 0;
+  }
+  
+  .bracket-rounds-container {
+    page-break-inside: avoid;
   }
   
   .category-bracket {
@@ -1197,6 +1201,17 @@
   
   #listView {
     display: none !important;
+  }
+  
+  /* Page breaks for PDF structure */
+  .results-box {
+    page-break-before: always;
+    margin-top: 0;
+  }
+  
+  .repechage-section {
+    page-break-before: auto;
+    page-break-inside: avoid;
   }
 }
 

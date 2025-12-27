@@ -36,8 +36,8 @@
             <div style="display: flex; gap: 10px; align-items: center;">
                 <button class="tab" data-tab="bracket">Bracket View</button>
                 <button class="tab active" data-tab="list">List View</button>
-                <button class="btn btn-outline" onclick="window.print()" style="margin-left: 10px;">
-                    <i class="fas fa-print"></i> Print
+                <button class="btn btn-outline" id="exportPdfBtn" style="margin-left: 10px;">
+                    <i class="fas fa-file-pdf"></i> Export PDF
                 </button>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
@@ -115,6 +115,10 @@
         </div>
     </div>
 
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -141,6 +145,9 @@
     
     <!-- Bracket View -->
     <script src="../public/js/bracket-view.js"></script>
+    
+    <!-- PDF Export System -->
+    <script src="../public/js/pdf-export.js"></script>
     
     <script>
         // Load saved categories from tournament/draws
@@ -262,8 +269,45 @@
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
             const categoryFilter = document.getElementById('categoryFilter');
+            const exportPdfBtn = document.getElementById('exportPdfBtn');
             let bracketView = null;
             let tournamentProgression = null;
+            let pdfExporter = null;
+
+            // Initialize PDF exporter
+            if (window.TournamentPDFExporter) {
+                pdfExporter = new TournamentPDFExporter();
+            }
+
+            // PDF Export button handler
+            if (exportPdfBtn && pdfExporter) {
+                exportPdfBtn.addEventListener('click', async () => {
+                    // Get current category name
+                    const selectedCategory = categoryFilter ? categoryFilter.value : '';
+                    let categoryName = 'Tournament';
+                    
+                    if (selectedCategory && categoryFilter) {
+                        const selectedOption = categoryFilter.options[categoryFilter.selectedIndex];
+                        categoryName = selectedOption.textContent || selectedCategory;
+                    }
+
+                    // Check which view is active
+                    const bracketViewActive = document.querySelector('.tab[data-tab="bracket"]').classList.contains('active');
+                    
+                    if (!selectedCategory) {
+                        alert('⚠️ Please select a category first to export PDF');
+                        return;
+                    }
+
+                    if (bracketViewActive) {
+                        // Export bracket view
+                        await pdfExporter.exportBracketViewPDF(categoryName);
+                    } else {
+                        // Export list view
+                        await pdfExporter.exportListViewPDF(categoryName);
+                    }
+                });
+            }
 
             // Load categories
             await loadCategories();
