@@ -20,11 +20,11 @@ class TournamentPDFExporter {
      */
     async exportBracketViewPDF(categoryName = 'Tournament') {
         try {
-            console.log('📄 Starting bracket PDF export...');
+            console.log('Starting bracket PDF export...');
             
             const bracketContainer = document.getElementById('bracketContainer');
             if (!bracketContainer) {
-                alert('❌ Bracket container not found');
+                alert('Bracket container not found');
                 return;
             }
 
@@ -53,10 +53,10 @@ class TournamentPDFExporter {
             pdf.save(fileName);
 
             this.hideLoadingOverlay();
-            console.log('✅ PDF exported successfully:', fileName);
+            console.log('PDF exported successfully:', fileName);
 
         } catch (error) {
-            console.error('❌ Error exporting bracket PDF:', error);
+            console.error('Error exporting bracket PDF:', error);
             this.hideLoadingOverlay();
             alert('Failed to export PDF. Please try again.');
         }
@@ -135,7 +135,7 @@ class TournamentPDFExporter {
             if (resultsItems.length > 0) {
                 pdf.setFontSize(14);
                 pdf.setFont('helvetica', 'bold');
-                pdf.text('🏆 Final Rankings', 15, yPos);
+                pdf.text('Final Rankings', 15, yPos);
                 yPos += 8;
 
                 resultsItems.forEach((item, index) => {
@@ -169,7 +169,7 @@ class TournamentPDFExporter {
         if (repechageSection && yPos < pageHeight - 40) {
             pdf.setFontSize(14);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('🥉 Repechage & Bronze Medal Matches', 15, yPos);
+            pdf.text('Repechage & Bronze Medal Matches', 15, yPos);
             yPos += 8;
 
             // Repechage matches
@@ -193,7 +193,7 @@ class TournamentPDFExporter {
                         const winnerCard = match.querySelector('.match-player.winner .player-name');
                         if (winnerCard) {
                             pdf.setFont('helvetica', 'bold');
-                            pdf.text(`✓ Winner: ${winnerCard.textContent}`, 150, yPos);
+                            pdf.text(`Winner: ${winnerCard.textContent}`, 150, yPos);
                         }
                     }
                     
@@ -224,7 +224,7 @@ class TournamentPDFExporter {
                         const winnerCard = match.querySelector('.match-player.winner .player-name');
                         if (winnerCard) {
                             pdf.setFont('helvetica', 'bold');
-                            pdf.text(`🥉 Winner: ${winnerCard.textContent}`, 150, yPos);
+                            pdf.text(`Bronze Winner: ${winnerCard.textContent}`, 150, yPos);
                         }
                     }
                     
@@ -245,11 +245,11 @@ class TournamentPDFExporter {
      */
     async exportListViewPDF(categoryName = 'Tournament') {
         try {
-            console.log('📄 Starting list view PDF export...');
+            console.log('Starting list view PDF export...');
             
             const matchesContainer = document.getElementById('matchesContainer');
             if (!matchesContainer) {
-                alert('❌ Matches container not found');
+                alert('Matches container not found');
                 return;
             }
 
@@ -277,80 +277,84 @@ class TournamentPDFExporter {
             pdf.text('Tournament Matches - List View', pageWidth / 2, yPos, { align: 'center' });
             yPos += 12;
 
-            // Get all match cards
-            const matchCards = matchesContainer.querySelectorAll('.match-card');
+            // Get matches from table rows (the actual structure used in list view)
+            const tableRows = matchesContainer.querySelectorAll('tbody tr:not(.table-secondary)');
             
-            if (matchCards.length === 0) {
+            console.log(`Found ${tableRows.length} match rows for PDF export`);
+            
+            if (tableRows.length === 0) {
                 pdf.setFontSize(10);
-                pdf.text('No matches available', pageWidth / 2, yPos, { align: 'center' });
+                pdf.text('No matches available for selected category', pageWidth / 2, yPos, { align: 'center' });
+                pdf.setFontSize(8);
+                pdf.text('Please ensure a category is selected and matches are loaded', pageWidth / 2, yPos + 10, { align: 'center' });
             } else {
-                // Group matches by round
-                const matchesByRound = this.groupMatchesByRound(matchCards);
+                // Parse table structure and group by sections
+                const sections = this.parseMatchTableSections(matchesContainer);
                 
-                for (const [round, matches] of Object.entries(matchesByRound)) {
+                for (const section of sections) {
                     // Check if we need a new page
                     if (yPos > pageHeight - 40) {
                         pdf.addPage();
                         yPos = 20;
                     }
 
-                    // Round header
-                    pdf.setFillColor(67, 97, 238);
-                    pdf.rect(10, yPos - 5, pageWidth - 20, 8, 'F');
-                    pdf.setTextColor(255, 255, 255);
-                    pdf.setFontSize(12);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.text(round, 15, yPos);
-                    pdf.setTextColor(0, 0, 0);
-                    yPos += 10;
+                    // Section header (Main Bracket, Repechage, Bronze, Final)
+                    if (section.title) {
+                        pdf.setFillColor(67, 97, 238);
+                        pdf.rect(10, yPos - 5, pageWidth - 20, 8, 'F');
+                        pdf.setTextColor(255, 255, 255);
+                        pdf.setFontSize(12);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.text(section.title, 15, yPos);
+                        pdf.setTextColor(0, 0, 0);
+                        yPos += 10;
+                    }
 
-                    // Matches in this round
-                    matches.forEach((match, index) => {
+                    // Matches in this section
+                    section.matches.forEach((match, index) => {
                         // Check if we need a new page
-                        if (yPos > pageHeight - 30) {
+                        if (yPos > pageHeight - 25) {
                             pdf.addPage();
                             yPos = 20;
                         }
 
-                        const matchNum = match.querySelector('.match-number')?.textContent || '';
-                        const playerA = match.querySelector('.player-a .player-name')?.textContent || 'TBD';
-                        const playerB = match.querySelector('.player-b .player-name')?.textContent || 'TBD';
-                        const status = match.querySelector('.match-status')?.textContent || 'Pending';
-                        const winner = match.querySelector('.winner-name')?.textContent || '';
-
                         // Match box
                         pdf.setDrawColor(200, 200, 200);
                         pdf.setLineWidth(0.3);
-                        pdf.rect(15, yPos - 4, pageWidth - 30, 18);
+                        pdf.rect(10, yPos - 4, pageWidth - 20, 16);
 
-                        // Match number
-                        pdf.setFontSize(10);
+                        // Match number and round
+                        pdf.setFontSize(9);
                         pdf.setFont('helvetica', 'bold');
-                        pdf.text(`Match ${matchNum}`, 18, yPos);
-
-                        // Status
+                        pdf.text(`#${match.number}`, 13, yPos);
+                        
                         pdf.setFontSize(8);
                         pdf.setFont('helvetica', 'normal');
+                        pdf.text(match.round, 25, yPos);
+
+                        // Status
+                        pdf.setFontSize(7);
                         pdf.setTextColor(100, 100, 100);
-                        pdf.text(status, pageWidth - 18, yPos, { align: 'right' });
+                        pdf.text(match.status, pageWidth - 13, yPos, { align: 'right' });
                         pdf.setTextColor(0, 0, 0);
 
                         yPos += 5;
 
                         // Players
-                        pdf.setFontSize(9);
+                        pdf.setFontSize(8);
                         pdf.setFont('helvetica', 'normal');
-                        pdf.text(`${playerA}`, 20, yPos);
+                        pdf.text(`${match.playerA}`, 13, yPos);
+                        pdf.text('vs', pageWidth / 2, yPos, { align: 'center' });
+                        pdf.text(`${match.playerB}`, pageWidth - 13, yPos, { align: 'right' });
+
                         yPos += 4;
-                        pdf.text('vs', 20, yPos);
-                        yPos += 4;
-                        pdf.text(`${playerB}`, 20, yPos);
 
                         // Winner
-                        if (winner) {
+                        if (match.winner) {
                             pdf.setFont('helvetica', 'bold');
                             pdf.setTextColor(6, 214, 160);
-                            pdf.text(`Winner: ${winner}`, pageWidth - 18, yPos, { align: 'right' });
+                            pdf.setFontSize(7);
+                            pdf.text(`Winner: ${match.winner}`, pageWidth / 2, yPos, { align: 'center' });
                             pdf.setTextColor(0, 0, 0);
                         }
 
@@ -371,17 +375,73 @@ class TournamentPDFExporter {
             pdf.save(fileName);
 
             this.hideLoadingOverlay();
-            console.log('✅ PDF exported successfully:', fileName);
+            console.log('PDF exported successfully:', fileName);
 
         } catch (error) {
-            console.error('❌ Error exporting list PDF:', error);
+            console.error('Error exporting list PDF:', error);
             this.hideLoadingOverlay();
             alert('Failed to export PDF. Please try again.');
         }
     }
 
     /**
-     * Group match cards by round
+     * Parse match table sections from list view
+     */
+    parseMatchTableSections(container) {
+        const sections = [];
+        const tbody = container.querySelector('tbody');
+        
+        if (!tbody) {
+            return sections;
+        }
+        
+        let currentSection = null;
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            // Check if this is a section header row
+            if (row.classList.contains('table-secondary')) {
+                // Save previous section if exists
+                if (currentSection && currentSection.matches.length > 0) {
+                    sections.push(currentSection);
+                }
+                
+                // Start new section
+                const titleCell = row.querySelector('td');
+                const titleText = titleCell ? titleCell.textContent.trim() : '';
+                currentSection = {
+                    title: titleText,
+                    matches: []
+                };
+            } else if (currentSection) {
+                // This is a match row - parse it
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 9) {
+                    const matchData = {
+                        number: cells[0].textContent.trim(),
+                        type: cells[1].textContent.trim(),
+                        round: cells[2].textContent.trim(),
+                        playerA: cells[3].textContent.trim(),
+                        playerB: cells[5].textContent.trim(),
+                        mat: cells[6].textContent.trim(),
+                        status: cells[7].textContent.trim(),
+                        winner: cells[8].textContent.trim()
+                    };
+                    currentSection.matches.push(matchData);
+                }
+            }
+        });
+        
+        // Add last section
+        if (currentSection && currentSection.matches.length > 0) {
+            sections.push(currentSection);
+        }
+        
+        return sections;
+    }
+
+    /**
+     * Group match cards by round (legacy method for card-based views)
      */
     groupMatchesByRound(matchCards) {
         const grouped = {};
@@ -465,4 +525,4 @@ class TournamentPDFExporter {
 // Export to global scope
 window.TournamentPDFExporter = TournamentPDFExporter;
 
-console.log('✅ PDF Export System loaded');
+console.log('PDF Export System loaded');
