@@ -14,6 +14,31 @@ class TournamentPDFExporter {
     }
 
     /**
+     * Sanitize text to remove problematic Unicode characters
+     * jsPDF's default Helvetica font only supports basic Latin characters
+     */
+    sanitizeText(text) {
+        if (!text) return '';
+        
+        // Convert to string and trim
+        let cleaned = String(text).trim();
+        
+        // Remove emoji and special Unicode characters
+        // Keep only basic Latin characters, numbers, and common punctuation
+        cleaned = cleaned.replace(/[\u{1F300}-\u{1F9FF}]/gu, ''); // Emojis
+        cleaned = cleaned.replace(/[\u{2600}-\u{26FF}]/gu, '');   // Misc symbols
+        cleaned = cleaned.replace(/[\u{2700}-\u{27BF}]/gu, '');   // Dingbats
+        cleaned = cleaned.replace(/[\u{FE00}-\u{FE0F}]/gu, '');   // Variation selectors
+        cleaned = cleaned.replace(/[\u{200D}]/gu, '');            // Zero-width joiner
+        cleaned = cleaned.replace(/[\u{00A0}]/g, ' ');            // Non-breaking space
+        
+        // Normalize whitespace
+        cleaned = cleaned.replace(/\s+/g, ' ').trim();
+        
+        return cleaned;
+    }
+
+    /**
      * Export bracket view to PDF
      * Page 1: Complete bracket
      * Page 2: Tournament results, bronze medals, and repechage
@@ -139,9 +164,9 @@ class TournamentPDFExporter {
                 yPos += 8;
 
                 resultsItems.forEach((item, index) => {
-                    const position = item.querySelector('.result-position')?.textContent || '';
-                    const name = item.querySelector('.result-name')?.textContent || '';
-                    const club = item.querySelector('.result-club')?.textContent || '';
+                    const position = this.sanitizeText(item.querySelector('.result-position')?.textContent || '');
+                    const name = this.sanitizeText(item.querySelector('.result-name')?.textContent || '');
+                    const club = this.sanitizeText(item.querySelector('.result-club')?.textContent || '');
 
                     pdf.setFontSize(11);
                     pdf.setFont('helvetica', 'bold');
@@ -181,8 +206,8 @@ class TournamentPDFExporter {
                 yPos += 6;
 
                 repechageMatches.forEach((match, index) => {
-                    const playerA = match.querySelector('.match-player:first-child .player-name')?.textContent || '';
-                    const playerB = match.querySelector('.match-player:last-child .player-name')?.textContent || '';
+                    const playerA = this.sanitizeText(match.querySelector('.match-player:first-child .player-name')?.textContent || '');
+                    const playerB = this.sanitizeText(match.querySelector('.match-player:last-child .player-name')?.textContent || '');
                     const hasWinner = match.querySelector('.match-winner-badge');
 
                     pdf.setFontSize(10);
@@ -193,7 +218,7 @@ class TournamentPDFExporter {
                         const winnerCard = match.querySelector('.match-player.winner .player-name');
                         if (winnerCard) {
                             pdf.setFont('helvetica', 'bold');
-                            pdf.text(`Winner: ${winnerCard.textContent}`, 150, yPos);
+                            pdf.text(`Winner: ${this.sanitizeText(winnerCard.textContent)}`, 150, yPos);
                         }
                     }
                     
@@ -212,8 +237,8 @@ class TournamentPDFExporter {
                 yPos += 6;
 
                 bronzeMatches.forEach((match, index) => {
-                    const playerA = match.querySelector('.match-player:first-child .player-name')?.textContent || '';
-                    const playerB = match.querySelector('.match-player:last-child .player-name')?.textContent || '';
+                    const playerA = this.sanitizeText(match.querySelector('.match-player:first-child .player-name')?.textContent || '');
+                    const playerB = this.sanitizeText(match.querySelector('.match-player:last-child .player-name')?.textContent || '');
                     const hasWinner = match.querySelector('.match-winner-badge');
 
                     pdf.setFontSize(10);
@@ -224,7 +249,7 @@ class TournamentPDFExporter {
                         const winnerCard = match.querySelector('.match-player.winner .player-name');
                         if (winnerCard) {
                             pdf.setFont('helvetica', 'bold');
-                            pdf.text(`Bronze Winner: ${winnerCard.textContent}`, 150, yPos);
+                            pdf.text(`Bronze Winner: ${this.sanitizeText(winnerCard.textContent)}`, 150, yPos);
                         }
                     }
                     
@@ -418,14 +443,14 @@ class TournamentPDFExporter {
                 const cells = row.querySelectorAll('td');
                 if (cells.length >= 9) {
                     const matchData = {
-                        number: cells[0].textContent.trim(),
-                        type: cells[1].textContent.trim(),
-                        round: cells[2].textContent.trim(),
-                        playerA: cells[3].textContent.trim(),
-                        playerB: cells[5].textContent.trim(),
-                        mat: cells[6].textContent.trim(),
-                        status: cells[7].textContent.trim(),
-                        winner: cells[8].textContent.trim()
+                        number: this.sanitizeText(cells[0].textContent),
+                        type: this.sanitizeText(cells[1].textContent),
+                        round: this.sanitizeText(cells[2].textContent),
+                        playerA: this.sanitizeText(cells[3].textContent),
+                        playerB: this.sanitizeText(cells[5].textContent),
+                        mat: this.sanitizeText(cells[6].textContent),
+                        status: this.sanitizeText(cells[7].textContent),
+                        winner: this.sanitizeText(cells[8].textContent)
                     };
                     currentSection.matches.push(matchData);
                 }
