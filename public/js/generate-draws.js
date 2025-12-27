@@ -80,14 +80,16 @@ class TournamentDraw {
       const allPlayers = [...seededPlayers, ...shuffledUnseeded];
       slots = this.shuffle([...allPlayers, ...new Array(byes).fill(null)]);
     } else {
-      // SEEDING STRATEGY: Place seeded players in different pools to avoid Round 1 matchups
-      // Standard seeding positions for 8-player bracket:
-      // Seed 1 → Position 0 (Pool A, Match 1)
-      // Seed 2 → Position 7 (Pool D, Match 4) - opposite end
-      // Seed 3 → Position 2 (Pool A, Match 2) or Position 4 (Pool B, Match 3)
-      // Seed 4 → Position 5 (Pool C, Match 3) or Position 6 (Pool D, Match 4)
+      // SEEDING STRATEGY: Place seeded players according to IJF regulations
+      // IJF seeding ensures top seeds don't meet until later rounds
+      // For 8-player bracket:
+      // Seed 1 → Position 0 (top)
+      // Seed 2 → Position 7 (bottom)
+      // Seed 3 → Position 4 (middle of bottom half)
+      // Seed 4 → Position 3 (middle of top half)
+      // Seeds 5-8 distributed to avoid early meetings with top 4
       
-      const seedPositions = [0, 7, 2, 5, 4, 3, 6, 1]; // Standard seeding pattern
+      const seedPositions = this.getIJFSeedPositions(bracketSize);
       
       // Place seeded players
       for (let i = 0; i < seededPlayers.length && i < seedPositions.length; i++) {
@@ -189,6 +191,25 @@ class TournamentDraw {
     }
 
     return { slots, bracketSize, byes };
+  }
+
+  getIJFSeedPositions(bracketSize) {
+    // IJF-compliant seed positions for different bracket sizes
+    // Ensures top seeds don't meet until later rounds
+    const positions = {
+      2: [0, 1],
+      4: [0, 3, 2, 1],
+      8: [0, 7, 4, 3, 2, 5, 6, 1],
+      16: [0, 15, 8, 7, 4, 11, 12, 3, 2, 13, 10, 5, 6, 9, 14, 1],
+      32: [0, 31, 16, 15, 8, 23, 24, 7, 4, 27, 20, 11, 12, 19, 28, 3,
+           2, 29, 18, 13, 10, 21, 26, 5, 6, 25, 22, 9, 14, 17, 30, 1],
+      64: [0, 63, 32, 31, 16, 47, 48, 15, 8, 55, 40, 23, 24, 39, 56, 7,
+           4, 59, 36, 27, 20, 43, 52, 11, 12, 51, 44, 19, 28, 35, 60, 3,
+           2, 61, 34, 29, 18, 45, 50, 13, 10, 53, 42, 21, 26, 37, 58, 5,
+           6, 57, 38, 25, 22, 41, 54, 9, 14, 49, 46, 17, 30, 33, 62, 1]
+    };
+    
+    return positions[bracketSize] || positions[8];
   }
 
   assignPools(slotIndex, bracketSize) {
