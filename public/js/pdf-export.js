@@ -229,7 +229,21 @@ class TournamentPDFExporter {
         pdf.setFontSize(11);
         pdf.setFont('helvetica', 'normal');
         pdf.text('Tournament Bracket', pageWidth / 2, yPos, { align: 'center' });
-        yPos += 2;
+        yPos += 5;
+        
+        // Add match and mat number if available
+        const matchNumberEl = document.getElementById('matchNumber');
+        const matNumberEl = document.getElementById('matNumber');
+        if (matchNumberEl?.value || matNumberEl?.value) {
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            let infoText = '';
+            if (matchNumberEl?.value) infoText += `Match #${matchNumberEl.value}`;
+            if (matNumberEl?.value) infoText += (infoText ? ' | ' : '') + `Mat #${matNumberEl.value}`;
+            pdf.text(infoText, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 3;
+        }
+        yPos -= 1;
 
         // Find the bracket rounds container
         const bracketRounds = container.querySelector('.bracket-rounds-container');
@@ -441,7 +455,21 @@ class TournamentPDFExporter {
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
             pdf.text('Tournament Matches - List View', pageWidth / 2, yPos, { align: 'center' });
-            yPos += 10;
+            yPos += 5;
+            
+            // Add match and mat number if available
+            const matchNumberEl = document.getElementById('matchNumber');
+            const matNumberEl = document.getElementById('matNumber');
+            if (matchNumberEl?.value || matNumberEl?.value) {
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'normal');
+                let infoText = '';
+                if (matchNumberEl?.value) infoText += `Match #${matchNumberEl.value}`;
+                if (matNumberEl?.value) infoText += (infoText ? ' | ' : '') + `Mat #${matNumberEl.value}`;
+                pdf.text(infoText, pageWidth / 2, yPos, { align: 'center' });
+                yPos += 5;
+            }
+            yPos += 5;
 
             // Get matches from table rows (the actual structure used in list view)
             const tableRows = matchesContainer.querySelectorAll('tbody tr:not(.table-secondary)');
