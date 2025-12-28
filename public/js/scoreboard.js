@@ -1323,6 +1323,68 @@ setTimeout(() => {
      refreshUI();
    }
 
+function switchHoldTimer() {
+  if (!match.holdTimer.active) {
+    alert('No active hold timer to switch');
+    return;
+  }
+
+  // Get current timer state
+  const currentPlayer = match.holdTimer.player;
+  const currentElapsed = match.holdTimer.elapsedSec;
+  const currentType = match.holdTimer.type;
+  
+  // Determine new player
+  const newPlayer = currentPlayer === 'A' ? 'B' : 'A';
+  const oldPlayerColor = currentPlayer === 'A' ? 'White' : 'Blue';
+  const newPlayerColor = newPlayer === 'A' ? 'White' : 'Blue';
+  const oldPlayerName = currentPlayer === 'A' ? match.fighterA.name : match.fighterB.name;
+  const newPlayerName = newPlayer === 'A' ? match.fighterA.name : match.fighterB.name;
+  
+  // Stop current timer
+  clearInterval(match.holdTimer.timerId);
+  
+  // Determine new duration based on new player's waza-ari status
+  let newDuration = 20;
+  let newType = 'normal';
+  if ((newPlayer === 'A' && match.fighterA.waza > 0) || (newPlayer === 'B' && match.fighterB.waza > 0)) {
+    newDuration = 10;
+    newType = 'waza-ari';
+  }
+  
+  // Transfer timer to new player with same elapsed time
+  match.holdTimer = {
+    active: true,
+    player: newPlayer,
+    elapsedSec: currentElapsed,
+    duration: newDuration,
+    type: newType,
+    timerId: null
+  };
+  
+  const holdTypeText = newType === 'waza-ari' ? ' (after Waza-ari)' : '';
+  
+  pushLog(
+    'System',
+    'Osaekomi Timer Switch',
+    `Hold timer switched from ${oldPlayerColor} (${oldPlayerName}) to ${newPlayerColor} (${newPlayerName})${holdTypeText} at ${currentElapsed}s`
+  );
+  
+  // Update display immediately
+  updateHoldTimerDisplay();
+  
+  // Resume timer with new player
+  match.holdTimer.timerId = setInterval(() => {
+    match.holdTimer.elapsedSec++;
+    updateHoldTimerDisplay();
+
+    // Check if osaekomi timer completed
+    if (match.holdTimer.elapsedSec >= match.holdTimer.duration) {
+      completeHoldTimer();
+    }
+  }, 1000);
+}
+
 function stopHoldTimer() {
   if (!match.holdTimer.active) return;
 
