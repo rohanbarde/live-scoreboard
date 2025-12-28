@@ -154,8 +154,36 @@ function handlePrint() {
     <head>
         <title>Player List - ${currentDate}</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { text-align: center; margin-bottom: 20px; }
+            body { font-family: Arial, sans-serif; margin: 20px; padding: 18px; color: #000; }
+            .tournament-header { 
+                background: #fff; 
+                border-radius: 12px; 
+                padding: 10px 14px; 
+                box-shadow: 0 4px 14px rgba(0,0,0,0.2); 
+                margin-bottom: 20px; 
+            }
+            .logo-container { 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                gap: 44px; 
+                margin-bottom: 10px;
+            }
+            .logo-container img { 
+                width: 54px; 
+                height: 54px; 
+                border-radius: 12px; 
+                box-shadow: 0 2px 8px rgba(0,0,0,0.12); 
+            }
+            .tournament-title { 
+                font-size: 1.5rem; 
+                font-weight: 700; 
+                line-height: 1.3; 
+                text-align: center; 
+                color: #000; 
+                margin: 16px 0 0 0; 
+            }
+            h1 { text-align: center; margin: 20px 0 10px 0; font-size: 1.3em; }
             .print-header { margin-bottom: 20px; text-align: center; }
             .print-header p { margin: 5px 0; }
             table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -163,13 +191,32 @@ function handlePrint() {
             th { background-color: #f2f2f2; }
             .weight-category { margin-top: 30px; font-size: 1.2em; font-weight: bold; }
             .no-print { display: none; }
-            .print-footer { margin-top: 30px; text-align: right; font-size: 0.9em; color: #666; }
+            .print-footer { 
+                margin-top: 36px; 
+                font-size: 1.09rem; 
+                text-align: center; 
+                color: #222; 
+                opacity: 0.82; 
+                letter-spacing: 1px; 
+                padding: 8px 0; 
+            }
+            @media print { 
+                body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
+            }
         </style>
     </head>
     <body>
+        <div class="tournament-header">
+            <div class="logo-container">
+                <img src="/public/assets/Backdrop%5B1%5D%20mja%20logooooo.png" alt="Logo1">
+                <img src="/public/assets/punitBalan.png" alt="Logo2">
+                <img src="/public/assets/mum_m%20copy%2001.png" alt="Logo3">
+            </div>
+            <h1 class="tournament-title">52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI</h1>
+        </div>
         <div class="print-header">
             <h1>Player List</h1>
-            <p>Date: ${currentDate}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
             <p>Total Players: ${playersToPrint.length}</p>
         </div>
     `;
@@ -229,9 +276,7 @@ function handlePrint() {
     
     // Add footer
     printHTML += `
-        <div class="print-footer">
-            <p>Generated on ${new Date().toLocaleString()}</p>
-        </div>
+        <footer class="print-footer">MAHAJUDO &copy; BLACKTROUNCE STUDIO</footer>
     </body>
     </html>`;
     
