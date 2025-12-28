@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🔧 Toggle form sections depending on user type
   function updateFormForUserType(userType) {
     const photoInput = document.getElementById('photo');
+    const genderSelect = document.getElementById('gender');
 
     if (userType === 'player') {
       playerFields.style.display = 'block';
@@ -30,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('weight').required = true;
       document.getElementById('team').required = true;
       document.getElementById('licenseNumber').required = false;
+      if (genderSelect) genderSelect.required = true;
 
       // ✅ Require photo for players only
       if (photoInput) {
@@ -42,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('weight').required = false;
       document.getElementById('team').required = false;
       document.getElementById('licenseNumber').required = true;
+      if (genderSelect) genderSelect.required = false;
 
       // hide photo field for others
       if (photoInput) {
@@ -51,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       playerFields.style.display = 'none';
       coachRefereeFields.style.display = 'none';
+      document.getElementById('licenseNumber').required = false;
+      if (genderSelect) genderSelect.required = false;
       if (photoInput) {
         photoInput.required = false;
         photoInput.closest('.form-group').style.display = 'none';
@@ -189,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updates[`/users/${userId}`] = userData;
 
       await database.ref().update(updates);
-      console.log('✅ Player registration saved:', userId);
+      console.log('✅ registration saved:', userId);
 
       // Reset form
       const selectedType = document.getElementById('userType').value;
