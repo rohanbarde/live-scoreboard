@@ -11,6 +11,131 @@
 class TournamentPDFExporter {
     constructor() {
         this.jsPDF = window.jspdf.jsPDF;
+        this.logoImages = {};
+    }
+
+    /**
+     * Add tournament header with logos and title
+     */
+    async addTournamentHeader(pdf, pageWidth, yPos = 10) {
+        const startY = yPos;
+        
+        // Header box with white background (reduced size)
+        pdf.setFillColor(255, 255, 255);
+        pdf.setDrawColor(200, 200, 200);
+        pdf.setLineWidth(0.3);
+        pdf.roundedRect(10, startY, pageWidth - 20, 30, 2, 2, 'FD');
+        
+        // Add logos if not already loaded
+        if (!this.logosLoaded) {
+            await this.loadLogos();
+        }
+        
+        // Calculate logo positions (centered horizontally) - reduced size
+        const logoSize = 10; // mm (reduced from 12)
+        const logoGap = 12; // mm between logos (reduced from 15)
+        const totalWidth = (logoSize * 3) + (logoGap * 2);
+        const startX = (pageWidth - totalWidth) / 2;
+        const logoY = startY + 5;
+        
+        // Add three logos with JPEG format
+        try {
+            if (this.logoImages.logo1) {
+                pdf.addImage(this.logoImages.logo1, 'JPEG', startX, logoY, logoSize, logoSize);
+            }
+            if (this.logoImages.logo2) {
+                pdf.addImage(this.logoImages.logo2, 'JPEG', startX + logoSize + logoGap, logoY, logoSize, logoSize);
+            }
+            if (this.logoImages.logo3) {
+                pdf.addImage(this.logoImages.logo3, 'JPEG', startX + (logoSize + logoGap) * 2, logoY, logoSize, logoSize);
+            }
+        } catch (e) {
+            console.warn('Could not add logos to PDF:', e);
+        }
+        
+        // Tournament title (smaller font)
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        const titleText = '52th SENIOR STATE & NATIONAL SELECTION JUDO CHAMPIONSHIP 2025-26, MUMBAI';
+        pdf.text(titleText, pageWidth / 2, startY + 23, { align: 'center', maxWidth: pageWidth - 30 });
+        
+        return startY + 34; // Return Y position after header (reduced)
+    }
+
+    /**
+     * Load logo images as base64 with compression
+     */
+    async loadLogos() {
+        const logoUrls = [
+            '/public/assets/Backdrop[1] mja logooooo.png',
+            '/public/assets/punitBalan.png',
+            '/public/assets/mum_m copy 01.png'
+        ];
+        
+        try {
+            const loadImage = (url) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        // Create small canvas for compression
+                        const maxSize = 100; // Reduce to 100px max dimension
+                        const canvas = document.createElement('canvas');
+                        
+                        // Calculate scaled dimensions
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height = (height * maxSize) / width;
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width = (width * maxSize) / height;
+                                height = maxSize;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Use JPEG with high compression (0.3 quality)
+                        resolve(canvas.toDataURL('image/jpeg', 0.3));
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = url;
+                });
+            };
+            
+            const [logo1, logo2, logo3] = await Promise.all(logoUrls.map(loadImage));
+            this.logoImages = { logo1, logo2, logo3 };
+            this.logosLoaded = true;
+        } catch (e) {
+            console.warn('Failed to load logos:', e);
+            this.logosLoaded = true; // Mark as loaded to avoid retrying
+        }
+    }
+
+    /**
+     * Add footer with copyright
+     */
+    addTournamentFooter(pdf, pageWidth, pageHeight) {
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(34, 34, 34);
+        pdf.text('MAHAJUDO \u00A9 BLACKTROUNCE STUDIO', pageWidth / 2, pageHeight - 6, { align: 'center' });
+        
+        // Generated timestamp (smaller)
+        pdf.setFontSize(7);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 3, { align: 'center' });
+        pdf.setTextColor(0, 0, 0);
     }
 
     /**
@@ -91,14 +216,20 @@ class TournamentPDFExporter {
      * Add bracket to page 1
      */
     async addBracketPage(pdf, container, categoryName, pageWidth, pageHeight) {
-        // Add title
-        pdf.setFontSize(18);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(categoryName, pageWidth / 2, 15, { align: 'center' });
+        // Add tournament header
+        let yPos = await this.addTournamentHeader(pdf, pageWidth, 10);
+        yPos += 5;
         
-        pdf.setFontSize(12);
+        // Add category title
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(categoryName, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 6;
+        
+        pdf.setFontSize(11);
         pdf.setFont('helvetica', 'normal');
-        pdf.text('Tournament Bracket', pageWidth / 2, 22, { align: 'center' });
+        pdf.text('Tournament Bracket', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 2;
 
         // Find the bracket rounds container
         const bracketRounds = container.querySelector('.bracket-rounds-container');
@@ -124,7 +255,7 @@ class TournamentPDFExporter {
             const ratio = imgWidth / imgHeight;
             
             const maxWidth = pageWidth - 20; // 10mm margins
-            const maxHeight = pageHeight - 35; // Leave space for title
+            const maxHeight = pageHeight - 70; // Leave space for header and footer
             
             let finalWidth = maxWidth;
             let finalHeight = finalWidth / ratio;
@@ -135,7 +266,7 @@ class TournamentPDFExporter {
             }
             
             const x = (pageWidth - finalWidth) / 2;
-            const y = 28;
+            const y = yPos + 5;
             
             // Use JPEG format to match compressed image data
             pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
@@ -143,16 +274,21 @@ class TournamentPDFExporter {
             pdf.setFontSize(10);
             pdf.text('No bracket data available', pageWidth / 2, pageHeight / 2, { align: 'center' });
         }
+        
+        // Add footer
+        this.addTournamentFooter(pdf, pageWidth, pageHeight);
     }
 
     /**
      * Add results, bronze, and repechage to page 2
      */
     async addResultsPage(pdf, container, categoryName, pageWidth, pageHeight) {
-        let yPos = 15;
+        // Add tournament header
+        let yPos = await this.addTournamentHeader(pdf, pageWidth, 10);
+        yPos += 5;
 
         // Title
-        pdf.setFontSize(18);
+        pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
         pdf.text('Tournament Results', pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
@@ -263,11 +399,8 @@ class TournamentPDFExporter {
             }
         }
 
-        // Footer
-        pdf.setFontSize(8);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
-        pdf.setTextColor(0, 0, 0);
+        // Add footer
+        this.addTournamentFooter(pdf, pageWidth, pageHeight);
     }
 
     /**
@@ -294,18 +427,21 @@ class TournamentPDFExporter {
 
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
-            let yPos = 20;
+            
+            // Add tournament header
+            let yPos = await this.addTournamentHeader(pdf, pageWidth, 10);
+            yPos += 5;
 
-            // Title
-            pdf.setFontSize(18);
+            // Category title
+            pdf.setFontSize(16);
             pdf.setFont('helvetica', 'bold');
             pdf.text(categoryName, pageWidth / 2, yPos, { align: 'center' });
-            yPos += 8;
+            yPos += 6;
             
-            pdf.setFontSize(12);
+            pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
             pdf.text('Tournament Matches - List View', pageWidth / 2, yPos, { align: 'center' });
-            yPos += 12;
+            yPos += 10;
 
             // Get matches from table rows (the actual structure used in list view)
             const tableRows = matchesContainer.querySelectorAll('tbody tr:not(.table-secondary)');
@@ -323,9 +459,10 @@ class TournamentPDFExporter {
                 
                 for (const section of sections) {
                     // Check if we need a new page
-                    if (yPos > pageHeight - 40) {
+                    if (yPos > pageHeight - 50) {
                         pdf.addPage();
-                        yPos = 20;
+                        yPos = await this.addTournamentHeader(pdf, pageWidth, 10);
+                        yPos += 10;
                     }
 
                     // Section header (Main Bracket, Repechage, Bronze, Final)
@@ -341,11 +478,12 @@ class TournamentPDFExporter {
                     }
 
                     // Matches in this section
-                    section.matches.forEach((match, index) => {
+                    for (const match of section.matches) {
                         // Check if we need a new page
-                        if (yPos > pageHeight - 25) {
+                        if (yPos > pageHeight - 35) {
                             pdf.addPage();
-                            yPos = 20;
+                            yPos = await this.addTournamentHeader(pdf, pageWidth, 10);
+                            yPos += 10;
                         }
 
                         // Match box
@@ -389,16 +527,14 @@ class TournamentPDFExporter {
                         }
 
                         yPos += 8;
-                    });
+                    }
 
                     yPos += 5;
                 }
             }
 
-            // Footer
-            pdf.setFontSize(8);
-            pdf.setTextColor(150, 150, 150);
-            pdf.text(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+            // Add footer
+            this.addTournamentFooter(pdf, pageWidth, pageHeight);
 
             // Save PDF
             const fileName = `${categoryName.replace(/[^a-z0-9]/gi, '_')}_List_${this.getTimestamp()}.pdf`;
